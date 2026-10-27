@@ -39,9 +39,13 @@ HubSpot, Salesforce and LinkedIn are docs-only.
 - How packaged Salesforce External Client Apps behave across customer orgs (unresolved community thread).
 - Which toolkits have Composio-managed apps beyond Gmail, Slack and GitHub.
 
-## Agent code path checks
+## Agent and product checks
 
-- `npm run validate` checks all 8 library guides against the schema.
-- The research agent was run end to end against a fake Claude API (tool use, `pause_turn` continuation, JSON lines split across stream chunks): all 14 sections parsed and streamed in order.
-- `AGENT_MOCK=1` replays a guide through the real streaming UI and save flow; save refused a duplicate without confirmation and refused overwriting a library guide.
-- Not run in the build sandbox: a live research pass against the real API (outbound network to api.anthropic.com was blocked there). Run one after deploying.
+- `npm test`: 76 unit and edge-case tests, all passing, against a fake Claude API that follows the documented streaming format: text, server tool use, `pause_turn` continuation, client tool rounds (skills, page rendering, library tools), tool errors, API and stream errors, and the round limit.
+- Research agent end to end: the model loads a skill, renders a JavaScript page, searches, streams all 14 sections; the self-check lowers an unsupported claim; a failed review still finishes; a vendor without OAuth stops after header and evidence; an empty answer is an error, not an empty success.
+- Chat agent end to end: reads another guide to compare and answers with citations; proposes research and corrections but cannot write; corrections are saved only through the approval endpoint.
+- Server rules: library guides can't be replaced; generated guides are forced to "generated" and "tested" claims are downgraded; an existing guide needs explicit overwrite; private and internal URLs can't be rendered; per-network rate limits.
+- `npm run validate`: all 8 library guides pass the schema. Tests also check that no guide or skill contains an em dash, every source is a link, and the bundled content matches the files.
+- `npm run e2e` (browser, mock mode): 10 of 10 checks pass, including filters, instant library lookup, the confirm step for rough names, chat with citations, approve-to-save, a full research run with save, no sideways scrolling at phone width, and no JavaScript errors.
+- Dependency audit: 0 production vulnerabilities after upgrading to Next.js 16.4.1 and React 19.3.1. Next.js 14 had critical advisories.
+- Not run in the build sandbox: a live research pass against the real API (outbound network to api.anthropic.com is blocked there). DEPLOY.md step 4 is the first live run.
