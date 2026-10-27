@@ -4,13 +4,17 @@ import GuidePage from "@/components/GuidePage";
 
 export const dynamic = "force-dynamic";
 
-export async function generateMetadata({ params }: { params: { slug: string } }) {
-  const g = await getGuide(params.slug);
+type Props = { params: Promise<{ slug: string }> };
+
+export async function generateMetadata({ params }: Props) {
+  const { slug } = await params;
+  const g = await getGuide(slug);
   return { title: g ? `${g.name} OAuth Readiness Guide` : "Guide not found", description: g?.verdict };
 }
 
-export default async function Page({ params }: { params: { slug: string } }) {
-  const g = await getGuide(params.slug);
+export default async function Page({ params }: Props) {
+  const { slug } = await params;
+  const g = await getGuide(slug);
   if (!g) notFound();
   const agentOn = Boolean(process.env.ANTHROPIC_API_KEY || process.env.AGENT_MOCK === "1");
   const [all, corrections] = await Promise.all([listGuides(), listCorrections(g.slug).catch(() => [])]);

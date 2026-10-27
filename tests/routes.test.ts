@@ -94,12 +94,12 @@ test("guides: list and read, JSON and Markdown, 404 for unknown", async () => {
   const list = await (await listRoute()).json();
   assert.equal(list.length, 8);
   assert.ok(list.every((g: any) => g.trap && typeof g.oauthSupported === "boolean"));
-  const one = await oneRoute(req(`${U}/api/guides/slack`), { params: { slug: "slack" } });
+  const one = await oneRoute(req(`${U}/api/guides/slack`), { params: Promise.resolve({ slug: "slack" }) });
   assert.equal((await one.json()).slug, "slack");
-  const md = await oneRoute(req(`${U}/api/guides/slack?format=md`), { params: { slug: "slack" } });
+  const md = await oneRoute(req(`${U}/api/guides/slack?format=md`), { params: Promise.resolve({ slug: "slack" }) });
   assert.match(md.headers.get("content-type")!, /markdown/);
   assert.match(md.headers.get("content-disposition")!, /slack-oauth-readiness\.md/);
-  assert.equal((await oneRoute(req(`${U}/api/guides/nope`), { params: { slug: "nope" } })).status, 404);
+  assert.equal((await oneRoute(req(`${U}/api/guides/nope`), { params: Promise.resolve({ slug: "nope" }) })).status, 404);
 });
 
 test("save: rejects empty, incomplete and library-overwriting guides", async () => {
