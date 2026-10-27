@@ -1,180 +1,146 @@
 "use client";
+// The search box and the agent's decision points:
+// A. rough name -> confirm the vendor   B. no guide yet -> offer research (runs on /research)
+// library hit -> open the guide          unknown -> say so and ask for the website
 import { useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import type { Guide } from "@/lib/schema";
-import { validateGuide } from "@/lib/schema";
-import GuideView from "./GuideView";
-import { Toolbar } from "./GuidePage";
+import { BUDGET } from "@/lib/agent/budget";
 
 type Candidate = { name: string; website: string; description?: string };
 type Resolve =
   | { kind: "library"; slug: string; name: string }
   | { kind: "confirm"; candidates: Candidate[]; reason?: string }
-  | { kind: "new"; vendor: Candidate; slug: string; existing?: boolean }
+  | { kind: "new"; vendor: Candidate; slug: string }
   | { kind: "notfound"; message: string };
 
 type Phase =
   | { p: "idle" }
-  | { p: "resolving" }
-  | { p: "confirm"; r: Extract<Resolve, { kind: "confirm" }> }
-  | { p: "offer"; vendor: Candidate; slug: string; overwrite: boolean }
-  | { p: "generating"; vendor: Candidate }
-  | { p: "review"; vendor: Candidate; overwrite: boolean }
-  | { p: "saved"; slug: string }
+  | { p: "resolving"; q: string }
+  | { p: "opening"; name: string }
+  | { p: "confirm"; q: string; r: Extract<Resolve, { kind: "confirm" }> }
+  | { p: "offer"; vendor: Candidate; overwrite: boolean }
+  | { p: "notfound"; message: string }
   | { p: "error"; message: string };
+
+export function researchHref(v: Candidate, overwrite = false) {
+  const q = new URLSearchParams({ name: v.name, website: v.website || "" });
+  if (overwrite) q.set("overwrite", "1");
+  return `/research?${q.toString()}`;
+}
+
+const TRIES = ["Slack", "monday", "https://calendly.com", "Zoom"];
 
 export default function Explorer({ agentOn }: { agentOn: boolean }) {
   const router = useRouter();
   const params = useSearchParams();
   const [q, setQ] = useState("");
   const [phase, setPhase] = useState<Phase>({ p: "idle" });
-  const [guide, setGuide] = useState<Partial<Guide>>({});
-  const [log, setLog] = useState<string[]>([]);
-  const ctl = useRef<AbortController | null>(null);
+  const ran = useRef("");
 
-  // "Research again" from a generated guide lands here with the vendor prefilled.
-  useEffect(() => {
-    const name = params.get("regenerate");
-    if (name) setPhase({ p: "offer", vendor: { name, website: params.get("website") || "" }, slug: "", overwrite: true });
-  }, [params]);
+  async function post(body: unknown): Promise<Resolve> {
+    const res = await fetch("/api/resolve", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
+    const r = (await res.json().catch(() => ({}))) as Resolve & { error?: string };
+    if (!res.ok) throw new Error(r.error || "Could not look that up. Try again.");
+    return r;
+  }
+
+  function route(r: Resolve, query: string) {
+    if (r.kind === "library") { setPhase({ p: "opening", name: r.name }); router.push(`/guides/${r.slug}`); return; }
+    if (r.kind === "confirm") { setPhase({ p: "confirm", q: query, r }); return; }
+    if (r.kind === "new") { setPhase({ p: "offer", vendor: r.vendor, overwrite: false }); return; }
+    setPhase({ p: "notfound", message: r.message });
+  }
 
   async function resolve(query: string) {
-    setPhase({ p: "resolving" });
-    try {
-      const res = await fetch("/api/resolve", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ query }) });
-      const r = (await res.json()) as Resolve & { error?: string };
-      if (!res.ok) throw new Error(r.error || "Could not look that up.");
-      if (r.kind === "library") { router.push(`/guides/${r.slug}`); return; }
-      if (r.kind === "confirm") { setPhase({ p: "confirm", r }); return; }
-      if (r.kind === "new") {
-        if (r.existing) { router.push(`/guides/${r.slug}`); return; }
-        setPhase({ p: "offer", vendor: r.vendor, slug: r.slug, overwrite: false }); return;
-      }
-      setPhase({ p: "error", message: r.message });
-    } catch (e) {
-      setPhase({ p: "error", message: (e as Error).message });
-    }
+    const v = query.trim();
+    if (!v) return;
+    setQ(v);
+    setPhase({ p: "resolving", q: v });
+    try { route(await post({ query: v }), v); }
+    catch (e) { setPhase({ p: "error", message: (e as Error).message }); }
   }
 
   async function pick(c: Candidate) {
-    // A confirmed vendor may already have a guide.
-    setPhase({ p: "resolving" });
-    const res = await fetch("/api/resolve", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ query: c.website || c.name, confirmed: c }) });
-    const r = (await res.json()) as Resolve;
-    if (r.kind === "library" || (r.kind === "new" && r.existing)) { router.push(`/guides/${(r as { slug: string }).slug}`); return; }
-    setPhase({ p: "offer", vendor: c, slug: r.kind === "new" ? r.slug : "", overwrite: false });
+    setPhase({ p: "resolving", q: c.name });
+    try { route(await post({ query: c.website || c.name, confirmed: c }), c.name); }
+    catch (e) { setPhase({ p: "error", message: (e as Error).message }); }
   }
 
-  async function generate(vendor: Candidate, overwrite: boolean) {
-    ctl.current?.abort();
-    const c = new AbortController(); ctl.current = c;
-    setGuide({}); setLog([]);
-    setPhase({ p: "generating", vendor });
-    const g: Partial<Guide> = {};
-    try {
-      const res = await fetch("/api/generate", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(vendor), signal: c.signal });
-      if (!res.ok || !res.body) throw new Error((await res.text()) || "The research agent is unavailable.");
-      const reader = res.body.getReader(); const dec = new TextDecoder(); let buf = "";
-      for (;;) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        buf += dec.decode(value, { stream: true });
-        const lines = buf.split("\n"); buf = lines.pop() || "";
-        for (const line of lines) {
-          if (!line.trim()) continue;
-          let ev: { type: string; text?: string; section?: string; data?: any; message?: string };
-          try { ev = JSON.parse(line); } catch { continue; }
-          if (ev.type === "status") setLog((l) => [...l.slice(-40), ev.text!]);
-          if (ev.type === "error") throw new Error(ev.message);
-          if (ev.type === "section" && ev.section) {
-            if (ev.section === "header") Object.assign(g, ev.data, { evidenceLevel: "generated" });
-            else if (ev.section === "evidence") { g.evidence = ev.data.evidence; g.sources = ev.data.sources; }
-            else (g as Record<string, unknown>)[ev.section] = ev.data;
-            setGuide({ ...g });
-          }
-        }
-      }
-      const problems = validateGuide(g);
-      if (problems.length) throw new Error("The agent's guide is incomplete: " + problems.join("; "));
-      setPhase({ p: "review", vendor, overwrite });
-    } catch (e) {
-      if ((e as Error).name === "AbortError") { setPhase({ p: "idle" }); return; }
-      setPhase({ p: "error", message: (e as Error).message });
-    }
-  }
+  // ?q=Calendly runs a lookup (links from chat); ?regenerate=Name&website=x offers research again.
+  useEffect(() => {
+    const regen = params.get("regenerate");
+    const query = params.get("q");
+    const key = `${regen}|${query}`;
+    if (ran.current === key) return;
+    ran.current = key;
+    if (regen) setPhase({ p: "offer", vendor: { name: regen, website: params.get("website") || "" }, overwrite: true });
+    else if (query) resolve(query);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [params]);
 
-  async function save(overwrite: boolean) {
-    const res = await fetch("/api/guides", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ guide, overwrite }) });
-    const r = await res.json();
-    if (!res.ok) { setPhase({ p: "error", message: r.error || "Could not save." }); return; }
-    setPhase({ p: "saved", slug: r.slug });
-    router.refresh();
-  }
-
-  const busy = phase.p === "resolving" || phase.p === "generating";
+  const busy = phase.p === "resolving" || phase.p === "opening";
 
   return (
     <div>
-      <form className="ask" onSubmit={(e) => { e.preventDefault(); if (q.trim()) resolve(q.trim()); }}>
-        <input id="app-query" value={q} onChange={(e) => setQ(e.target.value)} placeholder="App name or link, e.g. Zoom, monday, https://calendly.com" aria-label="App name or link" disabled={busy} />
-        <button className="btn primary" type="submit" disabled={busy || !q.trim()}>{phase.p === "resolving" ? "Looking it up…" : "Find guide"}</button>
+      <form className="ask" role="search" onSubmit={(e) => { e.preventDefault(); resolve(q); }}>
+        <label className="sr" htmlFor="app-query">App name or link</label>
+        <input id="app-query" value={q} onChange={(e) => setQ(e.target.value)} placeholder="App name or link, e.g. Zoom, monday, https://calendly.com" disabled={busy} autoComplete="off" />
+        <button className="btn primary" type="submit" disabled={busy || !q.trim()}>{phase.p === "resolving" ? <><span className="spin" /> Looking it up</> : "Find guide"}</button>
       </form>
+      <div className="tries"><span>Try</span>{TRIES.map((t) => <button key={t} type="button" className="chip" disabled={busy} onClick={() => resolve(t)}>{t}</button>)}</div>
 
-      {phase.p === "confirm" && (
-        <div className="panel">
-          <h3>Which app do you mean?</h3>
-          {phase.r.reason && <p className="small">{phase.r.reason}</p>}
-          <div className="row">
-            {phase.r.candidates.map((c) => (
-              <button key={c.website + c.name} className="btn" type="button" onClick={() => pick(c)}>{c.name} <span className="small">{c.website}</span></button>
-            ))}
-            <button className="btn" type="button" onClick={() => setPhase({ p: "idle" })}>Something else</button>
+      <div aria-live="polite">
+        {phase.p === "opening" && <div className="card"><p><span className="spin" /> Opening the {phase.name} guide…</p></div>}
+
+        {phase.p === "confirm" && (
+          <div className="card">
+            <div className="kicker">You typed “{phase.q}”</div>
+            <h3>Which app do you mean?</h3>
+            {phase.r.reason && <p>{phase.r.reason}</p>}
+            <div className="cands">
+              {phase.r.candidates.map((c, i) => (
+                <button key={c.website + c.name} type="button" className={`cand ${i === 0 ? "best" : ""}`} onClick={() => pick(c)}>
+                  <span><span className="n">{c.name}</span><span className="d">{[c.website, c.description].filter(Boolean).join(" · ")}</span></span>
+                  <span className="go">{i === 0 ? "Yes, this one" : "Choose"}</span>
+                </button>
+              ))}
+            </div>
+            <div className="row"><button className="btn" type="button" onClick={() => { setPhase({ p: "idle" }); document.getElementById("app-query")?.focus(); }}>Something else</button></div>
           </div>
-        </div>
-      )}
+        )}
 
-      {phase.p === "offer" && (
-        <div className="panel">
-          <h3>{phase.overwrite ? `Research ${phase.vendor.name} again?` : `There's no guide for ${phase.vendor.name} yet.`}</h3>
-          <p className="small">{phase.vendor.website} {phase.vendor.description ? `· ${phase.vendor.description}` : ""}</p>
-          <p>{agentOn ? "The agent can research it now: official docs first, then changelogs and other sources. It takes about 2 to 3 minutes and fills the same 14-section guide. Nothing is saved until you say so." : "The research agent isn't configured on this deployment (no API key)."}</p>
-          <div className="row">
-            <button className="btn primary" type="button" disabled={!agentOn} onClick={() => generate(phase.vendor, phase.overwrite)}>Create guide</button>
-            <button className="btn" type="button" onClick={() => setPhase({ p: "idle" })}>Not now</button>
+        {phase.p === "offer" && (
+          <div className="card">
+            <div className="kicker">{phase.overwrite ? "Research again" : "Vendor found, no guide yet"}</div>
+            <h3>{phase.overwrite ? `Research ${phase.vendor.name} again?` : `There's no guide for ${phase.vendor.name} yet.`}</h3>
+            {phase.vendor.website && <p className="small">{phase.vendor.website}{phase.vendor.description ? ` · ${phase.vendor.description}` : ""}</p>}
+            <p>{agentOn
+              ? "The agent can research it now: official developer docs first, then the changelog, other sources and Composio's docs. It takes about 2 to 4 minutes and fills the same 14-section guide. Nothing is saved until you say so."
+              : "The research agent isn't configured on this deployment (no API key), so it can't research new apps."}</p>
+            <div className="row">
+              <button className="btn primary lg" type="button" disabled={!agentOn} onClick={() => router.push(researchHref(phase.vendor, phase.overwrite))}>Research {phase.vendor.name}</button>
+              <button className="btn lg" type="button" onClick={() => setPhase({ p: "idle" })}>Not now</button>
+            </div>
+            <div className="foot"><span>Up to {BUDGET.searches} searches</span><span>Up to {BUDGET.fetches} pages read</span><span>Self-check before you see it</span></div>
           </div>
-        </div>
-      )}
+        )}
 
-      {phase.p === "generating" && (
-        <div className="panel">
-          <div className="live"><span className="pulse" /> Researching {phase.vendor.name}… <button className="btn" type="button" onClick={() => ctl.current?.abort()}>Stop</button></div>
-          <div className="log" aria-live="polite">{log.map((l, i) => <div key={i}>{l}</div>)}</div>
-        </div>
-      )}
-
-      {phase.p === "review" && (
-        <div className="panel">
-          <h3>{phase.overwrite ? "Replace the saved guide with this one?" : "Save this guide to the library?"}</h3>
-          <p className="small">Saving makes it available to everyone at its own link. It stays marked as generated until a person reviews it.</p>
-          <div className="row">
-            <button className="btn primary" type="button" onClick={() => save(phase.overwrite)}>{phase.overwrite ? "Replace saved guide" : "Save to library"}</button>
-            <button className="btn" type="button" onClick={() => setPhase({ p: "idle" })}>Don't save</button>
+        {phase.p === "notfound" && (
+          <div className="card">
+            <h3>We couldn't place that app.</h3>
+            <p>{phase.message}</p>
+            <div className="row"><button className="btn" type="button" onClick={() => { setPhase({ p: "idle" }); document.getElementById("app-query")?.focus(); }}>Try its website</button></div>
           </div>
-        </div>
-      )}
+        )}
 
-      {phase.p === "saved" && (
-        <div className="panel"><h3>Saved.</h3><a className="btn primary" href={`/guides/${phase.slug}`}>Open the guide</a></div>
-      )}
-
-      {phase.p === "error" && <div className="notice err">{phase.message} <button className="btn" type="button" onClick={() => setPhase({ p: "idle" })}>OK</button></div>}
-
-      {(phase.p === "generating" || phase.p === "review") && (
-        <div style={{ marginTop: 24 }}>
-          {phase.p === "review" && <Toolbar g={guide as Guide} />}
-          <GuideView g={guide} streaming={phase.p === "generating"} />
-        </div>
-      )}
+        {phase.p === "error" && (
+          <div className="card err">
+            <h3>Something went wrong.</h3>
+            <p>{phase.message}</p>
+            <div className="row"><button className="btn" type="button" onClick={() => resolve(q)}>Try again</button></div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

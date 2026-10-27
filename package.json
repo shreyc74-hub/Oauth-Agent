@@ -4,11 +4,18 @@
   "private": true,
   "description": "OAuth app readiness guides for agent builders on Composio, with a live research agent.",
   "scripts": {
+    "bundle": "tsx scripts/bundle-content.ts",
+    "predev": "tsx scripts/bundle-content.ts",
     "dev": "next dev",
+    "prebuild": "tsx scripts/bundle-content.ts",
     "build": "next build",
     "start": "next start",
     "validate": "tsx scripts/validate.ts",
-    "seed:sql": "tsx scripts/seed-sql.ts > supabase/seed.sql"
+    "pretest": "tsx scripts/bundle-content.ts",
+    "test": "tsx --test tests/*.test.ts",
+    "typecheck": "tsc --noEmit",
+    "seed:sql": "tsx scripts/seed-sql.ts > supabase/seed.sql",
+    "build:artifact": "tsx --tsconfig tsconfig.scripts.json scripts/build-artifact.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "2.45.4",

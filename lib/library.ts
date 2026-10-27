@@ -1,19 +1,13 @@
-// Library guides shipped with the repo (data/guides/*.json). Used to seed Supabase and as the
-// fallback store when Supabase is not configured.
-import fs from "node:fs";
-import path from "node:path";
+// Library guides shipped with the repo (data/guides/*.json, bundled into lib/generated/content.ts
+// at build time). Used to seed Supabase and as the fallback store when Supabase is not configured.
 import type { Guide } from "./schema";
+import { GUIDES } from "./generated/content";
 
 let cache: Guide[] | null = null;
 
 export function libraryGuides(): Guide[] {
   if (cache) return cache;
-  const dir = path.join(process.cwd(), "data", "guides");
-  cache = fs
-    .readdirSync(dir)
-    .filter((f) => f.endsWith(".json"))
-    .map((f) => JSON.parse(fs.readFileSync(path.join(dir, f), "utf8")) as Guide)
-    .sort((a, b) => a.name.localeCompare(b.name));
+  cache = (GUIDES as Guide[]).slice().sort((a, b) => a.name.localeCompare(b.name));
   return cache;
 }
 
@@ -22,11 +16,11 @@ export const ALIASES: Record<string, string[]> = {
   slack: ["slack", "slack.com", "slack api"],
   linear: ["linear", "linear.app"],
   notion: ["notion", "notion.so", "notion.com"],
-  gmail: ["gmail", "google mail", "gmail.com", "mail.google.com"],
-  confluence: ["confluence", "atlassian confluence", "confluence cloud"],
+  gmail: ["gmail", "google mail", "gmail.com", "mail.google.com", "gmail api"],
+  confluence: ["confluence", "atlassian confluence", "confluence cloud", "atlassian.com/software/confluence"],
   hubspot: ["hubspot", "hubspot.com", "hubspot crm"],
   salesforce: ["salesforce", "salesforce.com", "sfdc", "salesforce crm"],
-  linkedin: ["linkedin", "linkedin.com"],
+  linkedin: ["linkedin", "linkedin.com", "linkedin api"],
 };
 
 export function slugify(s: string): string {

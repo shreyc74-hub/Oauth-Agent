@@ -15,9 +15,12 @@ export interface GuideSummary {
   creation: number;
   approval: number;
   waiting: string;
+  /** The first "decision you can't undo": the one thing to know before starting. */
+  trap: string;
+  oauthSupported: boolean;
 }
 
-const summarize = (g: Guide): GuideSummary => ({
+export const summarize = (g: Guide): GuideSummary => ({
   slug: g.slug,
   name: g.name,
   website: g.website,
@@ -28,6 +31,8 @@ const summarize = (g: Guide): GuideSummary => ({
   creation: g.glance?.creation?.rating ?? 0,
   approval: g.glance?.approval?.rating ?? 0,
   waiting: g.glance?.waiting?.value ?? "",
+  trap: (g.oneWayDoors?.[0]?.title ?? g.oauth?.note ?? "").replace(/`/g, ""),
+  oauthSupported: g.oauth?.supported !== false,
 });
 
 let sb: SupabaseClient | null | undefined;
@@ -82,3 +87,26 @@ export async function saveGuide(g: Guide): Promise<void> {
   });
   if (error) throw new Error(error.message);
 }
+
+// ---------- Corrections proposed in chat and approved by the developer ----------
+export interface Correction { id?: string; slug: string; section: string; claim: string; correction: string; source: string; createdAt?: string }
+const corrections: Correction[] = [];
+
+export async function saveCorrection(c: Correction): Promise<void> {
+  const db = supabase();
+  const row = { ...c, createdAt: new Date().toISOString() };
+  if (!db) { corrections.push(row); return; }
+  const { error } = await db.from("corrections").insert({ slug: c.slug, section: c.section, claim: c.claim, correction: c.correction, source: c.source });
+  if (error) throw new Error(error.message);
+}
+
+export async function listCorrections(slug: string): Promise<Correction[]> {
+  const db = supabase();
+  if (!db) return corrections.filter((c) => c.slug === slug);
+  const { data, error } = await db.from("corrections").select("*").eq("slug", slug).order("created_at", { ascending: false }).limit(50);
+  if (error) return [];
+  return (data || []) as Correction[];
+}
+
+/** For tests: forget the in-memory state. */
+export function _resetMemoryStore() { memory.clear(); corrections.length = 0; }
