@@ -1,0 +1,85 @@
+{
+  "slug": "salesforce",
+  "name": "Salesforce",
+  "website": "salesforce.com",
+  "category": "CRM",
+  "oauth": { "supported": true },
+  "evidenceLevel": "docs",
+  "checkedOn": "2026-10-27",
+  "verdict": "No vendor review, but the rules changed twice in a year. New apps are External Client Apps, and since September 2025 each customer's admin may need to approve your app before their users can connect.",
+  "glance": {
+    "creation": { "rating": 2, "label": "Moderate", "note": "External Client App in a Developer Edition org. Not tested by us." },
+    "approval": { "rating": 3, "label": "Admin-gated", "note": "No Salesforce review, but customer admins decide." },
+    "handsOn": { "value": "1 to 3 hours", "note": "App, policies, and a customer-admin enablement note." },
+    "waiting": { "value": "Per customer", "note": "Depends on each customer's admin." },
+    "ownApp": { "managedByComposio": "unknown", "headline": "Often your own app.", "note": "Composio lists private Salesforce subdomains as a reason to bring your own app." }
+  },
+  "oneWayDoors": [
+    { "title": "Connected Apps can no longer be created.", "detail": "From Spring '26, creating Connected Apps is off by default in UI and API. Support can grant a temporary exception that Salesforce says will be removed.", "doThis": "Build on External Client Apps.", "status": "docs" },
+    { "title": "Your home org matters.", "detail": "Packaged apps can depend on the org that owns them.", "doThis": "Keep a dedicated Developer Edition org alive for the app.", "status": "secondary" }
+  ],
+  "appTypes": {
+    "items": [
+      { "name": "Connected App (legacy)", "when": "Existing apps only.", "whoCanInstall": "Existing behaviour", "review": "None", "useFor": "Keep running; no new ones" },
+      { "name": "External Client App, local", "when": "Created in your org.", "whoCanInstall": "Your org", "review": "None", "useFor": "Building and testing", "recommended": true },
+      { "name": "External Client App, packaged", "when": "Inside a 2GP managed package.", "whoCanInstall": "Orgs that install your package", "review": "AppExchange if listed", "useFor": "Multi-org distribution" }
+    ],
+    "notes": [
+      { "title": "Cross-org behaviour is unclear", "text": "A Trailblazer thread shows OAUTH_AUTHORIZATION_BLOCKED after installing a packaged ECA, with no confirmed answer. Test with a real customer org before promising dates.", "status": "unverified", "tone": "warn" }
+    ]
+  },
+  "scopes": {
+    "intro": "Salesforce scopes are broad API grants set on the app.",
+    "rows": [
+      { "useCase": "Call REST APIs", "scopes": ["api"], "impact": "Standard", "level": "none" },
+      { "useCase": "Stay connected", "scopes": ["refresh_token", "offline_access"], "impact": "Needed for unattended agents", "level": "none" }
+    ],
+    "minimalSets": [ { "label": "\"CRM assistant\" agent", "scopes": ["api", "refresh_token"], "note": "Add `web` only if you need it." } ],
+    "changingLater": [ "Edit the app's OAuth settings; users reauthorize." ]
+  },
+  "prerequisites": {
+    "toCreate": ["Developer Edition org", "Callback URL"],
+    "forApproval": ["Customer-admin instructions for approving or installing your app"]
+  },
+  "steps": [
+    { "owner": "you", "title": "Get a Developer Edition org", "detail": "The app's home org.", "time": "15 min" },
+    { "owner": "agent", "title": "Create an External Client App", "detail": "Setup, App Manager, New External Client App; enable OAuth.", "time": "15 min" },
+    { "owner": "agent", "title": "Set callback, scopes and policies", "detail": "Refresh token validity and session timeout suit long-running agents.", "time": "20 min" },
+    { "owner": "you", "title": "Reveal consumer key and secret", "detail": "Salesforce emails a verification code first.", "time": "5 min" },
+    { "owner": "agent", "title": "Write the customer-admin note", "detail": "How to install or approve your app, and grant the approval permission.", "time": "20 min" }
+  ],
+  "approval": {
+    "whenNeeded": "No Salesforce review for OAuth. Customer admins may need to approve your app.",
+    "cost": "None.",
+    "renewal": "None.",
+    "stages": [ { "label": "Per customer", "duration": "Varies", "detail": "Admin installs the app or grants \"Approve Uninstalled Connected Apps\"." } ],
+    "submit": ["Nothing to Salesforce for OAuth"],
+    "rejections": ["Not applicable"]
+  },
+  "limits": {
+    "ladder": [
+      { "stage": "Build and test", "works": "ECA in your org.", "limit": "No new Connected Apps." },
+      { "stage": "First customers", "works": "Users authorize via login.salesforce.com or My Domain.", "limit": "Users need admin approval for uninstalled apps since Sept 2025." },
+      { "stage": "Scale", "works": "Packaged ECA or AppExchange.", "limit": "Cross-org packaging behaviour not well documented." }
+    ],
+    "notes": []
+  },
+  "tokens": { "rows": [ { "setting": "ECA OAuth", "access": "Session-based", "refresh": "Per app policy", "breaks": "Policy expiry or admin revocation" } ], "note": "ECAs do not support the username-password flow." },
+  "dataUse": { "rules": [ { "title": "Customer admin control.", "text": "Admins decide which apps their users may authorize." } ] },
+  "credentialHandoff": { "level": 3, "summary": "Revealing the consumer secret needs an emailed verification code, so a human is required.", "status": "docs" },
+  "blockers": [
+    { "symptom": "OAUTH_APPROVAL_ERROR or authorization blocked", "cause": "Uninstalled app and user lacks approval permission", "fix": "Customer admin installs or approves your app" },
+    { "symptom": "Cannot create a Connected App", "cause": "Spring '26 restriction", "fix": "Use an External Client App" },
+    { "symptom": "Sandbox users cannot log in", "cause": "Wrong login host", "fix": "Use test.salesforce.com for sandboxes" }
+  ],
+  "evidence": [
+    { "claim": "Connected App creation restricted from Spring '26", "status": "docs", "basis": "Salesforce Mobile SDK docs and a vendor notice" },
+    { "claim": "Uninstalled app restriction from Sept 2025", "status": "secondary", "basis": "Consultancy write-up and vendor notices" },
+    { "claim": "Packaged ECA cross-org behaviour", "status": "unverified", "basis": "Unresolved community thread" }
+  ],
+  "sources": [
+    { "title": "Salesforce: Connected Apps restriction notice", "url": "https://developer.salesforce.com/docs/atlas.en-us.noversion.mobile_sdk.meta/mobile_sdk/connected_apps.htm" },
+    { "title": "Salesforce: Create an External Client App", "url": "https://developer.salesforce.com/docs/platform/sfdx-dev/guide/sfdx-dev-auth-eca.html" },
+    { "title": "Soliant: Connected app security changes", "url": "https://www.soliantconsulting.com/blog/salesforce-connected-app-security-changes-sept2025/" }
+  ]
+}

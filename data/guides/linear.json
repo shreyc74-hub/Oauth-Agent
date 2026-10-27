@@ -1,0 +1,118 @@
+{
+  "slug": "linear",
+  "name": "Linear",
+  "website": "linear.app",
+  "category": "Project management",
+  "oauth": { "supported": true },
+  "evidenceLevel": "tested",
+  "checkedOn": "2026-10-28",
+  "verdict": "The easiest app in the library: a public OAuth app in about 4 minutes, no review, no install cap. The one trap is that new apps are private by default, so your first customer cannot connect unless you switch on \"Public\".",
+  "glance": {
+    "creation": { "rating": 1, "label": "Easy", "note": "About 4 minutes in our test, plus workspace onboarding if the workspace is new." },
+    "approval": { "rating": 1, "label": "None", "note": "No review. Public availability was immediate." },
+    "handsOn": { "value": "5 to 15 min", "note": "Form, redirect URL, one toggle. A new workspace adds a short onboarding." },
+    "waiting": { "value": "None", "note": "Nothing to wait for." },
+    "ownApp": { "managedByComposio": "unknown", "headline": "Check Composio first; your own app is cheap here.", "note": "We could not confirm a Composio-managed Linear app. Since your own app takes minutes and needs no review, bringing your own is low cost." }
+  },
+  "oneWayDoors": [
+    { "title": "New apps are private by default.", "detail": "The \"Public: Allow this application to be installed by other workspaces\" toggle is off when you create an app. A private app only works in your own workspace.", "doThis": "Turn on Public before you share an install link with anyone. A Developer URL is required for public apps and is shown to users.", "status": "tested" },
+    { "title": "The workspace that owns the app sees its secret.", "detail": "Every admin in the workspace that owns the app can view and edit it, including the client secret.", "doThis": "Create the app in a dedicated workspace with few admins.", "status": "docs" },
+    { "title": "Refresh tokens rotate.", "detail": "Access tokens last 24 hours and every refresh returns a new refresh token. A lost refresh response can be replayed within 30 minutes.", "doThis": "Store the newest refresh token every time. All apps were moved to this system on April 1, 2026.", "status": "docs" }
+  ],
+  "appTypes": {
+    "items": [
+      { "name": "Private OAuth app", "when": "The default after creation.", "whoCanInstall": "Your own workspace only", "review": "None", "useFor": "Internal tools and testing" },
+      { "name": "Public OAuth app", "when": "After turning on the Public toggle.", "whoCanInstall": "Any Linear workspace", "review": "None", "useFor": "Agent products with customers", "recommended": true },
+      { "name": "Client credentials", "when": "Optional toggle on the app.", "whoCanInstall": "Server-to-server in one workspace", "review": "None", "useFor": "Background jobs acting as the app, 30-day tokens" }
+    ],
+    "notes": [
+      { "title": "Act as the app, not the user", "text": "Add `actor=app` to the authorize URL so issues and comments are attributed to your agent instead of the person who connected. Linear's consent screen then shows the app as the actor.", "status": "docs", "tone": "info" }
+    ]
+  },
+  "scopes": {
+    "intro": "Linear has no scopes on the app itself. You request them in the authorize URL, so changing scopes means changing your Composio auth config, not the app.",
+    "rows": [
+      { "useCase": "Read issues, projects, teams", "scopes": ["read"], "impact": "Always included", "level": "none" },
+      { "useCase": "Create issues and attachments", "scopes": ["issues:create"], "impact": "No review", "level": "none" },
+      { "useCase": "Comment on issues", "scopes": ["comments:create"], "impact": "No review", "level": "none" },
+      { "useCase": "Broad edits", "scopes": ["write"], "impact": "No review, but users see broad access", "level": "none" },
+      { "useCase": "Admin endpoints", "scopes": ["admin"], "impact": "Only when essential; scares admins at consent", "level": "review" }
+    ],
+    "minimalSets": [
+      { "label": "\"Triage bot\" agent", "scopes": ["read", "issues:create", "comments:create"], "note": "Narrower than `write`, and reads better on the consent screen." }
+    ],
+    "changingLater": [
+      "Scopes live in the authorize URL, so update the Composio auth config and ask users to reconnect.",
+      "No re-review, because there is no review.",
+      "Requesting different scopes for client credentials revokes the existing app tokens."
+    ]
+  },
+  "prerequisites": {
+    "toCreate": [
+      "A Linear workspace to own the app (ideally dedicated, few admins)",
+      "A Developer URL (homepage or docs page). Required for public apps",
+      "The Composio callback URL from your auth config"
+    ],
+    "forApproval": ["Nothing. There is no review."]
+  },
+  "steps": [
+    { "owner": "you", "title": "Sign in and finish onboarding", "detail": "In a brand-new workspace, onboarding (\"Set up your profile\") blocks Settings until it is done. Linear links may open the desktop app; choose \"Open here instead\".", "time": "1 to 2 min" },
+    { "owner": "agent", "title": "Open Settings, API, New application", "detail": "Path: /settings/api/applications/new in your workspace.", "time": "30 sec" },
+    { "owner": "agent", "title": "Fill the form", "detail": "Application name, developer name, Developer URL, description, redirect URI. All are shown to users at consent.", "time": "2 min" },
+    { "owner": "agent", "title": "Turn on Public", "detail": "Off by default. Leave client credentials and webhooks off unless you need them.", "time": "5 sec" },
+    { "owner": "you", "title": "Approve Create", "detail": "The app is created instantly with \"Availability: Publicly available\". Client ID is shown; the secret is masked.", "time": "5 sec" },
+    { "owner": "you", "title": "Copy credentials into Composio", "detail": "Create a custom auth config for the linear toolkit with the scopes from section 4.", "time": "2 min" },
+    { "owner": "you", "title": "Test from a second workspace", "detail": "Check the consent screen, including the team-access choice users will see.", "time": "5 min" }
+  ],
+  "stepsNote": "Total in our test: about 4 minutes of agent work, onboarding and one approval.",
+  "approval": {
+    "whenNeeded": "Never for OAuth. Linear's integrations directory listing is a separate, optional step.",
+    "cost": "None.",
+    "renewal": "None.",
+    "stages": [ { "label": "Review", "duration": "None", "detail": "Public apps work immediately." } ],
+    "submit": ["Nothing for OAuth"],
+    "rejections": ["Not applicable"]
+  },
+  "limits": {
+    "ladder": [
+      { "stage": "Build and test", "works": "Private app in your workspace.", "limit": "Other workspaces cannot connect until Public is on." },
+      { "stage": "First customers", "works": "Public app, any workspace.", "limit": "Users may grant access to only some teams." },
+      { "stage": "Scale", "works": "Same app.", "limit": "Standard API rate limits only." }
+    ],
+    "notes": [
+      { "title": "Users choose which teams you see", "text": "The consent screen offers \"All public teams\" or \"Only select teams\". Private teams are not in \"All public teams\". An agent may see fewer issues than the user expects.", "status": "tested", "tone": "warn" }
+    ]
+  },
+  "tokens": {
+    "rows": [
+      { "setting": "Authorization code", "access": "24 hours", "refresh": "Rotates on every refresh; 30-minute replay window", "breaks": "Using an old refresh token after the window" },
+      { "setting": "Client credentials", "access": "30 days", "refresh": "None; request a new token on 401", "breaks": "Rotating the client secret invalidates them" }
+    ],
+    "note": "PKCE is supported. With PKCE the client secret is optional at token exchange."
+  },
+  "dataUse": {
+    "rules": [
+      { "title": "Your terms apply.", "text": "Linear's consent screen tells users that your app's use of their data is governed by your own terms and privacy policy, not Linear's." },
+      { "title": "Revocable by admins.", "text": "Workspace owners and admins can revoke the connection at any time in Settings." }
+    ],
+    "impact": { "title": "Design impact", "text": "Publish a privacy policy before your first customer, and handle revoked tokens gracefully.", "status": "tested", "tone": "info" }
+  },
+  "credentialHandoff": { "level": 2, "summary": "No public API to create OAuth apps that we found. An agent can fill the console and use the copy button to move the secret into Composio. The secret stayed masked in our test.", "status": "tested" },
+  "blockers": [
+    { "symptom": "Customer cannot install the app", "cause": "App is still private", "fix": "Turn on Public in the app settings" },
+    { "symptom": "Agent cannot see some issues", "cause": "User picked \"Only select teams\" or the issues are in private teams", "fix": "Ask the user to reconnect and include those teams" },
+    { "symptom": "Connections fail after a day", "cause": "24-hour access token not refreshed", "fix": "Refresh before expiry and store the newest refresh token" },
+    { "symptom": "Comments show as the user, not the agent", "cause": "Default actor is the user", "fix": "Add `actor=app` to the authorize URL" }
+  ],
+  "evidence": [
+    { "claim": "Apps are private by default; Public toggle needed", "status": "tested", "basis": "Create form on Oct 28, 2026" },
+    { "claim": "No review; public availability immediate", "status": "tested", "basis": "App showed \"Publicly available\" right after creation" },
+    { "claim": "Consent screen offers team selection", "status": "tested", "basis": "Opened the authorize URL (not approved)" },
+    { "claim": "24-hour access tokens, rotating refresh, 30-minute replay", "status": "docs", "basis": "Linear OAuth 2.0 docs" },
+    { "claim": "Composio has a managed Linear app", "status": "unverified", "basis": "Not stated on Composio pages we read" }
+  ],
+  "sources": [
+    { "title": "Linear: OAuth 2.0 authentication", "url": "https://linear.app/developers/oauth-2-0-authentication" },
+    { "title": "Composio: Managed vs custom auth", "url": "https://docs.composio.dev/docs/authentication/custom-app-vs-managed-app" }
+  ]
+}

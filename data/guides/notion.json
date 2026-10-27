@@ -1,0 +1,116 @@
+{
+  "slug": "notion",
+  "name": "Notion",
+  "website": "notion.com",
+  "category": "Docs and knowledge",
+  "oauth": { "supported": true },
+  "evidenceLevel": "tested",
+  "checkedOn": "2026-10-28",
+  "verdict": "A working OAuth connection in about 4 minutes, no review. The trap is the very first choice: Notion defaults to a single-workspace API token, and the install scope you pick for OAuth is locked once the connection is created.",
+  "glance": {
+    "creation": { "rating": 1, "label": "Easy", "note": "About 4 minutes in our test." },
+    "approval": { "rating": 1, "label": "None for OAuth", "note": "Marketplace listing is optional and separate." },
+    "handsOn": { "value": "10 to 20 min", "note": "Form, capabilities, then a page-sharing hint for your users." },
+    "waiting": { "value": "None", "note": "Nothing to wait for unless you list on the Marketplace." },
+    "ownApp": { "managedByComposio": "unknown", "headline": "Check Composio first; your own connection is cheap here.", "note": "We could not confirm a Composio-managed Notion app. Your own connection needs no review." }
+  },
+  "oneWayDoors": [
+    { "title": "API token is the default authentication method.", "detail": "The New connection form preselects \"API token\": workspace-scoped, shared across collaborators, limited to 1 workspace and not Marketplace-eligible.", "doThis": "Choose \"OAuth\" for any agent your customers will connect.", "status": "tested" },
+    { "title": "Install scope is locked after creation.", "detail": "For OAuth, \"Installable in\" defaults to Any workspace. After creation it shows read-only. A connection limited to selected workspaces cannot be listed on the Marketplace.", "doThis": "Keep \"Any workspace\". Use a separate connection for internal testing if needed.", "status": "tested" },
+    { "title": "Deleting a connection revokes everyone.", "detail": "The danger zone says deleting revokes access for everyone who installed it.", "doThis": "Never delete a live connection to \"start fresh\"; create a new one alongside.", "status": "tested" }
+  ],
+  "appTypes": {
+    "items": [
+      { "name": "API token connection", "when": "The default choice in the form.", "whoCanInstall": "One workspace, shared token", "review": "None", "useFor": "Internal scripts and your own workspace" },
+      { "name": "OAuth connection, any workspace", "when": "OAuth + Installable in: Any workspace.", "whoCanInstall": "Any Notion user, each authorizes individually", "review": "None", "useFor": "Agent products with customers", "recommended": true },
+      { "name": "OAuth, selected workspaces", "when": "OAuth + specific workspaces.", "whoCanInstall": "Only workspaces you pick at creation", "review": "None", "useFor": "Pilots with named customers; not Marketplace-eligible" }
+    ],
+    "notes": [
+      { "title": "Integrations are now \"Connections\"", "text": "The developer area moved to app.notion.com/developers under \"Developer tools\", with Connections, Workers, Personal access tokens and MCP tokens. Older guides point to notion.so/my-integrations.", "status": "tested", "tone": "info" }
+    ]
+  },
+  "scopes": {
+    "intro": "Notion uses capabilities set on the connection, not OAuth scope strings. Users then choose which pages to share during consent.",
+    "rows": [
+      { "useCase": "Read pages and databases", "scopes": ["Read content"], "impact": "On by default", "level": "none" },
+      { "useCase": "Edit pages and database entries", "scopes": ["Update content"], "impact": "On by default", "level": "none" },
+      { "useCase": "Create pages and entries", "scopes": ["Insert content"], "impact": "On by default", "level": "none" },
+      { "useCase": "Read or add comments", "scopes": ["Read comments", "Insert comments"], "impact": "Off by default", "level": "none" },
+      { "useCase": "Read people and emails", "scopes": ["Read user information including email addresses"], "impact": "Default option; narrow it if you don't need emails", "level": "none" }
+    ],
+    "minimalSets": [
+      { "label": "\"Answer questions from docs\" agent", "scopes": ["Read content", "No user information"], "note": "Turn off update and insert, and pick \"No user information\"." }
+    ],
+    "changingLater": [
+      "Capabilities can be edited on the connection page.",
+      "Page access is per user: users must re-share pages if your agent needs new ones.",
+      "No review is triggered by capability changes."
+    ]
+  },
+  "prerequisites": {
+    "toCreate": [
+      "A Notion workspace (it becomes the connection's development workspace)",
+      "An HTTPS redirect URI with no fragments, wildcards, relative paths or public IP addresses",
+      "Agreement to Notion's Developer Terms (accepted when you create)"
+    ],
+    "forApproval": ["Only for a Marketplace listing: listing content and images, managed under Listings"]
+  },
+  "steps": [
+    { "owner": "you", "title": "Sign in to Notion", "detail": "Then open Developer tools, Connections. notion.so/profile/integrations redirects there.", "time": "1 min" },
+    { "owner": "agent", "title": "New connection, name it", "detail": "Name is shown to users.", "time": "30 sec" },
+    { "owner": "agent", "title": "Switch authentication to OAuth", "detail": "The form defaults to API token (decision 1).", "time": "5 sec" },
+    { "owner": "agent", "title": "Keep Installable in: Any workspace", "detail": "Locked after creation (decision 2).", "time": "5 sec" },
+    { "owner": "agent", "title": "Add the redirect URI", "detail": "Pick the typed value from the suggestion list or it is not saved. This tripped our agent once.", "time": "1 min" },
+    { "owner": "you", "title": "Approve Create connection", "detail": "This also accepts Notion's Developer Terms.", "time": "5 sec" },
+    { "owner": "agent", "title": "Narrow capabilities", "detail": "Defaults include update, insert and reading user emails. Turn off what your agent does not need.", "time": "1 min" },
+    { "owner": "you", "title": "Copy credentials into Composio", "detail": "Client ID and secret from the Configuration tab. A ready-made authorization URL is shown too.", "time": "2 min" }
+  ],
+  "stepsNote": "Total in our test: about 4 minutes of agent work and one approval.",
+  "approval": {
+    "whenNeeded": "Never for OAuth. Only to list on the Notion Marketplace.",
+    "cost": "None.",
+    "renewal": "None.",
+    "stages": [ { "label": "OAuth", "duration": "None", "detail": "Works immediately for any workspace." }, { "label": "Marketplace", "duration": "Not published", "detail": "Optional listing review; timeline not documented on pages we read." } ],
+    "submit": ["Marketplace only: listing description, categories, images"],
+    "rejections": ["Connection limited to selected workspaces (not eligible)"]
+  },
+  "limits": {
+    "ladder": [
+      { "stage": "Build and test", "works": "Any workspace, immediately.", "limit": "Agent only sees pages the user shared at consent." },
+      { "stage": "First customers", "works": "Same connection.", "limit": "Each user authorizes individually; only they can use it in their workspace." },
+      { "stage": "Scale", "works": "Same connection, optional Marketplace listing.", "limit": "Standard API rate limits." }
+    ],
+    "notes": [
+      { "title": "Empty results are the top support issue", "text": "Users pick pages during consent. If they share nothing, your agent sees nothing. Tell users in your product which pages to share.", "status": "docs", "tone": "warn" }
+    ]
+  },
+  "tokens": {
+    "rows": [ { "setting": "OAuth (owner=user)", "access": "Per user, per workspace", "refresh": "Check current docs", "breaks": "User removes the connection or the pages" } ],
+    "note": "Token lifetime and refresh behaviour were not checked in this pass."
+  },
+  "dataUse": {
+    "rules": [
+      { "title": "User-scoped access.", "text": "Access is limited to the signed-in user and the pages they share." },
+      { "title": "Defaults are broad.", "text": "New connections can read user email addresses unless you change it." }
+    ],
+    "impact": { "title": "Design impact", "text": "Ask only for capabilities you use; the consent screen shows them to every user.", "status": "tested", "tone": "info" }
+  },
+  "credentialHandoff": { "level": 2, "summary": "No creation API that we found. An agent can fill the console and copy the secret into Composio. The secret stayed masked in our test.", "status": "tested" },
+  "blockers": [
+    { "symptom": "Only one workspace can use the integration", "cause": "Created with API token, or OAuth limited to selected workspaces", "fix": "Create a new OAuth connection with Any workspace" },
+    { "symptom": "Agent returns nothing", "cause": "User shared no pages at consent", "fix": "Ask the user to reconnect and share the right pages" },
+    { "symptom": "Redirect URI not saved", "cause": "Typed value not selected from the suggestion list", "fix": "Select it so it becomes a chip" }
+  ],
+  "evidence": [
+    { "claim": "API token is the default; OAuth must be chosen", "status": "tested", "basis": "New connection form, Oct 28, 2026" },
+    { "claim": "Install scope read-only after creation", "status": "tested", "basis": "Connection page after creation" },
+    { "claim": "Default capabilities include user emails", "status": "tested", "basis": "Capabilities panel defaults" },
+    { "claim": "No review needed for OAuth", "status": "tested", "basis": "Connection usable immediately" },
+    { "claim": "Token lifetime and refresh", "status": "unverified", "basis": "Not checked in this pass" },
+    { "claim": "Marketplace review timeline", "status": "unverified", "basis": "Not documented on pages we read" }
+  ],
+  "sources": [
+    { "title": "Notion: Public connections", "url": "https://developers.notion.com/guides/get-started/public-integrations" },
+    { "title": "Notion: Authorization", "url": "https://developers.notion.com/docs/authorization" }
+  ]
+}

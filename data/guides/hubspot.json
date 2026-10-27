@@ -1,0 +1,84 @@
+{
+  "slug": "hubspot",
+  "name": "HubSpot",
+  "website": "hubspot.com",
+  "category": "CRM",
+  "oauth": { "supported": true },
+  "evidenceLevel": "docs",
+  "checkedOn": "2026-10-27",
+  "verdict": "A HubSpot OAuth app works the same day, then stops at 25 customer installs until your Marketplace listing is approved. New apps are built as projects with HubSpot's CLI, not just in a web form.",
+  "glance": {
+    "creation": { "rating": 3, "label": "Moderate", "note": "CLI project setup on the developer platform (2025.2+). Not tested by us." },
+    "approval": { "rating": 3, "label": "Capped until review", "note": "25 installs before Marketplace approval." },
+    "handsOn": { "value": "2 to 4 hours", "note": "Developer account, CLI project, config file, upload." },
+    "waiting": { "value": "Not published", "note": "Marketplace review timeline not stated on pages we read." },
+    "ownApp": { "managedByComposio": "unknown", "headline": "Check Composio first.", "note": "Composio publishes a HubSpot custom-app guide; managed availability not confirmed." }
+  },
+  "oneWayDoors": [
+    { "title": "The 25-install cap applies to new and migrated apps.", "detail": "Apps created with marketplace distribution, or legacy public apps migrated to the new platform, are capped at 25 installs until listed. Migrating an app with more installs applies the cap automatically.", "doThis": "Do not migrate a busy legacy app without a listing plan.", "status": "docs" },
+    { "title": "Required vs optional scopes shape installs.", "detail": "Users can untick optional scopes at install. Required scopes can make cautious admins abandon the install.", "doThis": "Put anything your agent can live without into optional scopes.", "status": "docs" }
+  ],
+  "appTypes": {
+    "items": [
+      { "name": "Static token (private)", "when": "Single account auth.", "whoCanInstall": "1 standard account + 10 developer test accounts", "review": "None", "useFor": "Internal scripts" },
+      { "name": "Private OAuth", "when": "distribution: private.", "whoCanInstall": "Up to 10 allowlisted accounts", "review": "None", "useFor": "Pilots with named customers" },
+      { "name": "Marketplace OAuth", "when": "distribution: marketplace.", "whoCanInstall": "25 accounts before listing; unlimited after", "review": "Marketplace listing review", "useFor": "Agent products with customers", "recommended": true }
+    ],
+    "notes": [
+      { "title": "Conflicting limit for private OAuth", "text": "The Manage apps page says 10 allowlisted accounts. The changelog says 10 for app partners and 100 for Solution Partners.", "status": "conflict", "tone": "info" }
+    ]
+  },
+  "scopes": {
+    "intro": "Scopes are set in app-hsmeta.json as required or optional and uploaded with `hs project upload`.",
+    "rows": [
+      { "useCase": "Read contacts", "scopes": ["crm.objects.contacts.read"], "impact": "Standard", "level": "none" },
+      { "useCase": "Write contacts", "scopes": ["crm.objects.contacts.write"], "impact": "Standard", "level": "none" },
+      { "useCase": "Deals and companies", "scopes": ["crm.objects.deals.read", "crm.objects.companies.read"], "impact": "Standard", "level": "none" }
+    ],
+    "minimalSets": [ { "label": "\"CRM lookup\" agent", "scopes": ["crm.objects.contacts.read", "crm.objects.companies.read"], "note": "Mark write scopes optional." } ],
+    "changingLater": [ "Edit app-hsmeta.json and run `hs project upload`.", "Existing installs must reauthorize for new required scopes (not verified)." ]
+  },
+  "prerequisites": {
+    "toCreate": ["HubSpot developer account", "HubSpot CLI installed", "Redirect URL"],
+    "forApproval": ["Signed Acceptable Use Policy (Distribution tab, \"Begin publishing\")", "Marketplace listing content"]
+  },
+  "steps": [
+    { "owner": "you", "title": "Create a developer account", "detail": "Apps live in projects on the developer platform.", "time": "15 min" },
+    { "owner": "agent", "title": "Scaffold the project with the CLI", "detail": "Set auth to OAuth, distribution to marketplace, redirectUrls and scopes in app-hsmeta.json.", "time": "45 min" },
+    { "owner": "you", "title": "Begin publishing and sign the AUP", "detail": "Until signed, installs only work in developer test accounts.", "time": "10 min" },
+    { "owner": "agent", "title": "Copy credentials into Composio", "detail": "Development, Projects, your app, Auth tab.", "time": "5 min" },
+    { "owner": "waiting", "title": "Marketplace listing review", "detail": "Needed beyond 25 installs.", "time": "Unknown" }
+  ],
+  "approval": {
+    "whenNeeded": "To go beyond 25 installs.",
+    "cost": "Not stated on pages we read.",
+    "renewal": "Not stated.",
+    "stages": [ { "label": "Listing review", "duration": "Not published", "detail": "Check current listing requirements before planning dates." } ],
+    "submit": ["Listing content", "Install and usage requirements per HubSpot's listing rules"],
+    "rejections": ["Not documented on pages we read"]
+  },
+  "limits": {
+    "ladder": [
+      { "stage": "Build and test", "works": "Developer test accounts.", "limit": "Must sign the AUP to install elsewhere." },
+      { "stage": "First customers", "works": "Marketplace-distribution app, unlisted.", "limit": "25 installs, excluding developer test accounts." },
+      { "stage": "Scale", "works": "Approved listing.", "limit": "Unlimited installs." }
+    ],
+    "notes": []
+  },
+  "tokens": { "rows": [ { "setting": "OAuth", "access": "Short-lived", "refresh": "Standard refresh token", "breaks": "Not checked" } ], "note": "Token details not checked in this pass." },
+  "dataUse": { "rules": [ { "title": "Acceptable Use Policy", "text": "must be signed before installing outside test accounts." } ] },
+  "credentialHandoff": { "level": 2, "summary": "Credentials are read from the Auth tab after a CLI upload. Not tested.", "status": "unverified" },
+  "blockers": [
+    { "symptom": "Install fails after 25 customers", "cause": "Marketplace install cap", "fix": "Get the listing approved" },
+    { "symptom": "Can only install in test accounts", "cause": "AUP not signed", "fix": "Distribution tab, Begin publishing" }
+  ],
+  "evidence": [
+    { "claim": "25-install cap before listing", "status": "docs", "basis": "Changelog and Manage apps page agree" },
+    { "claim": "Private OAuth limit", "status": "conflict", "basis": "10 vs 10/100 on two official pages" },
+    { "claim": "Review duration", "status": "unverified", "basis": "Not published on pages we read" }
+  ],
+  "sources": [
+    { "title": "HubSpot changelog: install limits", "url": "https://developers.hubspot.com/changelog/new-marketplace-distribution-app-install-limits" },
+    { "title": "HubSpot: Manage apps", "url": "https://developers.hubspot.com/docs/apps/developer-platform/build-apps/manage-apps-in-hubspot" }
+  ]
+}

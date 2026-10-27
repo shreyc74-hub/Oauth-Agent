@@ -1,0 +1,92 @@
+{
+  "slug": "linkedin",
+  "name": "LinkedIn",
+  "website": "linkedin.com",
+  "category": "Social",
+  "oauth": { "supported": true },
+  "evidenceLevel": "docs",
+  "checkedOn": "2026-10-27",
+  "verdict": "Signing in and posting as a member is self-serve and instant. Anything for company pages, mentions or analytics is an application LinkedIn can reject, and a rejected app cannot reapply.",
+  "glance": {
+    "creation": { "rating": 1, "label": "Easy", "note": "Self-serve products are instant. Not tested by us." },
+    "approval": { "rating": 5, "label": "Partner-gated", "note": "Community Management API: two reviews, no reapply after rejection." },
+    "handsOn": { "value": "1 hour to days", "note": "Minutes for member posting; days to prepare an application and screencast." },
+    "waiting": { "value": "Not published", "note": "Plan in weeks." },
+    "ownApp": { "managedByComposio": "unknown", "headline": "Check Composio first.", "note": "Composio's guide warns that org actions return 403 unless your auth config requests organization scopes." }
+  },
+  "oneWayDoors": [
+    { "title": "Rejection means a new app.", "detail": "If a Development or Standard tier request is rejected, you cannot reapply with the same app.", "doThis": "Prepare the application carefully the first time.", "status": "docs" },
+    { "title": "A page admin must verify your app.", "detail": "A super admin of the linked LinkedIn Page has to verify the app.", "doThis": "Line up the page admin before you apply.", "status": "docs" }
+  ],
+  "appTypes": {
+    "items": [
+      { "name": "Self-serve products", "when": "Sign In with LinkedIn (OIDC), Share on LinkedIn.", "whoCanInstall": "Any member", "review": "None", "useFor": "Sign-in and posting as a member", "recommended": true },
+      { "name": "Community Management, Development tier", "when": "After an access request is approved.", "whoCanInstall": "Limited", "review": "Yes", "useFor": "Building page features" },
+      { "name": "Community Management, Standard tier", "when": "After a second review with a screencast.", "whoCanInstall": "Customers", "review": "Yes", "useFor": "Company pages, mentions, analytics" }
+    ],
+    "notes": []
+  },
+  "scopes": {
+    "intro": "You can only request scopes your approved products grant. LinkedIn rejects the whole authorization if any requested scope is not granted.",
+    "rows": [
+      { "useCase": "Sign in", "scopes": ["openid", "profile", "email"], "impact": "Self-serve", "level": "none" },
+      { "useCase": "Post as the member", "scopes": ["w_member_social"], "impact": "Self-serve", "level": "none" },
+      { "useCase": "Manage company pages", "scopes": ["organization scopes"], "impact": "Community Management approval", "level": "audit" }
+    ],
+    "minimalSets": [ { "label": "\"Draft and post\" agent", "scopes": ["openid", "profile", "w_member_social"], "note": "No review needed." } ],
+    "changingLater": [ "New scopes need the matching product approved first.", "Functional changes may need re-review for Standard tier." ]
+  },
+  "prerequisites": {
+    "toCreate": ["LinkedIn app linked to a company page"],
+    "forApproval": ["Registered legal organization (commercial use only)", "Business email (personal emails fail vetting)", "Privacy policy and website", "Standard tier: downloadable screencast of each use case"]
+  },
+  "steps": [
+    { "owner": "you", "title": "Create the app and link a page", "detail": "A page super admin verifies the app.", "time": "20 min" },
+    { "owner": "you", "title": "Add self-serve products", "detail": "Sign In with LinkedIn using OpenID Connect, Share on LinkedIn.", "time": "5 min" },
+    { "owner": "agent", "title": "Match auth config scopes to products", "detail": "Request only granted scopes.", "time": "10 min" },
+    { "owner": "agent", "title": "Draft the Development tier request", "detail": "Use case, legal entity, business email, website, privacy policy.", "time": "1 hour" },
+    { "owner": "waiting", "title": "Development tier review", "detail": "Rejection means a new app.", "time": "Unknown" },
+    { "owner": "you", "title": "Build and record the Standard tier screencast", "detail": "Show OAuth approval and each use case's test cases.", "time": "Days" },
+    { "owner": "waiting", "title": "Standard tier review", "detail": "Rejection again means a new app.", "time": "Unknown" }
+  ],
+  "approval": {
+    "whenNeeded": "Only for page, mention and analytics APIs.",
+    "cost": "None stated.",
+    "renewal": "Functional changes may need re-review.",
+    "stages": [ { "label": "Development tier", "duration": "Not published", "detail": "Access request form." }, { "label": "Standard tier", "duration": "Not published", "detail": "Form plus screencast." } ],
+    "submit": ["Use case", "Legal entity and business email", "Privacy policy", "Screencast for Standard tier"],
+    "rejections": ["Personal email", "No registered organization", "Screencast missing a use case"]
+  },
+  "limits": {
+    "ladder": [
+      { "stage": "Build and test", "works": "Sign-in and member posting.", "limit": "60-day tokens, no refresh token; users re-consent." },
+      { "stage": "First customers", "works": "Development tier, if approved.", "limit": "Standard tier needs a second review." },
+      { "stage": "Scale", "works": "Standard tier.", "limit": "Changes may need re-review." }
+    ],
+    "notes": [ { "title": "Marketing API version sunset", "text": "Version 202511 sunsets Nov 16, 2026. Pin a current version.", "status": "docs", "tone": "info" } ]
+  },
+  "tokens": {
+    "rows": [
+      { "setting": "Standard apps", "access": "60 days", "refresh": "None; repeat the browser flow", "breaks": "Every 60 days" },
+      { "setting": "Approved Marketing partners", "access": "60 days", "refresh": "Stated 365 days, fixed from first grant", "breaks": "After a year, users reauthorize" }
+    ],
+    "note": "LinkedIn's example response shows refresh_token_expires_in of 525600 seconds (about 6 days), conflicting with the stated 365 days."
+  },
+  "dataUse": { "rules": [ { "title": "Data storage requirements", "text": "apply to Community Management apps and are checked in review." } ] },
+  "credentialHandoff": { "level": 2, "summary": "Console-only. Not tested.", "status": "unverified" },
+  "blockers": [
+    { "symptom": "Whole authorization rejected", "cause": "Requested a scope your products don't grant", "fix": "Request only granted scopes" },
+    { "symptom": "Org actions return 403", "cause": "Organization scopes not requested or not approved", "fix": "Get Community Management approval and request org scopes" },
+    { "symptom": "Users disconnected every 60 days", "cause": "No refresh token for standard apps", "fix": "Prompt users to reconnect before expiry" }
+  ],
+  "evidence": [
+    { "claim": "Two-tier review, no reapply after rejection", "status": "docs", "basis": "Microsoft Learn: Community Management app review" },
+    { "claim": "Refresh token lifetime", "status": "conflict", "basis": "Stated 365 days vs example 525600 seconds" },
+    { "claim": "Review timelines", "status": "unverified", "basis": "Not published" }
+  ],
+  "sources": [
+    { "title": "LinkedIn: Community Management app review", "url": "https://learn.microsoft.com/en-us/linkedin/marketing/community-management-app-review" },
+    { "title": "LinkedIn: Programmatic refresh tokens", "url": "https://learn.microsoft.com/en-us/linkedin/shared/authentication/programmatic-refresh-tokens" },
+    { "title": "Composio: LinkedIn toolkit guide", "url": "https://docs.composio.dev/kb/guide/toolkits-linkedin.md" }
+  ]
+}

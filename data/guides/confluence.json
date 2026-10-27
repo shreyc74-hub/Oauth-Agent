@@ -1,0 +1,115 @@
+{
+  "slug": "confluence",
+  "name": "Confluence",
+  "website": "atlassian.com/software/confluence",
+  "category": "Docs and knowledge",
+  "oauth": { "supported": true },
+  "evidenceLevel": "tested",
+  "checkedOn": "2026-10-28",
+  "verdict": "A private Atlassian OAuth app takes about 5 minutes and no review. Sharing it with customers is self-serve but needs vendor details, policy links and a personal data declaration. For an agent that stores or caches Confluence data, that declaration brings reporting obligations.",
+  "glance": {
+    "creation": { "rating": 2, "label": "Easy", "note": "About 5 minutes in our test, across three console pages." },
+    "approval": { "rating": 2, "label": "Self-serve", "note": "No review to share an OAuth app. Marketplace listing is separate." },
+    "handsOn": { "value": "15 min to 1 day", "note": "Minutes for the app; longer if you need a privacy policy and a personal data reporting setup." },
+    "waiting": { "value": "None", "note": "Sharing takes effect when you save it." },
+    "ownApp": { "managedByComposio": "unknown", "headline": "Check Composio first.", "note": "We could not confirm a Composio-managed Atlassian app." }
+  },
+  "oneWayDoors": [
+    { "title": "Access type is set at creation.", "detail": "Resource-level limits access to the one site the user picks (acme.atlassian.net). Account-level reaches every site in the customer's account. Neither is preselected.", "doThis": "Pick Resource-level unless your agent truly needs every site.", "status": "tested" },
+    { "title": "The personal data answer is almost always Yes for agents.", "detail": "You must say Yes if you store personal data tied to Atlassian account IDs in your systems, or cache any data for longer than 24 hours.", "doThis": "Decide your caching and memory design before you share, and plan for the Personal data reporting API.", "status": "tested" },
+    { "title": "Stopping sharing affects existing users.", "detail": "The console warns that switching back to Not sharing may affect existing app users.", "doThis": "Share only when ready to support customers.", "status": "tested" }
+  ],
+  "appTypes": {
+    "items": [
+      { "name": "OAuth 2.0 (3LO), not sharing", "when": "The default after creation.", "whoCanInstall": "Only you", "review": "None", "useFor": "Building and testing" },
+      { "name": "OAuth 2.0 (3LO), sharing", "when": "After providing vendor and security details.", "whoCanInstall": "Anyone with your authorization URL", "review": "None", "useFor": "Agent products with customers", "recommended": true },
+      { "name": "Forge app", "when": "Created as a Forge app instead.", "whoCanInstall": "Installed into sites by admins", "review": "Marketplace for distribution", "useFor": "Apps that run inside Atlassian" }
+    ],
+    "notes": [
+      { "title": "Classic vs granular scopes", "text": "Atlassian has two scope systems. After adding only classic scopes, the console warned that the Confluence API had no granular scopes. Newer endpoints need granular scopes; mixing them up is a common cause of 401 errors.", "status": "tested", "tone": "warn" }
+    ]
+  },
+  "scopes": {
+    "intro": "Scopes are added per API (Confluence, Jira, User identity, Personal data reporting and more). Atlassian recommends no more than 50 scopes in total.",
+    "rows": [
+      { "useCase": "Search pages and spaces", "scopes": ["search:confluence"], "impact": "Classic scope", "level": "none" },
+      { "useCase": "Read content summaries", "scopes": ["read:confluence-content.summary", "read:confluence-space.summary"], "impact": "Classic scopes", "level": "none" },
+      { "useCase": "Read full page bodies", "scopes": ["read:confluence-content.all"], "impact": "Classic scope", "level": "none" },
+      { "useCase": "Create and edit pages", "scopes": ["write:confluence-content"], "impact": "Classic scope", "level": "none" },
+      { "useCase": "Newer v2 endpoints", "scopes": ["granular scopes (e.g. read:page:confluence)"], "impact": "Required by many newer endpoints", "level": "limited" },
+      { "useCase": "Keep refreshing without the user", "scopes": ["offline_access"], "impact": "Needed for refresh tokens", "level": "none" }
+    ],
+    "minimalSets": [
+      { "label": "\"Answer from our wiki\" agent", "scopes": ["search:confluence", "read:confluence-content.all", "offline_access"], "note": "Check each endpoint's docs for whether it wants granular scopes." }
+    ],
+    "changingLater": [
+      "Edit scopes on the Permissions page; users must reauthorize to grant new ones.",
+      "No review for OAuth apps."
+    ]
+  },
+  "prerequisites": {
+    "toCreate": [
+      "An Atlassian account; agreement to Atlassian's developer terms",
+      "The Composio callback URL (up to 30 callback URLs allowed)"
+    ],
+    "forApproval": [
+      "Vendor name, privacy policy URL, terms of service URL, support contact",
+      "A personal data decision, and Personal data reporting API handling if Yes"
+    ]
+  },
+  "steps": [
+    { "owner": "you", "title": "Sign in to developer.atlassian.com", "detail": "Console, My apps. A new Developer Space selector may appear.", "time": "1 min" },
+    { "owner": "agent", "title": "Create, OAuth 2.0 integration", "detail": "Name the app and choose Resource-level access.", "time": "1 min" },
+    { "owner": "you", "title": "Agree to developer terms and create", "detail": "The page notes rotating refresh tokens are mandatory for new apps.", "time": "5 sec" },
+    { "owner": "agent", "title": "Add the Confluence API and scopes", "detail": "Permissions, Confluence API, Configure, Edit scopes. Choose classic or granular per the endpoints you call.", "time": "2 min" },
+    { "owner": "agent", "title": "Add OAuth 2.0 (3LO) and the callback", "detail": "Authorization page, then paste the Composio callback. The page then generates an authorization URL.", "time": "1 min" },
+    { "owner": "you", "title": "Fill distribution details and share", "detail": "Vendor name, policy links, support contact, personal data answer, then switch to Sharing.", "time": "15 min" },
+    { "owner": "you", "title": "Copy credentials into Composio", "detail": "From the app's Settings page.", "time": "2 min" }
+  ],
+  "stepsNote": "In our test: about 5 minutes to a private app with scopes and callback. Sharing was not switched on (needs real policy URLs).",
+  "approval": {
+    "whenNeeded": "No review to share an OAuth 2.0 app. Atlassian Marketplace listing is a separate path.",
+    "cost": "None to share.",
+    "renewal": "If you declared personal data: ongoing reporting through the Personal data reporting API.",
+    "stages": [ { "label": "Share", "duration": "Immediate", "detail": "Self-serve, once details are saved." } ],
+    "submit": ["Vendor and security details", "Personal data declaration"],
+    "rejections": ["Not applicable for sharing"]
+  },
+  "limits": {
+    "ladder": [
+      { "stage": "Build and test", "works": "Private app, only you.", "limit": "Customers cannot authorize until Sharing is on." },
+      { "stage": "First customers", "works": "Shared app, any site via your URL.", "limit": "Resource-level apps see only the site the user picked." },
+      { "stage": "Scale", "works": "Same app.", "limit": "Rate limit tier shown on the app; reporting duties if you store personal data." }
+    ],
+    "notes": []
+  },
+  "tokens": {
+    "rows": [ { "setting": "OAuth 2.0 (3LO)", "access": "Short-lived", "refresh": "Rotating, mandatory for new apps; reuse is detected", "breaks": "Reusing an old refresh token" } ],
+    "note": "Request `offline_access` to receive refresh tokens."
+  },
+  "dataUse": {
+    "rules": [
+      { "title": "Personal data declaration.", "text": "Yes if you store personal data with account IDs or cache data longer than 24 hours." },
+      { "title": "Personal data reporting.", "text": "Apps that store personal data report the accounts they hold, so deleted or changed users can be handled." }
+    ],
+    "impact": { "title": "Design impact", "text": "Agent memory or a vector index of Confluence pages counts as storing data. Decide this before you share.", "status": "tested", "tone": "warn" }
+  },
+  "credentialHandoff": { "level": 2, "summary": "Console-only creation as far as we found. An agent can do every step after sign-in; the secret can be copied into Composio.", "status": "unverified" },
+  "blockers": [
+    { "symptom": "401 on newer Confluence endpoints", "cause": "Only classic scopes added", "fix": "Add the granular scopes the endpoint documents" },
+    { "symptom": "Customers cannot authorize", "cause": "Distribution still Not sharing", "fix": "Provide vendor details and switch to Sharing" },
+    { "symptom": "Refresh fails after working once", "cause": "Rotating refresh token reused", "fix": "Store the newest refresh token every time" },
+    { "symptom": "Agent sees only one site", "cause": "Resource-level access type", "fix": "Expected; users connect each site, or use Account-level" }
+  ],
+  "evidence": [
+    { "claim": "Rotating refresh tokens mandatory for new apps", "status": "tested", "basis": "Banner on the create page, Oct 28, 2026" },
+    { "claim": "Resource-level vs Account-level access type", "status": "tested", "basis": "Create form" },
+    { "claim": "Apps start private; sharing needs vendor details and personal data declaration", "status": "tested", "basis": "Distribution page and edit form" },
+    { "claim": "Classic vs granular warning", "status": "tested", "basis": "Authorization page after adding classic scopes" },
+    { "claim": "Composio managed Atlassian app", "status": "unverified", "basis": "Not checked" }
+  ],
+  "sources": [
+    { "title": "Atlassian: OAuth 2.0 (3LO) apps", "url": "https://developer.atlassian.com/cloud/confluence/oauth-2-3lo-apps/" },
+    { "title": "Atlassian developer console", "url": "https://developer.atlassian.com/console/myapps/" }
+  ]
+}
