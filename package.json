@@ -12,10 +12,11 @@
     "start": "next start",
     "validate": "tsx scripts/validate.ts",
     "pretest": "tsx scripts/bundle-content.ts",
-    "test": "tsx --test tests/*.test.ts",
+    "test": "tsx --tsconfig tsconfig.scripts.json --test tests/*.test.ts",
     "typecheck": "tsc --noEmit",
     "seed:sql": "tsx scripts/seed-sql.ts > supabase/seed.sql",
-    "build:artifact": "tsx --tsconfig tsconfig.scripts.json scripts/build-artifact.ts"
+    "build:artifact": "tsx --tsconfig tsconfig.scripts.json scripts/build-artifact.ts",
+    "e2e": "node scripts/e2e.cjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "2.45.4",
