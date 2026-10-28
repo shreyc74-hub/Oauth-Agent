@@ -11,7 +11,8 @@ type Resolve =
   | { kind: "library"; slug: string; name: string }
   | { kind: "confirm"; candidates: Candidate[]; reason?: string }
   | { kind: "new"; vendor: Candidate; slug: string }
-  | { kind: "notfound"; message: string };
+  | { kind: "notfound"; message: string }
+  | { kind: "agentoff"; query: string; message: string };
 
 type Phase =
   | { p: "idle" }
@@ -20,6 +21,7 @@ type Phase =
   | { p: "confirm"; q: string; r: Extract<Resolve, { kind: "confirm" }> }
   | { p: "offer"; vendor: Candidate; overwrite: boolean }
   | { p: "notfound"; message: string }
+  | { p: "agentoff"; message: string }
   | { p: "error"; message: string };
 
 export function researchHref(v: Candidate, overwrite = false) {
@@ -48,6 +50,7 @@ export default function Explorer({ agentOn }: { agentOn: boolean }) {
     if (r.kind === "library") { setPhase({ p: "opening", name: r.name }); router.push(`/guides/${r.slug}`); return; }
     if (r.kind === "confirm") { setPhase({ p: "confirm", q: query, r }); return; }
     if (r.kind === "new") { setPhase({ p: "offer", vendor: r.vendor, overwrite: false }); return; }
+    if (r.kind === "agentoff") { setPhase({ p: "agentoff", message: r.message }); return; }
     setPhase({ p: "notfound", message: r.message });
   }
 
@@ -77,6 +80,16 @@ export default function Explorer({ agentOn }: { agentOn: boolean }) {
     else if (query) resolve(query);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [params]);
+
+  // Puts "https://" in the box and the cursor after it, so the developer only types the domain.
+  function tryWebsite() {
+    setQ("https://");
+    setPhase({ p: "idle" });
+    requestAnimationFrame(() => {
+      const el = document.getElementById("app-query") as HTMLInputElement | null;
+      if (el) { el.focus(); el.setSelectionRange(el.value.length, el.value.length); }
+    });
+  }
 
   const busy = phase.p === "resolving" || phase.p === "opening";
 
@@ -129,7 +142,19 @@ export default function Explorer({ agentOn }: { agentOn: boolean }) {
           <div className="card">
             <h3>We couldn't place that app.</h3>
             <p>{phase.message}</p>
-            <div className="row"><button className="btn" type="button" onClick={() => { setPhase({ p: "idle" }); document.getElementById("app-query")?.focus(); }}>Try its website</button></div>
+            <p className="small">A link usually works better than a name, for example https://calendly.com.</p>
+            <div className="row"><button className="btn primary" type="button" onClick={tryWebsite}>Try its website</button></div>
+          </div>
+        )}
+
+        {phase.p === "agentoff" && (
+          <div className="card">
+            <div className="kicker">Not in the library</div>
+            <h3>There's no guide for that app yet.</h3>
+            <p>{phase.message}</p>
+            <div className="row">
+              <button className="btn" type="button" onClick={() => { setPhase({ p: "idle" }); document.querySelector(".libhead")?.scrollIntoView({ behavior: "smooth" }); }}>Browse the library</button>
+            </div>
           </div>
         )}
 

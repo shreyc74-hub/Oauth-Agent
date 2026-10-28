@@ -50,8 +50,9 @@ test("resolve: library names, aliases and links open instantly without the model
 
 test("resolve: without an API key, unknown apps say the agent is off", async () => {
   const r = await (await resolve(req(`${U}/api/resolve`, { query: "Calendly" }, nextIp()))).json();
-  assert.equal(r.kind, "notfound");
-  assert.match(r.message, /isn't configured/);
+  assert.equal(r.kind, "agentoff");
+  assert.equal(r.query, "Calendly");
+  assert.match(r.message, /isn't switched on/);
 });
 
 test("resolve: rough names are confirmed, exact names go to research, confirmed vendors are re-checked", async () => {

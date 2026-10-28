@@ -42,7 +42,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ kind: "new", vendor, slug: slugify(vendor.name) });
   }
   if (!process.env.ANTHROPIC_API_KEY) {
-    return NextResponse.json({ kind: "notfound", message: `"${q}" isn't in the library, and the research agent isn't configured on this deployment.` });
+    return NextResponse.json({ kind: "agentoff", query: q, message: `"${q}" isn't in the library yet, and the research agent isn't switched on for this site, so it can't research new apps right now.` });
   }
   if (limited(req, "resolve", Number(process.env.RESOLVE_LIMIT_PER_HOUR || 40))) {
     return NextResponse.json({ error: "Too many lookups from this network. Try again in a few minutes." }, { status: 429 });
