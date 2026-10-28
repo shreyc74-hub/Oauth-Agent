@@ -2,7 +2,7 @@
 
 **How long until your users can connect?** Guides for agent builders on Composio that cover everything between "I need my own OAuth app" and "any customer can connect": which choices can't be undone, which app type and scopes to pick, what stays capped until review, how long approval takes, and which steps an agent can do versus a person.
 
-A developer opens a guide from the library, or types any app name or link. An agent identifies the vendor, checks the library first, and if there's no guide, researches the vendor's official docs live and streams a new guide in the same 14-section format, with a status on every claim. A chat agent on every guide answers questions with section citations. Nothing is written without the developer's approval.
+A developer opens a guide from the library, or types any app name or link. An agent identifies the vendor, checks the library first, and if there's no guide, researches the vendor's official docs live and streams a new guide in the same 9-section format, with sources for every claim. A chat agent on every guide answers questions with section citations. Nothing is written without the developer's approval.
 
 - **Live app:** _add your Vercel URL_
 - **Library preview (Claude artifact):** _add the shared artifact link_
@@ -92,7 +92,7 @@ Skills are folders of instructions in [`skills/`](skills/), in the same format a
 ## Key decisions
 
 - **Scope: the path from "app created" to "real users can connect".** Not an OAuth tutorial.
-- **One 14-section schema** for library guides, agent output, the web page, the PDF and the Markdown export (`lib/schema.ts`).
+- **One schema** for library guides, agent output, the web page, the PDF and the Markdown export (`lib/schema.ts`). The page shows 9 sections in this order: At a glance, Prerequisites, App types, Creation steps, Scopes, Approval and distribution, Data use and compliance, Common blockers, Sources. Four more (decisions you can't undo, limits before approval, tokens, credential handoff) and the per-claim evidence statuses are still researched and stored, used by the chat and the self-check, but not shown.
 - **Two ratings, not one.** Ease of creation and ease of approval are different problems; Slack is easy to create and hard to approve.
 - **"Decisions you can't undo" is section 2**, because almost every trap was a default or a one-way choice.
 - **Hands-on time and waiting time are separate numbers.**

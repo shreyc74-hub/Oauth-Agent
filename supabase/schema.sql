@@ -27,3 +27,6 @@ create table if not exists public.corrections (
 );
 create index if not exists corrections_slug_idx on public.corrections (slug);
 alter table public.corrections enable row level security;
+
+-- Make the API see the new tables immediately.
+notify pgrst, 'reload schema';

@@ -34,11 +34,11 @@ const expect = (cond, msg) => { if (!cond) throw new Error(msg); };
     await page.fill("#app-query", "Slack");
     await page.click("button:has-text('Find guide')");
     await page.waitForURL("**/guides/slack", { timeout: 15000 });
-    await page.waitForSelector("#s-limits");
+    await page.waitForSelector("#s-approval");
   });
 
   await check("guide page has the section menu, downloads and chat", async () => {
-    expect(await page.locator("nav.toc a").count() === 13, "TOC should list 13 sections");
+    expect(await page.locator("nav.toc a").count() === 9, "TOC should list 9 sections");
     const [dl] = await Promise.all([page.waitForEvent("download"), page.click("button:has-text('Markdown')")]);
     expect(dl.suggestedFilename() === "slack-oauth-readiness.md", "markdown filename");
     expect(await page.locator(".chat input").count() === 1, "chat input missing");

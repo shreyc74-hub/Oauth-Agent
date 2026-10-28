@@ -102,35 +102,43 @@ export interface Guide {
 export const SECTION_ORDER = [
   "header",
   "glance",
-  "oneWayDoors",
-  "appTypes",
-  "scopes",
   "prerequisites",
+  "appTypes",
   "steps",
+  "scopes",
   "approval",
+  "dataUse",
+  "blockers",
+  // Stored but not shown on the page, PDF or Markdown (product decision, Oct 28):
+  "oneWayDoors",
   "limits",
   "tokens",
-  "dataUse",
   "credentialHandoff",
-  "blockers",
+  // Last: the evidence statuses and the sources list ("Sources" on the page).
   "evidence",
 ] as const;
+
+/** Sections shown on the page, PDF and Markdown, in order. "sources" renders the guide's sources list. */
+export const DISPLAY_ORDER = ["glance", "prerequisites", "appTypes", "steps", "scopes", "approval", "dataUse", "blockers", "sources"] as const;
+export type DisplayKey = (typeof DISPLAY_ORDER)[number];
 export type SectionKey = (typeof SECTION_ORDER)[number];
 
 export const SECTION_TITLES: Record<string, { num: string; title: string; question: string }> = {
   glance: { num: "01", title: "At a glance", question: "The answer in one screen" },
-  oneWayDoors: { num: "02", title: "Decisions you can't undo", question: "Read this before you click anything" },
+  prerequisites: { num: "02", title: "Prerequisites", question: "What to have ready" },
   appTypes: { num: "03", title: "App types", question: "Which one is right for an agent product?" },
-  scopes: { num: "04", title: "Scopes", question: "What each permission costs you" },
-  prerequisites: { num: "05", title: "Prerequisites", question: "What to have ready" },
-  steps: { num: "06", title: "Creation steps", question: "Who does what, and how long it takes" },
-  approval: { num: "07", title: "Approval and distribution", question: "Review, cost and renewal" },
-  limits: { num: "08", title: "Limits before approval", question: "What breaks a launch after a demo that worked" },
-  tokens: { num: "09", title: "Tokens", question: "What an unattended agent must handle" },
-  dataUse: { num: "10", title: "Data use and compliance", question: "Rules that shape agent design" },
-  credentialHandoff: { num: "11", title: "Credential handoff", question: "Can the secret reach Composio without anyone seeing it?" },
-  blockers: { num: "12", title: "Common blockers", question: "Symptom, cause, fix" },
-  evidence: { num: "13", title: "Evidence", question: "How sure we are, and why" },
+  steps: { num: "04", title: "Creation steps", question: "Who does what, and how long it takes" },
+  scopes: { num: "05", title: "Scopes", question: "What each permission costs you" },
+  approval: { num: "06", title: "Approval and distribution", question: "Review, cost and renewal" },
+  dataUse: { num: "07", title: "Data use and compliance", question: "Rules that shape agent design" },
+  blockers: { num: "08", title: "Common blockers", question: "Symptom, cause, fix" },
+  sources: { num: "09", title: "Sources", question: "Where every claim comes from" },
+  // Stored, not shown. No number, so they never appear in the menu or citations.
+  oneWayDoors: { num: "", title: "Decisions you can't undo", question: "" },
+  limits: { num: "", title: "Limits before approval", question: "" },
+  tokens: { num: "", title: "Tokens", question: "" },
+  credentialHandoff: { num: "", title: "Credential handoff", question: "" },
+  evidence: { num: "", title: "Evidence", question: "" },
 };
 
 export const STATUS_LABEL: Record<Status, string> = {

@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { type Guide, SECTION_TITLES } from "@/lib/schema";
+import { type Guide, SECTION_TITLES, DISPLAY_ORDER } from "@/lib/schema";
 import { toMarkdown } from "@/lib/markdown";
 import GuideView from "./GuideView";
 import ChatPanel from "./ChatPanel";
@@ -32,9 +32,9 @@ export function Toolbar({ g, extra }: { g: Guide; extra?: React.ReactNode }) {
 
 /** Sections present in this guide, in order. */
 export function tocFor(g: Guide): string[] {
-  const keys = Object.keys(SECTION_TITLES);
-  if (g.oauth?.supported === false) return ["evidence"];
-  return keys.filter((k) => (g as unknown as Record<string, unknown>)[k] !== undefined);
+  const has = (k: string) => (k === "sources" ? (g.sources || []).length > 0 : (g as unknown as Record<string, unknown>)[k] !== undefined);
+  if (g.oauth?.supported === false) return has("sources") ? ["sources"] : [];
+  return DISPLAY_ORDER.filter(has);
 }
 
 function Toc({ keys }: { keys: string[] }) {

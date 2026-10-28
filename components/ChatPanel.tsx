@@ -10,7 +10,7 @@ import { Rich } from "./GuideView";
 type Decision = "approved" | "denied" | "saving" | "error";
 type Msg = { role: "user" | "assistant"; content: string; tools?: string[]; actions?: ChatAction[]; error?: string };
 
-const NUM_TO_KEY = Object.fromEntries(Object.entries(SECTION_TITLES).map(([k, v]) => [v.num, k]));
+const NUM_TO_KEY = Object.fromEntries(Object.entries(SECTION_TITLES).filter(([, v]) => v.num).map(([k, v]) => [v.num, k]));
 
 /** Splits text into plain parts and section citations like [§08] or [§08 slack]. Exported for tests. */
 export function parseCites(text: string): ({ t: "text"; v: string } | { t: "cite"; num: string; key: string; slug?: string })[] {

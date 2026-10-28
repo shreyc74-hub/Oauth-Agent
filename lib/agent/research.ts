@@ -25,17 +25,17 @@ and nothing else on that line. Do not wrap lines in code fences. Keys and value 
 
 header        {"slug":string,"name":string,"website":"domain.com","category":string,"oauth":{"supported":boolean,"note":string},"checkedOn":"YYYY-MM-DD","verdict":"2-3 plain sentences: how fast to create, what gates real users, the one thing to watch"}
 glance        {"creation":{"rating":1-5,"label":string,"note":string},"approval":{"rating":1-5,"label":string,"note":string},"handsOn":{"value":string,"note":string},"waiting":{"value":string,"note":string},"ownApp":{"managedByComposio":"yes"|"no"|"unknown","headline":string,"note":string}}
-oneWayDoors   [{"title":string,"detail":string,"doThis":string,"status":Status}]   2 to 5 items: defaults and choices that are hard to undo
-appTypes      {"items":[{"name","when","whoCanInstall","review","useFor","recommended":boolean}],"notes":[Note]}   mark the type to use for an agent product as recommended
-scopes        {"intro":string,"rows":[{"useCase":string,"scopes":[string],"impact":string,"level":"none"|"limited"|"review"|"audit"}],"minimalSets":[{"label":string,"scopes":[string],"note":string}],"changingLater":[string]}
 prerequisites {"toCreate":[string],"forApproval":[string]}
+appTypes      {"items":[{"name","when","whoCanInstall","review","useFor","recommended":boolean}],"notes":[Note]}   mark the type to use for an agent product as recommended
 steps         [{"owner":"agent"|"you"|"waiting","title":"imperative, under 9 words","detail":string,"time":string}]   4 to 10 steps in order
+scopes        {"intro":string,"rows":[{"useCase":string,"scopes":[string],"impact":string,"level":"none"|"limited"|"review"|"audit"}],"minimalSets":[{"label":string,"scopes":[string],"note":string}],"changingLater":[string]}
 approval      {"whenNeeded":string,"cost":string,"renewal":string,"stages":[{"label","duration","detail"}],"submit":[string],"rejections":[string],"note":string}
+dataUse       {"rules":[{"title":string,"text":string}],"impact":Note}
+blockers      [{"symptom":string,"cause":string,"fix":string,"status"?:Status}]   real error messages in backticks where known
+oneWayDoors   [{"title":string,"detail":string,"doThis":string,"status":Status}]   2 to 5 items: defaults and choices that are hard to undo
 limits        {"ladder":[{"stage":"Build and test","works":string,"limit":string},{"stage":"First customers",...},{"stage":"Scale",...}],"notes":[Note]}   exactly 3 ladder rows
 tokens        {"rows":[{"setting","access","refresh","breaks"}],"note":string}
-dataUse       {"rules":[{"title":string,"text":string}],"impact":Note}
 credentialHandoff {"level":1|2|3,"summary":string,"status":Status}
-blockers      [{"symptom":string,"cause":string,"fix":string,"status"?:Status}]   real error messages in backticks where known
 evidence      {"evidence":[{"claim":string,"status":Status,"basis":"which page says it, or why unsure"}],"sources":[{"title":string,"url":string}]}
 
 Status is one of "docs" (an official provider page you read says it), "secondary" (third-party page), "conflict" (sources disagree; say which), "unverified" (not found, or from general knowledge). Never use "tested": you did not create an app.

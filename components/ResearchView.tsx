@@ -11,6 +11,7 @@ import { toMarkdown } from "@/lib/markdown";
 import GuideView from "./GuideView";
 import { downloadText } from "./GuidePage";
 import ChatPanel from "./ChatPanel";
+import { saveDraft, loadDraft, clearDraft } from "@/lib/draftStore";
 
 type StageState = "pending" | "active" | "done" | "skipped";
 type Line = { kind: string; text: string };
@@ -56,6 +57,8 @@ export default function ResearchView({ name, website, overwrite }: { name: strin
   const [error, setError] = useState("");
   const [savedSlug, setSavedSlug] = useState("");
   const [seconds, setSeconds] = useState(0);
+  const [restoredAt, setRestoredAt] = useState<number | null>(null);
+  const [saveError, setSaveError] = useState("");
   const ctl = useRef<AbortController | null>(null);
   const started = useRef(false);
   // The chat reads the latest draft when a question is sent.
@@ -67,7 +70,7 @@ export default function ResearchView({ name, website, overwrite }: { name: strin
     const c = new AbortController(); ctl.current = c;
     let local: RunState = { guide: {}, stages: initialStages(), lines: [], counts: { search: 0, fetch: 0 } };
     setSt(local);
-    setPhase("running"); setError(""); setSeconds(0);
+    setPhase("running"); setError(""); setSeconds(0); setRestoredAt(null); setSaveError("");
     try {
       const res = await fetch("/api/generate", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name, website }), signal: c.signal });
       if (!res.ok || !res.body) throw new Error((await res.text()) || "The research agent is unavailable.");
@@ -87,6 +90,8 @@ export default function ResearchView({ name, website, overwrite }: { name: strin
         }
       }
       if (!local.guide.name) throw new Error("The connection closed before the agent wrote anything. Try again.");
+      // Keep the finished guide in this tab so a refresh doesn't lose it.
+      saveDraft(name, website, local);
       setPhase("review");
     } catch (e) {
       if ((e as Error).name === "AbortError") { setPhase("stopped"); return; }
@@ -97,6 +102,8 @@ export default function ResearchView({ name, website, overwrite }: { name: strin
   useEffect(() => {
     if (started.current) return;
     started.current = true;
+    const kept = loadDraft<RunState>(name, website);
+    if (kept) { setSt(kept.state); setRestoredAt(kept.savedAt); setPhase("review"); return; }
     run();
     return () => ctl.current?.abort();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -109,11 +116,13 @@ export default function ResearchView({ name, website, overwrite }: { name: strin
   }, [phase]);
 
   async function save(force: boolean) {
-    setPhase("saving");
+    setPhase("saving"); setSaveError("");
     const res = await fetch("/api/guides", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ guide: st.guide, overwrite: force }) });
     const r = await res.json().catch(() => ({}));
     if (res.status === 409 && !force && !String(r.error || "").includes("library guide")) { setPhase("exists"); return; }
-    if (!res.ok) { setError(r.error || "Could not save."); setPhase("error"); return; }
+    // A failed save keeps the guide and the buttons on screen, so nothing has to be researched again.
+    if (!res.ok) { setSaveError(r.error || "Could not save."); setPhase(force ? "exists" : "review"); return; }
+    clearDraft(name, website);
     setSavedSlug(r.slug); setPhase("saved");
     router.refresh();
   }
@@ -135,6 +144,7 @@ export default function ResearchView({ name, website, overwrite }: { name: strin
           <div className="toolbar">
             {phase === "running" && <><span className="timer" aria-label="Elapsed time">{mmss}</span><button className="btn" type="button" onClick={() => ctl.current?.abort()}>Stop</button></>}
             {(phase === "stopped" || phase === "error") && <button className="btn primary" type="button" onClick={run}>Start again</button>}
+            {restoredAt && (phase === "review" || phase === "exists") && <button className="btn" type="button" onClick={() => { clearDraft(name, website); run(); }}>Research again</button>}
           </div>
         </div>
       </div>
@@ -171,6 +181,8 @@ export default function ResearchView({ name, website, overwrite }: { name: strin
               <h2>{phase === "exists" ? `A saved guide for ${g.name} already exists. Replace it?` : overwrite ? "Replace the saved guide with this one?" : "Save this guide to the library?"}</h2>
               <p>Saving gives it its own link that anyone can open. It stays marked as generated. Generated guides can never replace a tested one.</p>
               {st.selfcheck && st.selfcheck.notes.length > 0 && (<><b style={{ fontSize: 14 }}>Self-check notes</b><ul>{st.selfcheck.notes.map((n, i) => <li key={i}>{n}</li>)}</ul></>)}
+              {restoredAt && <div className="notice" style={{ marginTop: 0 }}>Restored from earlier in this tab ({new Date(restoredAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}). It isn&apos;t saved to the library yet; it stays here until you close the tab.</div>}
+              {saveError && <div className="notice" style={{ marginTop: 0, background: "var(--bad-soft)" }}>{saveError}</div>}
               {problems.length > 0 && <div className="notice">This guide is incomplete and can't be saved: {problems.join("; ")}. You can still download it.</div>}
               <div className="row">
                 {(phase === "exists" || overwrite)
@@ -178,7 +190,7 @@ export default function ResearchView({ name, website, overwrite }: { name: strin
                   : <button className="btn primary lg" type="button" disabled={problems.length > 0 || phase === "saving"} onClick={() => save(false)}>{phase === "saving" ? "Saving…" : "Save to library"}</button>}
                 <button className="btn lg" type="button" onClick={() => downloadText(`${g.slug || "guide"}-oauth-readiness.md`, toMarkdown(g as Guide))}>Download without saving</button>
                 <button className="btn lg" type="button" onClick={() => window.print()}>PDF</button>
-                <button className="btn lg" type="button" onClick={() => router.push("/")}>Discard</button>
+                <button className="btn lg" type="button" onClick={() => { clearDraft(name, website); router.push("/"); }}>Discard</button>
               </div>
               {c && <div className="counts"><span>Self-check:</span><span><b>{c.docs || 0}</b> from official docs</span><span><b>{c.secondary || 0}</b> secondary</span><span><b>{c.unverified || 0}</b> not verified</span><span><b>{c.conflict || 0}</b> conflicts</span></div>}
             </div>

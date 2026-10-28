@@ -8,7 +8,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import GuideView from "../components/GuideView";
 import { libraryGuides } from "../lib/library";
 import { toMarkdown } from "../lib/markdown";
-import { SECTION_TITLES } from "../lib/schema";
+import { SECTION_TITLES, DISPLAY_ORDER } from "../lib/schema";
 
 const root = path.join(__dirname, "..");
 const guides = libraryGuides();
@@ -50,7 +50,7 @@ const rows = guides.map((g) => `
 
 const live = (what: string) => SITE ? `<a href="${SITE}" target="_blank" rel="noopener">${what}</a>` : what;
 const views = guides.map((g) => {
-  const keys = Object.keys(SECTION_TITLES).filter((k) => (g as unknown as Record<string, unknown>)[k] !== undefined);
+  const keys = DISPLAY_ORDER.filter((k) => (k === "sources" ? g.sources.length > 0 : (g as unknown as Record<string, unknown>)[k] !== undefined));
   return `
   <div class="view" id="v-${g.slug}" hidden>
     <div class="subbar"><div class="in">

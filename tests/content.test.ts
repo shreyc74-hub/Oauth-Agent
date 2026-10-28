@@ -2,7 +2,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { libraryGuides, matchLibrary, slugify, ALIASES } from "../lib/library";
-import { validateGuide, SECTION_ORDER, SECTION_TITLES, type Guide } from "../lib/schema";
+import { validateGuide, SECTION_ORDER, SECTION_TITLES, DISPLAY_ORDER, type Guide } from "../lib/schema";
 import { toMarkdown } from "../lib/markdown";
 import { allSkills, getSkill, parseSkill, skillIndex, skillTool } from "../lib/agent/skills";
 import { RESEARCH_SKILLS } from "../lib/agent/research";
@@ -88,7 +88,10 @@ test("markdown export has every section heading and no undefined values", () => 
   for (const g of guides) {
     const md = toMarkdown(g);
     assert.ok(md.startsWith(`# ${g.name}`), g.slug);
-    for (const k of Object.keys(SECTION_TITLES)) assert.ok(md.includes(SECTION_TITLES[k].title), `${g.slug} md missing ${k}`);
+    for (const k of DISPLAY_ORDER) assert.ok(md.includes(`## ${SECTION_TITLES[k].num}. ${SECTION_TITLES[k].title}`), `${g.slug} md missing ${k}`);
+    const order = DISPLAY_ORDER.map((k) => md.indexOf(`## ${SECTION_TITLES[k].num}.`));
+    assert.deepEqual(order, [...order].sort((a, b) => a - b), `${g.slug} md sections out of order`);
+    for (const hidden of ["Decisions you can't undo", "Limits before approval", "Credential handoff", "## Evidence"]) assert.ok(!md.includes(hidden), `${g.slug} md shows hidden section ${hidden}`);
     assert.ok(!md.includes("undefined"), `${g.slug} md has undefined`);
     assert.ok(!md.includes("[object Object]"), `${g.slug} md has [object Object]`);
   }
@@ -97,7 +100,8 @@ test("markdown export has every section heading and no undefined values", () => 
 test("markdown export of a no-OAuth guide says so and still lists evidence", () => {
   const md = toMarkdown({ slug: "acme", name: "Acme", website: "acme.com", category: "x", oauth: { supported: false, note: "Uses API keys." }, evidenceLevel: "generated", checkedOn: "2026-10-28", verdict: "No OAuth app to create.", evidence: [{ claim: "API keys only", status: "docs", basis: "Docs" }], sources: [{ title: "Docs", url: "https://acme.com/docs" }] } as unknown as Guide);
   assert.match(md, /No OAuth found/);
-  assert.match(md, /API keys only/);
+  assert.match(md, /## 09\. Sources/);
+  assert.match(md, /acme\.com\/docs/);
   assert.ok(!md.includes("undefined"));
 });
 

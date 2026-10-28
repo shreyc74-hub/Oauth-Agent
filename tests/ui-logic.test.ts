@@ -33,8 +33,8 @@ test("library filters", () => {
 test("parseCites turns [§NN slug] markers into links and leaves other brackets alone", () => {
   const p = parseCites("Capped [§08 slack], see [§7] and [§99] or [note].");
   assert.deepEqual(p.map((x) => x.t), ["text", "cite", "text", "cite", "text"]);
-  assert.deepEqual(p[1], { t: "cite", num: "08", key: "limits", slug: "slack" });
-  assert.deepEqual(p[3], { t: "cite", num: "07", key: "approval", slug: undefined });
+  assert.deepEqual(p[1], { t: "cite", num: "08", key: "blockers", slug: "slack" });
+  assert.deepEqual(p[3], { t: "cite", num: "07", key: "dataUse", slug: undefined });
   assert.equal((p[4] as any).v, " and [§99] or [note].");
   assert.deepEqual(parseCites("plain"), [{ t: "text", v: "plain" }]);
   assert.deepEqual(parseCites(""), []);
@@ -67,10 +67,10 @@ test("research reducer: sections fill in, skipped stages are marked honestly, bu
   assert.equal(s.lines.length, 60, "activity log is bounded");
 });
 
-test("TOC lists present sections; a no-OAuth guide shows only evidence", () => {
+test("TOC lists the 9 shown sections in the agreed order; a no-OAuth guide shows only sources", () => {
   const slack = libraryGuides().find((g) => g.slug === "slack")!;
-  assert.equal(tocFor(slack).length, 13);
-  assert.deepEqual(tocFor({ ...slack, oauth: { supported: false } }), ["evidence"]);
+  assert.deepEqual(tocFor(slack), ["glance", "prerequisites", "appTypes", "steps", "scopes", "approval", "dataUse", "blockers", "sources"]);
+  assert.deepEqual(tocFor({ ...slack, oauth: { supported: false } }), ["sources"]);
 });
 
 test("chat suggestions fit the guide", () => {
@@ -89,7 +89,10 @@ test("researchHref encodes the vendor", () => {
 test("every library guide renders, and a half-streamed guide renders with placeholders", () => {
   for (const g of libraryGuides()) {
     const html = renderToStaticMarkup(React.createElement(GuideView, { g }));
-    assert.ok(html.includes(`id="s-limits"`), g.slug);
+    assert.ok(html.includes(`id="s-approval"`) && html.includes(`id="s-sources"`), g.slug);
+    for (const hidden of ["s-oneWayDoors", "s-limits", "s-tokens", "s-credentialHandoff", "s-evidence"]) assert.ok(!html.includes(`id="${hidden}"`), `${g.slug} shows ${hidden}`);
+    const pos = ["glance", "prerequisites", "appTypes", "steps", "scopes", "approval", "dataUse", "blockers", "sources"].map((k) => html.indexOf(`id="s-${k}"`));
+    assert.deepEqual(pos, [...pos].sort((a, b) => a - b), `${g.slug} sections out of order`);
     assert.ok(!html.includes("undefined"), `${g.slug} renders "undefined"`);
   }
   const partial = renderToStaticMarkup(React.createElement(GuideView, { g: { name: "Acme", verdict: "v", oauth: { supported: true } }, streaming: true }));

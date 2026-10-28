@@ -67,7 +67,7 @@ export default function HowItWorks() {
           <div className="sh"><h2>Decisions</h2></div>
           <ul className="tight">
             <li><b>Two ratings, not one.</b> Ease of creation and ease of approval are different problems. Slack is easy to create and hard to approve.</li>
-            <li><b>&quot;Decisions you can&apos;t undo&quot; comes second.</b> Almost every trap we found was a default or a one-way choice at creation.</li>
+            <li><b>Nine sections, in the order a developer works:</b> at a glance, prerequisites, app types, creation steps, scopes, approval and distribution, data use, common blockers, sources. One-way decisions, limits before approval, tokens and credential handoff are still researched and stored for the chat and the self-check.</li>
             <li><b>Hands-on time and waiting time are separate numbers.</b> Two hours of work and two months of waiting plan very differently.</li>
             <li><b>Every step has an owner:</b> Agent, You, or Waiting.</li>
             <li><b>Every key claim carries a status:</b> tested, official docs, secondary source, conflict, or not verified. Generated guides can never claim &quot;tested&quot;.</li>

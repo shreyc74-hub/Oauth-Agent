@@ -1,4 +1,4 @@
-import { type Guide, HANDOFF_LEVELS, OWNER_LABEL, SECTION_TITLES, STATUS_LABEL } from "./schema";
+import { type Guide, OWNER_LABEL, SECTION_TITLES } from "./schema";
 
 const h = (key: string) => `## ${SECTION_TITLES[key].num}. ${SECTION_TITLES[key].title}`;
 const list = (items: string[]) => items.map((i) => `- ${i}`).join("\n");
@@ -20,26 +20,22 @@ export function toMarkdown(g: Guide): string {
       `| Waiting on provider | ${cell(gl.waiting.value)}: ${cell(gl.waiting.note)} |`,
       `| Do you need your own app yet? | ${cell(gl.ownApp.headline)} ${cell(gl.ownApp.note)} |`, "");
 
-    out.push(h("oneWayDoors"), "");
-    g.oneWayDoors.forEach((d, i) => out.push(`${i + 1}. **${d.title}** ${d.detail} _Do this:_ ${d.doThis} (${STATUS_LABEL[d.status]})`));
-    out.push("");
+    out.push(h("prerequisites"), "", "**To create**", list(g.prerequisites.toCreate), "", "**For approval**", list(g.prerequisites.forApproval), "");
 
     out.push(h("appTypes"), "", "| Type | When | Who can install | Review | Use it for |", "|---|---|---|---|---|");
     g.appTypes.items.forEach((t) => out.push(`| ${t.recommended ? "**" + t.name + "** (recommended)" : t.name} | ${cell(t.when)} | ${cell(t.whoCanInstall)} | ${cell(t.review)} | ${cell(t.useFor)} |`));
     g.appTypes.notes.forEach((n) => out.push("", `> **${n.title}** ${n.text}`));
     out.push("");
 
-    out.push(h("scopes"), "", g.scopes.intro, "", "| Use case | Scopes | Impact |", "|---|---|---|");
-    g.scopes.rows.forEach((r) => out.push(`| ${cell(r.useCase)} | ${r.scopes.map((s) => "`" + s + "`").join(" ")} | ${cell(r.impact)} |`));
-    out.push("", "**Minimal sets**", list(g.scopes.minimalSets.map((m) => `${m.label}: ${m.scopes.map((s) => "`" + s + "`").join(" ")}. ${m.note}`)));
-    out.push("", "**Changing scopes later**", list(g.scopes.changingLater), "");
-
-    out.push(h("prerequisites"), "", "**To create**", list(g.prerequisites.toCreate), "", "**For approval**", list(g.prerequisites.forApproval), "");
-
     out.push(h("steps"), "");
     g.steps.forEach((s, i) => out.push(`${i + 1}. **[${OWNER_LABEL[s.owner]}] ${s.title}** (${s.time}). ${s.detail}`));
     if (g.stepsNote) out.push("", `_${g.stepsNote}_`);
     out.push("");
+
+    out.push(h("scopes"), "", g.scopes.intro, "", "| Use case | Scopes | Impact |", "|---|---|---|");
+    g.scopes.rows.forEach((r) => out.push(`| ${cell(r.useCase)} | ${r.scopes.map((s) => "`" + s + "`").join(" ")} | ${cell(r.impact)} |`));
+    out.push("", "**Minimal sets**", list(g.scopes.minimalSets.map((m) => `${m.label}: ${m.scopes.map((s) => "`" + s + "`").join(" ")}. ${m.note}`)));
+    out.push("", "**Changing scopes later**", list(g.scopes.changingLater), "");
 
     const a = g.approval;
     out.push(h("approval"), "", `**When needed:** ${a.whenNeeded}  `, `**Cost:** ${a.cost}  `, `**Renewal:** ${a.renewal}`, "");
@@ -48,30 +44,15 @@ export function toMarkdown(g: Guide): string {
     if (a.note) out.push("", a.note);
     out.push("");
 
-    out.push(h("limits"), "", "| Stage | What works | Limit |", "|---|---|---|");
-    g.limits.ladder.forEach((l) => out.push(`| ${l.stage} | ${cell(l.works)} | ${cell(l.limit)} |`));
-    g.limits.notes.forEach((n) => out.push("", `> **${n.title}** ${n.text}`));
-    out.push("");
-
-    out.push(h("tokens"), "", "| Setting | Access token | Refresh token | What breaks |", "|---|---|---|---|");
-    g.tokens.rows.forEach((r) => out.push(`| ${cell(r.setting)} | ${cell(r.access)} | ${cell(r.refresh)} | ${cell(r.breaks)} |`));
-    if (g.tokens.note) out.push("", g.tokens.note);
-    out.push("");
-
     out.push(h("dataUse"), "", list(g.dataUse.rules.map((r) => `**${r.title}** ${r.text}`)));
     if (g.dataUse.impact) out.push("", `> **${g.dataUse.impact.title}** ${g.dataUse.impact.text}`);
     out.push("");
-
-    const lv = HANDOFF_LEVELS[g.credentialHandoff.level];
-    out.push(h("credentialHandoff"), "", `**Level ${g.credentialHandoff.level}: ${lv.name}.** ${g.credentialHandoff.summary} (${STATUS_LABEL[g.credentialHandoff.status]})`, "");
 
     out.push(h("blockers"), "", "| Symptom | Cause | Fix |", "|---|---|---|");
     g.blockers.forEach((b) => out.push(`| ${cell(b.symptom)} | ${cell(b.cause)} | ${cell(b.fix)} |`));
     out.push("");
   }
 
-  out.push(h("evidence"), "", "| Claim | Status | Basis |", "|---|---|---|");
-  (g.evidence || []).forEach((e) => out.push(`| ${cell(e.claim)} | ${STATUS_LABEL[e.status] ?? e.status} | ${cell(e.basis)} |`));
-  out.push("", "**Sources**", list((g.sources || []).map((s) => `[${s.title}](${s.url})`)), "");
+  out.push(h("sources"), "", list((g.sources || []).map((s) => `[${s.title}](${s.url})`)), "");
   return out.join("\n");
 }

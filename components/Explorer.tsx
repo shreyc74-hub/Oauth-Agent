@@ -5,6 +5,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { BUDGET } from "@/lib/agent/budget";
+import { listDrafts } from "@/lib/draftStore";
 
 type Candidate = { name: string; website: string; description?: string };
 type Resolve =
@@ -38,6 +39,8 @@ export default function Explorer({ agentOn }: { agentOn: boolean }) {
   const [q, setQ] = useState("");
   const [phase, setPhase] = useState<Phase>({ p: "idle" });
   const ran = useRef("");
+  const [drafts, setDrafts] = useState<{ name: string; website: string }[]>([]);
+  useEffect(() => { setDrafts(listDrafts()); }, []);
 
   async function post(body: unknown): Promise<Resolve> {
     const res = await fetch("/api/resolve", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
@@ -102,6 +105,12 @@ export default function Explorer({ agentOn }: { agentOn: boolean }) {
       </form>
       <div className="tries"><span>Try</span>{TRIES.map((t) => <button key={t} type="button" className="chip" disabled={busy} onClick={() => resolve(t)}>{t}</button>)}</div>
 
+      {drafts.length > 0 && phase.p === "idle" && (
+        <div className="tries" style={{ marginTop: 14 }}>
+          <span>Unsaved in this tab:</span>
+          {drafts.map((d) => <a key={d.name + d.website} className="chip" href={researchHref(d)}>{d.name}</a>)}
+        </div>
+      )}
       <div aria-live="polite">
         {phase.p === "opening" && <div className="card"><p><span className="spin" /> Opening the {phase.name} guide…</p></div>}
 
@@ -128,7 +137,7 @@ export default function Explorer({ agentOn }: { agentOn: boolean }) {
             <h3>{phase.overwrite ? `Research ${phase.vendor.name} again?` : `There's no guide for ${phase.vendor.name} yet.`}</h3>
             {phase.vendor.website && <p className="small">{phase.vendor.website}{phase.vendor.description ? ` · ${phase.vendor.description}` : ""}</p>}
             <p>{agentOn
-              ? "The agent can research it now: official developer docs first, then the changelog, other sources and Composio's docs. It takes about 2 to 4 minutes and fills the same 14-section guide. Nothing is saved until you say so."
+              ? "The agent can research it now: official developer docs first, then the changelog, other sources and Composio's docs. It takes about 2 to 4 minutes and fills the same 9-section guide. Nothing is saved until you say so."
               : "The research agent isn't configured on this deployment (no API key), so it can't research new apps."}</p>
             <div className="row">
               <button className="btn primary lg" type="button" disabled={!agentOn} onClick={() => router.push(researchHref(phase.vendor, phase.overwrite))}>Research {phase.vendor.name}</button>
