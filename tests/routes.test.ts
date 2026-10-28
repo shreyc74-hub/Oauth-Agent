@@ -203,3 +203,41 @@ test("limited: allows max per window, separates buckets and IPs, resets after th
   await new Promise((res) => setTimeout(res, 60));
   assert.equal(limited(r("5.5.5.5"), "t", 2, 50), false);
 });
+
+import { buildRequest, formatNotification, whereFrom, notify } from "../lib/notify";
+test("notifications: format, channel detection, location, and never breaking the product", async () => {
+  assert.equal(formatNotification("research_started", "Research started:  Calendly\n", "Pune, IN"), "🔎 Research started: Calendly · Pune, IN");
+  assert.equal(formatNotification("chat", "x".repeat(500)), "💬 " + "x".repeat(300));
+  assert.equal(JSON.parse(String(buildRequest("https://hooks.slack.com/services/a/b", "hi")!.init.body)).text, "hi");
+  assert.equal(JSON.parse(String(buildRequest("https://discord.com/api/webhooks/1/x", "hi")!.init.body)).content, "hi");
+  assert.equal(buildRequest("https://ntfy.sh/topic-abc", "hi")!.init.body, "hi");
+  assert.equal(buildRequest("http://insecure.example.com", "hi"), null);
+  assert.equal(buildRequest("not a url", "hi"), null);
+  assert.equal(whereFrom(new Request("http://x", { headers: { "x-vercel-ip-city": "S%C3%A3o%20Paulo", "x-vercel-ip-country": "BR" } })), "São Paulo, BR");
+  assert.equal(whereFrom(new Request("http://x")), "");
+
+  delete process.env.AGENT_MOCK;
+  process.env.NOTIFY_URL = "https://ntfy.sh/test-topic";
+  const sent: string[] = [];
+  let f = installFake([], (url, init) => { sent.push(`${url} ${init?.body}`); return new Response("ok"); });
+  await notify("guide_saved", "Guide saved: Acme", new Request("http://x", { headers: { "x-vercel-ip-country": "IN" } }));
+  f.restore();
+  assert.deepEqual(sent, ["https://ntfy.sh/test-topic 💾 Guide saved: Acme · IN"]);
+  f = installFake([], () => { throw new Error("down"); });
+  await notify("chat", "still fine");
+  f.restore();
+  delete process.env.NOTIFY_URL;
+});
+
+test("save route sends a notification after a successful save only", async () => {
+  delete process.env.AGENT_MOCK;
+  process.env.NOTIFY_URL = "https://ntfy.sh/test-topic";
+  const sent: string[] = [];
+  const f = installFake([], (url, init) => { sent.push(String(init?.body)); return new Response("ok"); });
+  await saveRoute(req(`${U}/api/guides`, { guide: { slug: "x" } }, nextIp()));
+  await saveRoute(req(`${U}/api/guides`, { guide: generated() }, nextIp()));
+  f.restore();
+  delete process.env.NOTIFY_URL;
+  assert.equal(sent.length, 1);
+  assert.match(sent[0], /Guide saved: Acme \(new\) \/guides\/acme/);
+});

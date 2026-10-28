@@ -1,5 +1,6 @@
 import { runChat, cleanMessages, cleanDraft, type ChatEvent } from "@/lib/agent/chat";
 import { limited } from "@/lib/ratelimit";
+import { notify } from "@/lib/notify";
 
 export const runtime = "nodejs";
 export const maxDuration = 120;
@@ -17,7 +18,10 @@ export async function POST(req: Request) {
     async start(controller) {
       const emit = (e: ChatEvent) => controller.enqueue(enc.encode(JSON.stringify(e) + "\n"));
       try {
-        await runChat({ messages, slug, draft: cleanDraft(body.draft) }, emit, req.signal);
+        const draft = cleanDraft(body.draft);
+        const where = slug ? `the ${slug} guide` : draft?.name ? `research on ${draft.name}` : "Ask the agent";
+        await notify("chat", `Chat on ${where}: "${messages[messages.length - 1].content.slice(0, 120)}"`, req);
+        await runChat({ messages, slug, draft }, emit, req.signal);
         emit({ type: "done" });
       } catch (e) {
         if (!req.signal.aborted) emit({ type: "error", message: (e as Error).message });

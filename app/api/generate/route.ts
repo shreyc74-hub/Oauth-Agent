@@ -1,5 +1,6 @@
 import { researchGuide, type AgentEvent } from "@/lib/agent/research";
 import { limited } from "@/lib/ratelimit";
+import { notify } from "@/lib/notify";
 
 export const runtime = "nodejs";
 export const maxDuration = 300; // research takes 1 to 4 minutes
@@ -19,10 +20,16 @@ export async function POST(req: Request) {
     async start(controller) {
       const emit = (e: AgentEvent) => controller.enqueue(enc.encode(JSON.stringify(e) + "\n"));
       try {
+        const started = Date.now();
+        await notify("research_started", `Research started: ${name}${website ? ` (${website})` : ""}`, req);
         await researchGuide({ name, website }, emit, req.signal);
         emit({ type: "done" });
+        await notify("research_finished", `Research finished: ${name} in ${Math.round((Date.now() - started) / 1000)}s`, req);
       } catch (e) {
-        if (!req.signal.aborted) emit({ type: "error", message: (e as Error).message });
+        if (!req.signal.aborted) {
+          emit({ type: "error", message: (e as Error).message });
+          await notify("research_failed", `Research failed: ${name}: ${(e as Error).message.slice(0, 160)}`, req);
+        }
       } finally {
         controller.close();
       }

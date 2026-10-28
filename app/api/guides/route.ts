@@ -3,6 +3,7 @@ import { listGuides, getGuide, saveGuide } from "@/lib/store";
 import { libraryGuides } from "@/lib/library";
 import { validateGuide, type Guide } from "@/lib/schema";
 import { limited } from "@/lib/ratelimit";
+import { notify } from "@/lib/notify";
 
 export const runtime = "nodejs";
 
@@ -29,5 +30,6 @@ export async function POST(req: Request) {
   const clean: Guide = { ...guide, evidenceLevel: "generated", evidence: (guide.evidence || []).map((e) => ({ ...e, status: e.status === "tested" ? "unverified" : e.status })) };
   try { await saveGuide(clean); }
   catch (e) { return NextResponse.json({ error: (e as Error).message }, { status: 502 }); }
+  await notify("guide_saved", `Guide saved: ${clean.name} (${current ? "replaced" : "new"}) /guides/${clean.slug}`, req);
   return NextResponse.json({ ok: true, slug: clean.slug });
 }
