@@ -76,12 +76,17 @@ export async function runClaude(
         try { e = JSON.parse(line.slice(6)); } catch { continue; }
         if (e.type === "content_block_start") {
           blocks[e.index] = { ...e.content_block };
+          if (e.content_block.type === "thinking") { blocks[e.index].thinking = e.content_block.thinking || ""; blocks[e.index].signature = e.content_block.signature || ""; }
           if (e.content_block.type === "text") { blocks[e.index].text = ""; if (textBlocksSeen++ > 0) hooks.onText?.("\n"); }
           if (e.content_block.type === "server_tool_use" || e.content_block.type === "tool_use") json[e.index] = "";
         } else if (e.type === "content_block_delta") {
           const b = blocks[e.index];
           if (e.delta.type === "text_delta") { b.text = (b.text as string) + e.delta.text; hooks.onText?.(e.delta.text); }
           if (e.delta.type === "input_json_delta") json[e.index] += e.delta.partial_json;
+          // Thinking blocks must be sent back complete (thinking text plus signature) when a turn continues.
+          if (e.delta.type === "thinking_delta") b.thinking = String(b.thinking ?? "") + e.delta.thinking;
+          if (e.delta.type === "signature_delta") b.signature = String(b.signature ?? "") + e.delta.signature;
+          if (e.delta.type === "citations_delta") b.citations = [...((b.citations as unknown[]) || []), e.delta.citation];
         } else if (e.type === "content_block_stop") {
           const b = blocks[e.index];
           if (b?.type === "server_tool_use" || b?.type === "tool_use") {
@@ -98,9 +103,9 @@ export async function runClaude(
 
     const texts = blocks.filter((b) => b?.type === "text").map((b) => String(b.text));
     finalText = texts.join("\n");
-    // Empty text blocks are rejected by the API when sent back, so drop them.
+    // Empty text and thinking blocks are rejected by the API when sent back, so drop them.
     const assistant = blocks
-      .filter((b) => b && !(b.type === "text" && !String(b.text).length))
+      .filter((b) => b && !(b.type === "text" && !String(b.text).length) && !(b.type === "thinking" && !String(b.thinking ?? "").length))
       .map((b) => (b.type === "text" ? { type: "text", text: b.text } : b));
     if (stopReason === "pause_turn") {
       // Long research turns pause; send the partial turn back to continue it.

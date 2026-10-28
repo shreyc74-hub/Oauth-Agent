@@ -49,6 +49,36 @@ test("runClaude continues a pause_turn and sends the partial turn back without e
   assert.deepEqual(second[1].content[0].input, { query: "slack oauth" });
 });
 
+test("runClaude sends thinking blocks back complete (thinking text and signature) when a turn continues", async () => {
+  const thinking = [
+    { type: "message_start", message: { id: "m", role: "assistant", content: [] } },
+    { type: "content_block_start", index: 0, content_block: { type: "thinking", thinking: "", signature: "" } },
+    { type: "content_block_delta", index: 0, delta: { type: "thinking_delta", thinking: "I should search " } },
+    { type: "content_block_delta", index: 0, delta: { type: "thinking_delta", thinking: "the docs." } },
+    { type: "content_block_delta", index: 0, delta: { type: "signature_delta", signature: "sig123" } },
+    { type: "content_block_stop", index: 0 },
+    { type: "content_block_start", index: 1, content_block: { type: "thinking", thinking: "", signature: "" } },
+    { type: "content_block_stop", index: 1 },
+    { type: "content_block_start", index: 2, content_block: { type: "text", text: "" } },
+    { type: "content_block_delta", index: 2, delta: { type: "text_delta", text: "Searching." } },
+    { type: "content_block_delta", index: 2, delta: { type: "citations_delta", citation: { type: "web_search_result_location", url: "https://x" } } },
+    { type: "content_block_stop", index: 2 },
+    { type: "content_block_start", index: 3, content_block: { type: "redacted_thinking", data: "abc" } },
+    { type: "content_block_stop", index: 3 },
+    { type: "message_delta", delta: { stop_reason: "pause_turn" } },
+    { type: "message_stop" },
+  ];
+  const f = installFake([thinking, message([{ text: "Done." }])]);
+  const out = await runClaude({ system: "s", messages: [{ role: "user", content: "go" }] });
+  f.restore();
+  assert.equal(out, "Done.");
+  const sent = f.calls[1].body.messages[1].content;
+  assert.deepEqual(sent[0], { type: "thinking", thinking: "I should search the docs.", signature: "sig123" });
+  assert.equal(sent.filter((b: any) => b.type === "thinking").length, 1, "empty thinking block dropped");
+  assert.deepEqual(sent[1], { type: "text", text: "Searching." });
+  assert.deepEqual(sent[2], { type: "redacted_thinking", data: "abc" });
+});
+
 test("webTools uses the current tool versions and drops fetch when the budget is 0", () => {
   assert.deepEqual(webTools(3, 2).map((t: any) => t.type), ["web_search_20260318", "web_fetch_20260318"]);
   assert.deepEqual(webTools(3, 0).map((t: any) => t.type), ["web_search_20260318"]);
