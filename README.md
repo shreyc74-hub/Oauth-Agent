@@ -36,7 +36,7 @@ Without Supabase, guides you save are kept in memory until you restart. No API k
 ## How the agent works
 
 ```mermaid
-flowchart LR
+flowchart TD
   U[Developer types an app] --> L{In the library?}
   L -- yes --> G[Open guide]
   L -- no --> I[Identify vendor<br/>rough names confirmed]
