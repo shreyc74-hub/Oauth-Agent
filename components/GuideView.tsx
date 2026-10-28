@@ -1,6 +1,7 @@
 "use client";
 import { Fragment, useState } from "react";
 import { type Guide, type Note, type Status, OWNER_LABEL, SECTION_TITLES, STATUS_LABEL } from "@/lib/schema";
+import { claimSources } from "@/lib/evidence";
 
 /** Renders `code` spans inside plain text. */
 export function Rich({ text }: { text?: string }) {
@@ -10,7 +11,7 @@ export function Rich({ text }: { text?: string }) {
 }
 
 export function StatusBadge({ s }: { s?: Status }) {
-  if (!s) return null;
+  if (!s || s === "conflict") return null; // conflicts are kept in the data, not shown on the page
   return <span className={`badge st-${s}`}>{STATUS_LABEL[s] ?? s}</span>;
 }
 
@@ -67,7 +68,6 @@ export default function GuideView({ g, streaming = false }: { g: Partial<Guide>;
           <span className={`badge ev-${g.evidenceLevel ?? "generated"}`}>{evidenceText}</span>
           {g.checkedOn && <span className="badge neutral">Checked {g.checkedOn}</span>}
           {g.website && <span className="badge neutral">{g.website}</span>}
-          {(g.evidence || []).some((e) => e.status === "conflict") && <span className="badge st-conflict">Has open conflicts</span>}
         </div>
         {g.verdict ? <p className="verdict"><b>Verdict.</b> <Rich text={g.verdict} /></p> : streaming && <div className="skeleton tall" />}
         {oauthless && (
@@ -86,6 +86,12 @@ export default function GuideView({ g, streaming = false }: { g: Partial<Guide>;
             <div className="tile"><div className="k">Waiting on the provider</div><div className="v">{g.glance!.waiting.value}</div><div className="n"><Rich text={g.glance!.waiting.note} /></div></div>
             <div className="tile wide"><div className="k">Do you need your own app yet?</div><div className="v sm">{g.glance!.ownApp.headline}</div><div className="n"><Rich text={g.glance!.ownApp.note} /></div></div>
           </div>
+          {(g.oneWayDoors || []).length > 0 && (
+            <div className="watch">
+              <div className="k">Watch out: decisions you can&apos;t undo</div>
+              <ul className="tight">{g.oneWayDoors!.map((d, i) => <li key={i}><b><Rich text={d.title} /></b> <Rich text={d.doThis} /></li>)}</ul>
+            </div>
+          )}
           <div className="legend"><span className="own own-agent">Agent</span> an agent can do it <span className="own own-you">You</span> needs you <span className="own own-waiting">Waiting</span> on the provider</div>
         </section>
       ) : streaming && <P k="glance" />)}
@@ -177,6 +183,13 @@ export default function GuideView({ g, streaming = false }: { g: Partial<Guide>;
             <div><h3>Common rejection reasons</h3><ul className="tight">{g.approval!.rejections.map((x, i) => <li key={i}><Rich text={x} /></li>)}</ul></div>
           </div>
           {g.approval!.note && <p className="small"><Rich text={g.approval!.note} /></p>}
+          {g.limits && g.limits.ladder?.length > 0 && (<>
+            <h3>Before approval: what works and what&apos;s capped</h3>
+            <div className="ladder">
+              {g.limits.ladder.map((l, i) => <div key={i}><div className="st">{l.stage}</div><div className="w"><Rich text={l.works} /></div><div className="l"><b>Limit:</b> <Rich text={l.limit} /></div></div>)}
+            </div>
+            {(g.limits.notes || []).filter((n) => n.status !== "conflict").map((n, i) => <Callout n={n} key={i} />)}
+          </>)}
         </section>
       ) : streaming && <P k="approval" />)}
 
@@ -204,6 +217,17 @@ export default function GuideView({ g, streaming = false }: { g: Partial<Guide>;
       {show("sources") ? (
         <section className="gs" id="s-sources">
           <Head k="sources" />
+          {claimSources(g).length > 0 && (
+            <div className="tablewrap"><table>
+              <thead><tr><th>Claim</th><th>Source</th></tr></thead>
+              <tbody>{claimSources(g).map((c, i) => (
+                <tr key={i}><td><Rich text={c.claim} /></td><td className="src">{c.url
+                  ? <a href={c.url} target="_blank" rel="noopener noreferrer" title={c.title}>{c.label}</a>
+                  : <span className="muted">{c.label}</span>}</td></tr>
+              ))}</tbody>
+            </table></div>
+          )}
+          <h3>All sources</h3>
           <ul className="tight sources">{g.sources!.map((s, i) => <li key={i}><a href={s.url} target="_blank" rel="noopener noreferrer">{s.title}</a> <span className="muted small">{safeHost(s.url)}</span></li>)}</ul>
         </section>
       ) : streaming && <P k="sources" />}

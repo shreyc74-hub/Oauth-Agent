@@ -1,4 +1,5 @@
 import { type Guide, OWNER_LABEL, SECTION_TITLES } from "./schema";
+import { claimSources } from "./evidence";
 
 const h = (key: string) => `## ${SECTION_TITLES[key].num}. ${SECTION_TITLES[key].title}`;
 const list = (items: string[]) => items.map((i) => `- ${i}`).join("\n");
@@ -19,6 +20,7 @@ export function toMarkdown(g: Guide): string {
       `| Your hands-on time | ${cell(gl.handsOn.value)}: ${cell(gl.handsOn.note)} |`,
       `| Waiting on provider | ${cell(gl.waiting.value)}: ${cell(gl.waiting.note)} |`,
       `| Do you need your own app yet? | ${cell(gl.ownApp.headline)} ${cell(gl.ownApp.note)} |`, "");
+    if ((g.oneWayDoors || []).length) out.push("**Watch out: decisions you can't undo**", list(g.oneWayDoors.map((d) => `**${d.title}** ${d.doThis}`)), "");
 
     out.push(h("prerequisites"), "", "**To create**", list(g.prerequisites.toCreate), "", "**For approval**", list(g.prerequisites.forApproval), "");
 
@@ -42,6 +44,11 @@ export function toMarkdown(g: Guide): string {
     out.push(list(a.stages.map((s) => `**${s.label}: ${s.duration}.** ${s.detail}`)));
     out.push("", "**What you submit**", list(a.submit), "", "**Common rejection reasons**", list(a.rejections));
     if (a.note) out.push("", a.note);
+    if (g.limits?.ladder?.length) {
+      out.push("", "**Before approval: what works and what's capped**", "", "| Stage | What works | Limit |", "|---|---|---|");
+      g.limits.ladder.forEach((l) => out.push(`| ${l.stage} | ${cell(l.works)} | ${cell(l.limit)} |`));
+      (g.limits.notes || []).filter((n) => n.status !== "conflict").forEach((n) => out.push("", `> **${n.title}** ${n.text}`));
+    }
     out.push("");
 
     out.push(h("dataUse"), "", list(g.dataUse.rules.map((r) => `**${r.title}** ${r.text}`)));
@@ -53,6 +60,13 @@ export function toMarkdown(g: Guide): string {
     out.push("");
   }
 
-  out.push(h("sources"), "", list((g.sources || []).map((s) => `[${s.title}](${s.url})`)), "");
+  out.push(h("sources"), "");
+  const claims = claimSources(g);
+  if (claims.length) {
+    out.push("| Claim | Source |", "|---|---|");
+    claims.forEach((c) => out.push(`| ${cell(c.claim)} | ${c.url ? `[${c.label}](${c.url})` : c.label} |`));
+    out.push("", "**All sources**");
+  }
+  out.push(list((g.sources || []).map((s) => `[${s.title}](${s.url})`)), "");
   return out.join("\n");
 }

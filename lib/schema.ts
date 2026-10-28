@@ -94,7 +94,7 @@ export interface Guide {
   blockers: { symptom: string; cause: string; fix: string; status?: Status }[];
 
   // 13. Evidence
-  evidence: { claim: string; status: Status; basis: string }[];
+  evidence: { claim: string; status: Status; basis: string; url?: string }[];
   sources: { title: string; url: string }[];
 }
 

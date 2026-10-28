@@ -102,3 +102,32 @@ test("every library guide renders, and a half-streamed guide renders with placeh
   assert.ok(none.includes("No OAuth found"));
   assert.ok(!none.includes(`id="s-glance"`));
 });
+
+import { sourceForClaim, claimSources, REPO_URL } from "../lib/evidence";
+import { toMarkdown } from "../lib/markdown";
+test("claims link to the page they rest on; conflicts are never shown", () => {
+  const sources = [{ title: "Acme: OAuth review guide", url: "https://developer.acme.io/review" }, { title: "Nango: Acme rate limits", url: "https://nango.dev/acme" }];
+  assert.deepEqual(sourceForClaim({ claim: "Review takes 2 weeks", status: "docs", basis: "Review guide" }, sources), { claim: "Review takes 2 weeks", status: "docs", label: "Official docs", url: "https://developer.acme.io/review", title: "Acme: OAuth review guide" });
+  assert.equal(sourceForClaim({ claim: "Rate limits 10/min", status: "secondary", basis: "Nango rate limits page" }, sources).url, "https://nango.dev/acme");
+  assert.equal(sourceForClaim({ claim: "x", status: "docs", basis: "y", url: "https://exact.example.com/p" }, sources).url, "https://exact.example.com/p", "an explicit URL wins");
+  assert.equal(sourceForClaim({ claim: "Token life", status: "unverified", basis: "not found" }, sources).url, undefined);
+  assert.equal(sourceForClaim({ claim: "Created it", status: "tested", basis: "ours" }, sources, "slack").url, `${REPO_URL}/blob/main/attempts/slack.md`);
+  const two = [...sources, { title: "Acme: Terms", url: "https://acme.io/terms" }];
+  assert.equal(sourceForClaim({ claim: "zzz", status: "docs", basis: "qqq" }, two).url, undefined, "no guessing between several official pages");
+  assert.equal(claimSources({ evidence: [{ claim: "a", status: "conflict", basis: "b" }, { claim: "c", status: "docs", basis: "d" }], sources }).length, 1);
+});
+
+test("guide page and Markdown: watch-outs in At a glance, limits in Approval, linked claims in Sources, no conflicts", () => {
+  for (const g of libraryGuides()) {
+    const html = renderToStaticMarkup(React.createElement(GuideView, { g }));
+    const md = toMarkdown(g);
+    assert.ok(!html.includes("st-conflict") && !html.includes("Has open conflicts") && !html.includes("Open conflict"), `${g.slug} page shows a conflict`);
+    assert.ok(!md.includes("Open conflict") && !md.includes("Sources disagree"), `${g.slug} md shows a conflict`);
+    assert.ok(html.includes("Before approval"), `${g.slug} missing limits`);
+    assert.ok(md.includes("Before approval"), `${g.slug} md missing limits`);
+    if (g.oneWayDoors.length) assert.ok(html.includes("Watch out") && md.includes("Watch out"), `${g.slug} missing watch-outs`);
+    assert.ok(html.indexOf("Watch out") < html.indexOf('id="s-prerequisites"'), `${g.slug} watch-outs not in At a glance`);
+    assert.ok(html.includes("<th>Source</th>") && md.includes("| Claim | Source |"), `${g.slug} missing claim table`);
+    assert.ok(!html.includes("<th>Status</th>"), `${g.slug} still shows a status column`);
+  }
+});

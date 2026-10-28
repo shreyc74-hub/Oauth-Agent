@@ -347,3 +347,9 @@ footer.foot { border-top: 1px solid var(--line); font-size: 13px; color: var(--m
 @media (max-width: 640px) { .badge { white-space: normal; } }
 .chat .top { flex-wrap: wrap; row-gap: 2px; }
 .chat .top b { white-space: nowrap; }
+
+.watch { margin-top: 14px; padding: 14px 18px; border-radius: 10px; background: var(--bad-soft); }
+.watch .k { font-size: 11px; text-transform: uppercase; letter-spacing: .1em; color: var(--bad); font-weight: 700; margin-bottom: 6px; }
+.watch ul { margin: 0; }
+td.src { white-space: nowrap; font-size: 14px; font-weight: 600; }
+td.src a { text-decoration: underline; text-underline-offset: 2px; }

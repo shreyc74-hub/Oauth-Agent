@@ -36,7 +36,7 @@ oneWayDoors   [{"title":string,"detail":string,"doThis":string,"status":Status}]
 limits        {"ladder":[{"stage":"Build and test","works":string,"limit":string},{"stage":"First customers",...},{"stage":"Scale",...}],"notes":[Note]}   exactly 3 ladder rows
 tokens        {"rows":[{"setting","access","refresh","breaks"}],"note":string}
 credentialHandoff {"level":1|2|3,"summary":string,"status":Status}
-evidence      {"evidence":[{"claim":string,"status":Status,"basis":"which page says it, or why unsure"}],"sources":[{"title":string,"url":string}]}
+evidence      {"evidence":[{"claim":string,"status":Status,"basis":"which page says it, or why unsure","url":"the exact page URL that supports it (must also be in sources); omit if unverified"}],"sources":[{"title":string,"url":string}]}
 
 Status is one of "docs" (an official provider page you read says it), "secondary" (third-party page), "conflict" (sources disagree; say which), "unverified" (not found, or from general knowledge). Never use "tested": you did not create an app.
 Note is {"title":string,"text":string,"status":Status,"tone":"info"|"warn"|"bad"}.

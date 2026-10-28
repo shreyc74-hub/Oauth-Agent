@@ -192,7 +192,7 @@ export default function ResearchView({ name, website, overwrite }: { name: strin
                 <button className="btn lg" type="button" onClick={() => window.print()}>PDF</button>
                 <button className="btn lg" type="button" onClick={() => { clearDraft(name, website); router.push("/"); }}>Discard</button>
               </div>
-              {c && <div className="counts"><span>Self-check:</span><span><b>{c.docs || 0}</b> from official docs</span><span><b>{c.secondary || 0}</b> secondary</span><span><b>{c.unverified || 0}</b> not verified</span><span><b>{c.conflict || 0}</b> conflicts</span></div>}
+              {c && <div className="counts"><span>Self-check:</span><span><b>{c.docs || 0}</b> from official docs</span><span><b>{c.secondary || 0}</b> secondary</span><span><b>{c.unverified || 0}</b> not verified</span></div>}
             </div>
           )}
           {phase === "saved" && (

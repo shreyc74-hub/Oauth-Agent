@@ -30,7 +30,8 @@ export function ruleChecks(input: Partial<Guide>): { guide: Partial<Guide>; note
     let status: Status = STATUSES.includes(e.status) ? e.status : "unverified";
     if (status === "tested") { status = "unverified"; downgraded++; }
     if (status === "docs" && (!g.sources!.length || !String(e.basis || "").trim())) { status = "unverified"; downgraded++; }
-    return { ...e, status, basis: e.basis || "No basis given" };
+    const url = e.url && isUrl(e.url) ? e.url : undefined;
+    return { ...e, status, basis: e.basis || "No basis given", url };
   });
   if (downgraded) notes.push(`Marked ${downgraded} claim(s) "not verified" because they had no source behind them.`);
 
