@@ -59,6 +59,8 @@ test("research reducer: sections fill in, skipped stages are marked honestly, bu
   assert.equal(s.guide.evidenceLevel, "generated", "never tested in the browser either");
   assert.deepEqual((s.guide as any).glance, { a: 1 });
   assert.equal(s.guide.evidence!.length, 1);
+  s = applyEvent(s, { type: "oauth", supported: true, note: "OAuth 2.0" });
+  assert.deepEqual(s.oauth, { supported: true, note: "OAuth 2.0" });
   s = applyEvent(s, { type: "selfcheck", counts: { docs: 1 }, notes: ["n"] });
   assert.deepEqual(s.selfcheck, { counts: { docs: 1 }, notes: ["n"] });
   for (let i = 0; i < 100; i++) s = applyEvent(s, { type: "status", text: String(i) });

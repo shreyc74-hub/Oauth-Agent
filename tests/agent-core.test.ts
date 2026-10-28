@@ -3,7 +3,7 @@ import { test, beforeEach } from "node:test";
 import assert from "node:assert/strict";
 import { installFake, message, sse } from "./helpers";
 import { runClaude, extractJson, webTools, MAX_ROUNDS } from "../lib/agent/claude";
-import { createSectionParser, type AgentEvent } from "../lib/agent/parse";
+import { createSectionParser, inferStage, type AgentEvent } from "../lib/agent/parse";
 import { publicUrl, isThin, htmlToText, renderProvider, renderPage } from "../lib/agent/render";
 import { parseIdentified, cleanDomain, looksLikeUrl, identify, readMeta } from "../lib/agent/resolve";
 import { ruleChecks, applyReview, countStatuses } from "../lib/agent/selfcheck";
@@ -178,6 +178,34 @@ test("parser handles lines split across chunks, fences, narration and duplicates
   assert.equal(h.checkedOn, "2026-10-28");
   const stages = ev.filter((e) => e.type === "stage").map((e: any) => `${e.stage}:${e.state}`);
   assert.deepEqual(stages, ["oauth:active", "oauth:done", "docs:active", "docs:done", "write:active", "write:done"]);
+});
+
+test("parser: stages only move forward, and the OAuth result is reported once", () => {
+  const { ev } = parse(['{"stage":"docs"}\n', '{"stage":"oauth"}\n', '{"oauth":{"supported":true,"note":"OAuth 2.0 for public apps"}}\n', '{"oauth":{"supported":false,"note":"dup"}}\n', '{"stage":"composio"}\n', '{"stage":"changelog"}\n']);
+  assert.deepEqual(ev.filter((e) => e.type === "stage" && e.state === "active").map((e: any) => e.stage), ["docs", "composio"]);
+  assert.deepEqual(ev.filter((e) => e.type === "oauth"), [{ type: "oauth", supported: true, note: "OAuth 2.0 for public apps" }]);
+});
+
+test("parser: the header reports OAuth support when no marker came first", () => {
+  const { ev } = parse([JSON.stringify({ section: "header", data: { name: "K", oauth: { supported: false, note: "API keys only" }, verdict: "v" } }) + "\n"]);
+  assert.deepEqual(ev.find((e) => e.type === "oauth"), { type: "oauth", supported: false, note: "API keys only" });
+});
+
+test("inferStage maps tool activity to research stages", () => {
+  const i = (k: any, t: string) => inferStage(k, t, "calendly.com");
+  assert.equal(i("fetch", "https://developer.calendly.com/docs/oauth"), "docs");
+  assert.equal(i("fetch", "https://calendly.com/help/apps"), "docs");
+  assert.equal(i("search", "Calendly OAuth app scopes rate limits"), "docs");
+  assert.equal(i("search", "Calendly API changelog 2026"), "changelog");
+  assert.equal(i("fetch", "https://developer.calendly.com/release-notes"), "changelog");
+  assert.equal(i("fetch", "https://community.calendly.com/t/oauth-error/123"), "secondary");
+  assert.equal(i("fetch", "https://nango.dev/docs/integrations/calendly"), "secondary");
+  assert.equal(i("search", "Calendly app review how long did it take"), "secondary");
+  assert.equal(i("fetch", "https://docs.composio.dev/toolkits/calendly"), "composio");
+  assert.equal(i("search", "composio calendly managed auth"), "composio");
+  assert.equal(i("skill", "scope-risk"), "docs");
+  assert.equal(i("skill", "js-pages"), null);
+  assert.equal(i("search", "hello"), null);
 });
 
 test("parser ignores unknown stages and non-object headers", () => {

@@ -10,12 +10,13 @@ import { BUDGET } from "@/lib/agent/budget";
 import { toMarkdown } from "@/lib/markdown";
 import GuideView from "./GuideView";
 import { downloadText } from "./GuidePage";
+import ChatPanel from "./ChatPanel";
 
 type StageState = "pending" | "active" | "done" | "skipped";
 type Line = { kind: string; text: string };
 type Phase = "running" | "review" | "saving" | "saved" | "stopped" | "error" | "exists";
 
-export interface RunState { guide: Partial<Guide>; stages: Record<Stage, StageState>; lines: Line[]; counts: { search: number; fetch: number }; selfcheck?: { counts: Record<string, number>; notes: string[] } }
+export interface RunState { oauth?: { supported: boolean; note: string }; guide: Partial<Guide>; stages: Record<Stage, StageState>; lines: Line[]; counts: { search: number; fetch: number }; selfcheck?: { counts: Record<string, number>; notes: string[] } }
 
 /** Pure reducer for the event stream, exported for tests. */
 export function applyEvent(state: RunState, ev: AgentEvent): RunState {
@@ -39,6 +40,8 @@ export function applyEvent(state: RunState, ev: AgentEvent): RunState {
     s.lines = [...state.lines, { kind: "status", text: ev.text }].slice(-60);
   } else if (ev.type === "selfcheck") {
     s.selfcheck = { counts: ev.counts, notes: ev.notes };
+  } else if (ev.type === "oauth") {
+    s.oauth = { supported: ev.supported, note: ev.note };
   }
   return s;
 }
@@ -55,6 +58,9 @@ export default function ResearchView({ name, website, overwrite }: { name: strin
   const [seconds, setSeconds] = useState(0);
   const ctl = useRef<AbortController | null>(null);
   const started = useRef(false);
+  // The chat reads the latest draft when a question is sent.
+  const stRef = useRef(st); stRef.current = st;
+  const phaseRef = useRef(phase); phaseRef.current = phase;
 
   async function run() {
     ctl.current?.abort();
@@ -142,7 +148,9 @@ export default function ResearchView({ name, website, overwrite }: { name: strin
             {STAGES.map((k) => (
               <div key={k} className={`rstep ${st.stages[k]}`}>
                 <span className="dot" />
-                <div><div className="tt">{STAGE_LABEL[k].title}</div><div className="nt">{st.stages[k] === "skipped" ? "Skipped by the agent" : STAGE_LABEL[k].note}</div></div>
+                <div><div className="tt">{STAGE_LABEL[k].title}</div><div className="nt">{k === "oauth" && st.oauth
+                  ? <span className={st.oauth.supported ? "ok-text" : "bad-text"}>{st.oauth.supported ? "Yes: " : "No: "}{st.oauth.note}</span>
+                  : st.stages[k] === "skipped" ? "Skipped by the agent" : STAGE_LABEL[k].note}</div></div>
               </div>
             ))}
           </div>
@@ -183,6 +191,16 @@ export default function ResearchView({ name, website, overwrite }: { name: strin
 
           {(g.name || phase === "running") && <GuideView g={{ name, website, ...g }} streaming={phase === "running"} />}
         </main>
+
+        <aside className="chatcol rchat no-print" aria-label={`Ask about ${name}`}>
+          <ChatPanel
+            name={name}
+            subtitle={phase === "running" ? "Answers from the draft so far" : "Answers from this draft"}
+            intro={`Ask about ${name} while the agent researches. Answers come from the draft as it's written, then the library and the web, and say which.`}
+            suggestions={["Do I need my own OAuth app?", "What has it found so far?", "Compare with Slack"]}
+            getDraft={() => ({ name, website, running: phaseRef.current === "running", guide: stRef.current.guide })}
+          />
+        </aside>
       </div>
     </>
   );

@@ -3,7 +3,7 @@ import { test, beforeEach } from "node:test";
 import assert from "node:assert/strict";
 import { installFake, message } from "./helpers";
 import { researchGuide, researchSystem, type AgentEvent } from "../lib/agent/research";
-import { runChat, chatTools, chatSystem, cleanMessages, type ChatEvent } from "../lib/agent/chat";
+import { runChat, chatTools, chatSystem, cleanMessages, cleanDraft, type ChatEvent } from "../lib/agent/chat";
 import { libraryGuides } from "../lib/library";
 import { SECTION_ORDER } from "../lib/schema";
 import { listCorrections, listGuides, _resetMemoryStore } from "../lib/store";
@@ -193,4 +193,35 @@ test("chat mock mode covers answers, research offers and approvals", async () =>
   assert.ok((await collect("slack", "this limit is wrong")).some((e: any) => e.type === "action" && e.action.kind === "approve"));
   f.restore();
   assert.equal(f.calls.length, 0);
+});
+
+test("research: progress moves through stages from tool activity even without markers", async () => {
+  const f = installFake([
+    message([{ tool: "web_search", input: { query: "Acme OAuth" }, server: true }, { tool: "web_fetch", input: { url: "https://developer.acme.io/oauth" }, server: true }, { tool: "web_search", input: { query: "Acme API changelog" }, server: true }, { tool: "web_fetch", input: { url: "https://community.acme.io/t/review" }, server: true }, { tool: "web_search", input: { query: "composio acme" }, server: true }], "pause_turn"),
+    message([{ text: guideLines("Acme") }]),
+    message([{ text: '{"evidence":[],"notes":[]}' }]),
+  ]);
+  const ev: AgentEvent[] = [];
+  await researchGuide({ name: "Acme", website: "acme.io" }, (e) => ev.push(e));
+  f.restore();
+  const active = ev.filter((e: any) => e.type === "stage" && e.state === "active").map((e: any) => e.stage);
+  assert.deepEqual(active, ["oauth", "docs", "changelog", "secondary", "composio", "write", "selfcheck"]);
+  assert.ok(ev.some((e: any) => e.type === "oauth" && e.supported === true), "OAuth result reported from the header");
+});
+
+test("chat about a draft being researched: draft is cleaned, capped and used in the prompt", async () => {
+  assert.equal(cleanDraft(null), null);
+  assert.equal(cleanDraft({ guide: { evil: "x".repeat(200_000) } })!.guide.evil, undefined, "unknown keys dropped");
+  assert.equal(cleanDraft({ guide: { verdict: "x".repeat(200_000) } }), null, "oversized draft refused");
+  const d = cleanDraft({ name: "Acme", website: "acme.io", running: true, guide: { verdict: "Fast.", glance: { a: 1 }, junk: 1 } })!;
+  assert.deepEqual(Object.keys(d.guide).sort(), ["glance", "verdict"]);
+  const s = chatSystem(await listGuides(), null, d);
+  assert.match(s, /a NEW guide for Acme/);
+  assert.match(s, /still running/);
+  assert.match(s, /"verdict":"Fast\."/);
+  const f = installFake([(body) => { assert.match(body.system, /NEW guide for Acme/); return message([{ text: "From the draft [§01]." }]); }]);
+  const ev: ChatEvent[] = [];
+  await runChat({ messages: [{ role: "user", content: "Do I need my own app?" }], draft: d }, (e) => ev.push(e));
+  f.restore();
+  assert.match(ev.filter((e: any) => e.type === "text").map((e: any) => e.delta).join(""), /From the draft/);
 });

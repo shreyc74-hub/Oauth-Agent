@@ -35,7 +35,21 @@ export function guideForModel(g: Guide, sections?: string[]): string {
   return JSON.stringify(keep);
 }
 
-export function chatSystem(index: GuideSummary[], current: Guide | null): string {
+export type Draft = { name?: string; website?: string; running?: boolean; guide: Record<string, unknown> };
+
+/** Keeps only known guide sections from a draft the browser sends, capped in size. Returns null if unusable. */
+export function cleanDraft(raw: unknown): Draft | null {
+  if (!raw || typeof raw !== "object") return null;
+  const r = raw as Record<string, unknown>;
+  const g = (r.guide && typeof r.guide === "object" ? r.guide : {}) as Record<string, unknown>;
+  const keep: Record<string, unknown> = {};
+  for (const k of [...SECTION_ORDER, "name", "website", "category", "oauth", "verdict", "sources"]) if (k in g && k !== "header") keep[k] = g[k];
+  const json = JSON.stringify(keep);
+  if (json.length > 150_000) return null;
+  return { name: String(r.name || g.name || "").slice(0, 120), website: String(r.website || g.website || "").slice(0, 200), running: Boolean(r.running), guide: keep };
+}
+
+export function chatSystem(index: GuideSummary[], current: Guide | null, draft: Draft | null = null): string {
   const sk = getSkill("answering-questions");
   const sectionList = Object.entries(SECTION_TITLES).map(([k, v]) => `§${v.num} ${v.title} (${k})`).join(", ");
   return `You are the OAuth readiness agent for developers who build AI agents on Composio. You answer questions about creating provider OAuth apps, getting them approved, and the limits before approval.
@@ -47,7 +61,9 @@ ${index.map(brief).join("\n")}
 
 Guide sections: ${sectionList}
 
-${current ? `The developer is reading the ${current.name} guide (slug "${current.slug}"). Its full content:\n${JSON.stringify(current)}\n` : "The developer is on the library page, not reading a specific guide."}
+${current ? `The developer is reading the ${current.name} guide (slug "${current.slug}"). Its full content:\n${JSON.stringify(current)}\n`
+  : draft ? `The developer is watching the research agent write a NEW guide for ${draft.name} (${draft.website}). ${draft.running ? "Research is still running: sections not shown below are not written yet." : "Research has finished; the guide is not saved yet and not reviewed by a person."} Answer from this draft first, and say it is an unsaved draft whose statuses may still change. If a section isn't written yet, say so and answer from the library or a quick web search, labelled. Cite draft sections as [§NN] without a slug. Draft so far:\n${JSON.stringify(draft.guide)}\n`
+  : "The developer is on the library page, not reading a specific guide."}
 
 Skills you can load with load_skill:
 ${skillIndex(CHAT_SKILLS.filter((s) => s !== "answering-questions"))}
@@ -155,12 +171,16 @@ async function mockChat(messages: ChatMessage[], current: Guide | null, emit: (e
   emit({ type: "text", delta: `MOCK: There's no guide for ${word} yet. You can research it with the button below.` });
 }
 
-export async function runChat(input: { messages: ChatMessage[]; slug?: string }, emit: (e: ChatEvent) => void, signal?: AbortSignal) {
+export async function runChat(input: { messages: ChatMessage[]; slug?: string; draft?: Draft | null }, emit: (e: ChatEvent) => void, signal?: AbortSignal) {
   const current = input.slug ? await getGuide(input.slug) : null;
-  if (process.env.AGENT_MOCK === "1") return mockChat(input.messages, current, emit);
+  const draft = current ? null : input.draft ?? null;
+  if (process.env.AGENT_MOCK === "1") {
+    if (draft) { emit({ type: "text", delta: `MOCK: From the unsaved ${draft.name} draft: ${String((draft.guide.verdict as string) || "the verdict isn't written yet.")} [§01]` }); return; }
+    return mockChat(input.messages, current, emit);
+  }
   const index = await listGuides();
   await runClaude(
-    { system: chatSystem(index, current), maxTokens: 2500, tools: webTools(2, 2), clientTools: chatTools(emit), messages: input.messages },
+    { system: chatSystem(index, current, draft), maxTokens: 2500, tools: webTools(2, 2), clientTools: chatTools(emit), messages: input.messages },
     {
       signal,
       onText: (d) => emit({ type: "text", delta: d }),

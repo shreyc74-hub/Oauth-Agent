@@ -1,11 +1,11 @@
-import { runChat, cleanMessages, type ChatEvent } from "@/lib/agent/chat";
+import { runChat, cleanMessages, cleanDraft, type ChatEvent } from "@/lib/agent/chat";
 import { limited } from "@/lib/ratelimit";
 
 export const runtime = "nodejs";
 export const maxDuration = 120;
 
 export async function POST(req: Request) {
-  const body = (await req.json().catch(() => ({}))) as { messages?: unknown; slug?: string };
+  const body = (await req.json().catch(() => ({}))) as { messages?: unknown; slug?: string; draft?: unknown };
   const messages = cleanMessages(body.messages);
   if (!messages) return new Response("Send at least one question.", { status: 400 });
   if (!process.env.ANTHROPIC_API_KEY && process.env.AGENT_MOCK !== "1") return new Response("The agent isn't configured on this deployment (no ANTHROPIC_API_KEY).", { status: 503 });
@@ -17,7 +17,7 @@ export async function POST(req: Request) {
     async start(controller) {
       const emit = (e: ChatEvent) => controller.enqueue(enc.encode(JSON.stringify(e) + "\n"));
       try {
-        await runChat({ messages, slug }, emit, req.signal);
+        await runChat({ messages, slug, draft: cleanDraft(body.draft) }, emit, req.signal);
         emit({ type: "done" });
       } catch (e) {
         if (!req.signal.aborted) emit({ type: "error", message: (e as Error).message });

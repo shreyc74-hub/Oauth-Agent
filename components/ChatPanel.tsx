@@ -59,7 +59,7 @@ function Answer({ text, slug }: { text: string; slug?: string }) {
   );
 }
 
-export default function ChatPanel({ slug, name, suggestions, intro }: { slug?: string; name?: string; suggestions: string[]; intro?: string }) {
+export default function ChatPanel({ slug, name, suggestions, intro, getDraft, subtitle }: { slug?: string; name?: string; suggestions: string[]; intro?: string; getDraft?: () => unknown; subtitle?: string }) {
   const [msgs, setMsgs] = useState<Msg[]>([]);
   const [q, setQ] = useState("");
   const [busy, setBusy] = useState(false);
@@ -82,7 +82,7 @@ export default function ChatPanel({ slug, name, suggestions, intro }: { slug?: s
     const update = (fn: (m: Msg) => Msg) => setMsgs((all) => { const c = all.slice(); c[c.length - 1] = fn({ ...c[c.length - 1] }); return c; });
     const c = new AbortController(); ctl.current = c;
     try {
-      const res = await fetch("/api/chat", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ slug, messages: history }), signal: c.signal });
+      const res = await fetch("/api/chat", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ slug, messages: history, draft: getDraft?.() }), signal: c.signal });
       if (!res.ok || !res.body) throw new Error((await res.text()) || "The agent is unavailable.");
       const reader = res.body.getReader(); const dec = new TextDecoder(); let buf = "";
       for (;;) {
@@ -117,7 +117,7 @@ export default function ChatPanel({ slug, name, suggestions, intro }: { slug?: s
 
   return (
     <div className="chat">
-      <div className="top"><b>{name ? `Ask about ${name}` : "Ask the agent"}</b><span className="small">{name ? "Answers from this guide" : "Answers from the library"}</span></div>
+      <div className="top"><b>{name ? `Ask about ${name}` : "Ask the agent"}</b><span className="small">{subtitle ?? (name ? "Answers from this guide" : "Answers from the library and the web")}</span></div>
       <div className="msgs" aria-live="polite">
         {msgs.length === 0 && <p className="intro">{intro ?? (name ? `Ask anything about getting a ${name} app approved, its limits, scopes or tokens. You can also compare it with other apps in the library.` : "Ask about any app: whether you need your own OAuth app, how long approval takes, what's capped until review. If an app has no guide yet, the agent offers to research it.")}</p>}
         {msgs.map((m, i) => m.role === "user" ? <div key={i} className="me">{m.content}</div> : (

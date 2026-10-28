@@ -5,7 +5,7 @@
 import { runClaude, webTools, MAX_ROUNDS } from "./claude";
 import { SECTION_ORDER, type Guide } from "../schema";
 import { libraryGuides, slugify } from "../library";
-import { createSectionParser, type AgentEvent } from "./parse";
+import { createSectionParser, inferStage, type AgentEvent } from "./parse";
 import { getSkill, skillIndex, skillTool } from "./skills";
 import { renderProvider, renderTool } from "./render";
 import { BUDGET } from "./budget";
@@ -18,6 +18,7 @@ export const RESEARCH_SKILLS = ["oauth-research", "approval-programs", "scope-ri
 
 const SCHEMA = `
 Output protocol. While researching, write a stage marker line before each stage, for example {"stage":"docs"}.
+As soon as you know whether the vendor offers OAuth for third-party apps, write one line {"oauth":{"supported":true|false,"note":"under 12 words, e.g. OAuth 2.0 authorization code for public apps"}}.
 When you have researched, write the guide as JSON Lines: one line per section, in this exact order, each line exactly
 {"section":"<key>","data":<value>}
 and nothing else on that line. Do not wrap lines in code fences. Keys and value shapes:
@@ -76,6 +77,7 @@ async function mockResearch(vendor: { name: string; website: string }, emit: (e:
   const script: (() => void)[] = [
     () => parser.push('{"stage":"oauth"}\n'),
     () => emit({ type: "tool", kind: "search", text: `${vendor.name} OAuth app developer docs` }),
+    () => parser.push('{"oauth":{"supported":true,"note":"OAuth 2.0 for third-party apps (mock)"}}\n'),
     () => parser.push('{"stage":"docs"}\n'),
     () => emit({ type: "tool", kind: "skill", text: "approval-programs" }),
     () => emit({ type: "tool", kind: "fetch", text: `https://${vendor.website}/developers` }),
@@ -123,18 +125,26 @@ export async function researchGuide(vendor: { name: string; website: string }, e
     const slug = slugify(vendor.name) || slugify(vendor.website);
     const prompt = `Vendor: ${vendor.name} (${vendor.website}). Use slug "${slug}" and checkedOn "${today}". Research it and write the guide.${calibration()}`;
     const parser = createSectionParser({ slug, today, emit });
-    const clientTools = [skillTool((name) => emit({ type: "tool", kind: "skill", text: name }), RESEARCH_SKILLS)];
+    const clientTools = [skillTool((name) => { emit({ type: "tool", kind: "skill", text: name }); const st = inferStage("skill", name, vendor.website); if (st) parser.advance(st); }, RESEARCH_SKILLS)];
     if (renderProvider() !== "off") clientTools.push(renderTool);
 
-    emit({ type: "stage", stage: "oauth", state: "active" });
+    parser.advance("oauth");
+    let calls = 0;
+    const track = (kind: "search" | "fetch" | "render" | "skill", text: string) => {
+      calls++;
+      // The first call or two is usually the OAuth check itself.
+      if (calls <= 1 && parser.stage === "oauth") return;
+      const st = inferStage(kind, text, vendor.website || vendor.name);
+      if (st) parser.advance(st);
+    };
     await runClaude(
       { system: researchSystem(), maxTokens: 20000, tools: webTools(BUDGET.searches, BUDGET.fetches), clientTools, messages: [{ role: "user", content: prompt }] },
       {
         signal,
         onToolUse: (name, input) => {
-          if (name === "web_search") emit({ type: "tool", kind: "search", text: String(input.query ?? "") });
-          if (name === "web_fetch") emit({ type: "tool", kind: "fetch", text: String(input.url ?? "") });
-          if (name === "render_page") emit({ type: "tool", kind: "render", text: String(input.url ?? "") });
+          if (name === "web_search") { emit({ type: "tool", kind: "search", text: String(input.query ?? "") }); track("search", String(input.query ?? "")); }
+          if (name === "web_fetch") { emit({ type: "tool", kind: "fetch", text: String(input.url ?? "") }); track("fetch", String(input.url ?? "")); }
+          if (name === "render_page") { emit({ type: "tool", kind: "render", text: String(input.url ?? "") }); track("render", String(input.url ?? "")); }
         },
         onText: (d) => parser.push(d),
       },

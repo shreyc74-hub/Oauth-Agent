@@ -257,10 +257,12 @@ ol.steps .dd { grid-column: 2 / 4; color: var(--muted); font-size: 14.5px; }
 .toast { color: var(--ok); font-size: 13px; }
 
 /* ---------- Research: steps | live guide ---------- */
-.rpage { display: grid; grid-template-columns: 380px minmax(0, 1fr); align-items: start; }
+.rpage { display: grid; grid-template-columns: 330px minmax(0, 1fr) 360px; align-items: start; }
+@media (max-width: 1280px) { .rpage { grid-template-columns: 300px minmax(0, 1fr); } .rpage .rchat { grid-column: 1 / -1; position: static; height: 560px; border-left: 0; border-top: 1px solid var(--line); } }
+.ok-text { color: var(--ok); font-weight: 600; } .bad-text { color: var(--bad); font-weight: 600; }
 @media (max-width: 900px) { .rpage { grid-template-columns: minmax(0, 1fr); } .rside { position: static !important; height: auto !important; border-right: 0 !important; border-bottom: 1px solid var(--line); } }
 .rside { position: sticky; top: var(--head); height: calc(100vh - var(--head)); overflow: auto; border-right: 1px solid var(--line); background: var(--panel); padding: 28px 28px 40px; }
-.rmain { padding: 32px 48px 80px; min-width: 0; }
+.rmain { padding: 32px 40px 80px; min-width: 0; }
 @media (max-width: 640px) { .rmain { padding: 24px 16px 60px; } .rside { padding: 20px 16px; } }
 .rsteps { margin-top: 16px; display: flex; flex-direction: column; }
 .rstep { display: grid; grid-template-columns: 22px minmax(0, 1fr); gap: 10px; padding: 9px 0; }
@@ -343,3 +345,5 @@ footer.foot { border-top: 1px solid var(--line); font-size: 13px; color: var(--m
   .toc, .chatcol, .rside { top: 0; }
 }
 @media (max-width: 640px) { .badge { white-space: normal; } }
+.chat .top { flex-wrap: wrap; row-gap: 2px; }
+.chat .top b { white-space: nowrap; }
