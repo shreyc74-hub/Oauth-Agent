@@ -27,6 +27,7 @@ export async function POST(req: Request) {
   if (current && !overwrite) return NextResponse.json({ error: "A guide with this name exists. Confirm replacing it." }, { status: 409 });
 
   const clean: Guide = { ...guide, evidenceLevel: "generated", evidence: (guide.evidence || []).map((e) => ({ ...e, status: e.status === "tested" ? "unverified" : e.status })) };
-  await saveGuide(clean);
+  try { await saveGuide(clean); }
+  catch (e) { return NextResponse.json({ error: (e as Error).message }, { status: 502 }); }
   return NextResponse.json({ ok: true, slug: clean.slug });
 }

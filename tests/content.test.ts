@@ -154,3 +154,14 @@ test("environment variables work in any case, with or without underscores", () =
   assert.equal(e2.SUPABASE_SERVICE_ROLE_KEY, "sk");
   assert.equal(e2.ANTHROPIC_API_KEY, undefined);
 });
+
+import { cleanSupabaseUrl } from "../lib/store";
+test("Supabase URL accepts the forms people paste", () => {
+  assert.equal(cleanSupabaseUrl("https://abcdefghijklmnopqrst.supabase.co/rest/v1/"), "https://abcdefghijklmnopqrst.supabase.co");
+  assert.equal(cleanSupabaseUrl("abcdefghijklmnopqrst.supabase.co"), "https://abcdefghijklmnopqrst.supabase.co");
+  assert.equal(cleanSupabaseUrl("abcdefghijklmnopqrst"), "https://abcdefghijklmnopqrst.supabase.co");
+  assert.equal(cleanSupabaseUrl("https://supabase.com/dashboard/project/abcdefghijklmnopqrst/settings/api"), "https://abcdefghijklmnopqrst.supabase.co");
+  assert.equal(cleanSupabaseUrl(' "https://db.example.com" '), "https://db.example.com");
+  assert.equal(cleanSupabaseUrl(""), "");
+  assert.equal(cleanSupabaseUrl("not a url at all"), "");
+});

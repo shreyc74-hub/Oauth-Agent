@@ -22,6 +22,7 @@ export async function POST(req: Request) {
   if (!c.slug || !c.claim || !c.correction) return NextResponse.json({ error: "slug, claim and correction are required." }, { status: 400 });
   if (!(await getGuide(c.slug))) return NextResponse.json({ error: `No guide called "${c.slug}".` }, { status: 404 });
   if (limited(req, "corrections", 20)) return NextResponse.json({ error: "Too many corrections. Try later." }, { status: 429 });
-  await saveCorrection(c);
+  try { await saveCorrection(c); }
+  catch (e) { return NextResponse.json({ error: (e as Error).message }, { status: 502 }); }
   return NextResponse.json({ ok: true });
 }
