@@ -39,6 +39,20 @@ HubSpot, Salesforce and LinkedIn are docs-only.
 - How packaged Salesforce External Client Apps behave across customer orgs (unresolved community thread).
 - Which toolkits have Composio-managed apps beyond Gmail, Slack and GitHub.
 
+## Live agent runs (deployed site, Oct 28, 2026)
+
+Five apps that are not in the library, chosen to vary the case: a vendor without OAuth, a consumer API with a quota program, a marketplace with review, a marketing platform and an HR platform.
+
+| App | Case | Result |
+|---|---|---|
+| Claude (Anthropic) | No OAuth for third-party apps | Correctly reported no OAuth and named the real method: API keys. Stopped after the header and sources, as designed. |
+| Spotify | Consumer API, quota and review program | Guide generated end to end. Claim-by-claim review against official docs: pending. |
+| Zoom | Marketplace app review | Guide generated end to end. Claim-by-claim review: pending. |
+| Constant Contact | Marketing API | Guide generated end to end. Claim-by-claim review: pending. |
+| Greenhouse | HR platform with API keys and partner OAuth | Guide generated end to end. Claim-by-claim review: pending. |
+
+Bugs found only in live runs, now fixed: thinking blocks were sent back empty when a research turn continued (API 400), and the progress list stalled because it waited for stage markers the model did not always write (now inferred from tool activity).
+
 ## Agent and product checks
 
 - `npm test`: 76 unit and edge-case tests, all passing, against a fake Claude API that follows the documented streaming format: text, server tool use, `pause_turn` continuation, client tool rounds (skills, page rendering, library tools), tool errors, API and stream errors, and the round limit.
