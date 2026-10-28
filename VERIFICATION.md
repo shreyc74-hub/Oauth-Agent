@@ -46,10 +46,36 @@ Five apps that are not in the library, chosen to vary the case: a vendor without
 | App | Case | Result |
 |---|---|---|
 | Claude (Anthropic) | No OAuth for third-party apps | Correctly reported no OAuth and named the real method: API keys. Stopped after the header and sources, as designed. |
-| Spotify | Consumer API, quota and review program | Guide generated end to end. Claim-by-claim review against official docs: pending. |
+| Spotify | Consumer API, quota and review program | Generated, saved, and checked claim by claim against Spotify's official pages (below). 11 of 11 key facts correct; 1 real blocker missed. |
 | Zoom | Marketplace app review | Guide generated end to end. Claim-by-claim review: pending. |
 | Constant Contact | Marketing API | Guide generated end to end. Claim-by-claim review: pending. |
 | Greenhouse | HR platform with API keys and partner OAuth | Guide generated end to end. Claim-by-claim review: pending. |
+
+### Spotify: agent output checked against official sources
+
+The agent researched Spotify live and wrote the guide without help. We then checked its key claims against Spotify's own pages.
+
+| Claim in the generated guide | Official source | Result |
+|---|---|---|
+| Development mode: up to 5 users, each on an allowlist; owner needs Premium | [Quota modes](https://developer.spotify.com/documentation/web-api/concepts/quota-modes) | Correct |
+| 5-user cap for new apps from Feb 11, 2026; existing apps from Mar 9, 2026 | [Spotify blog, Feb 6, 2026](https://developer.spotify.com/blog/2026-02-06-update-on-developer-access-and-platform-security) | Correct. Many older blog posts still say 25 users; the agent did not repeat that. |
+| Extended quota: organizations only since May 15, 2025 | [Quota modes](https://developer.spotify.com/documentation/web-api/concepts/quota-modes) | Correct |
+| Extended quota needs at least 250k MAU, a launched service, a company email | [Quota modes](https://developer.spotify.com/documentation/web-api/concepts/quota-modes) | Correct |
+| Review takes up to 6 weeks | [Quota modes](https://developer.spotify.com/documentation/web-api/concepts/quota-modes) | Correct |
+| Dev mode quota counted per developer account; up to 25 Client IDs share it (July 2026) | [Quota updates, Jul 23, 2026](https://developer.spotify.com/blog/2026-07-23-web-api-quota-updates) | Correct |
+| Quota overruns return 429 with `QUOTA_EXCEEDED`, unlike rate limits | [Quota updates, Jul 23, 2026](https://developer.spotify.com/blog/2026-07-23-web-api-quota-updates) | Correct |
+| Access tokens last 1 hour | [Refreshing tokens](https://developer.spotify.com/documentation/web-api/tutorials/refreshing-tokens) | Correct |
+| Refresh tokens expire 6 months after the original authorization; refreshing doesn't extend it; existing apps from Jul 20, 2026; `400 invalid_grant` | [Refresh token expiration, Jun 18, 2026](https://developer.spotify.com/blog/2026-06-18-refresh-token-expiration) | Correct. The agent marked it "secondary" because it only saw a search snippet: cautious, not wrong. |
+| `account_id` added May 2026 as the stable ID for linking accounts | [May 2026 changelog](https://developer.spotify.com/documentation/web-api/references/changes/may-2026) | Correct |
+| Rate limits use a rolling 30-second window, numbers not published | Rate limits page (cited by the agent) | Correct, and correctly marked "not verified" for numbers |
+
+**What the agent missed:** Spotify's redirect URI rules. HTTPS is required except for loopback addresses, `localhost` is not allowed (use `http://127.0.0.1:PORT`), enforced for new apps from Apr 9, 2025 and for all apps by November 2025 ([Redirect URIs](https://developer.spotify.com/documentation/web-api/concepts/redirect_uri)). Developers testing locally hit this first, so it belongs in Common blockers.
+
+**What the self-check caught on its own:** an inconsistent scope count between the intro and the table, and a blocker whose cited source was about something else. Both were downgraded before the guide could be saved.
+
+**Not verified by us either:** whether Composio offers a managed Spotify app (the agent found conflicting Composio pages and kept "no"), and Developer Policy details such as one Client ID per product.
+
+**What we learned:** on a vendor with fast-moving 2026 rules, the agent got every checked fact right and leaned cautious when it hadn't read a full page. Its weak spot is completeness: a well-known blocker that sits on a page it didn't open. That is the case for the next step, a live verifier that opens each cited page and a checklist of standard blockers (redirect URI rules, token expiry, allowlists) for every guide.
 
 Bugs found only in live runs, now fixed: thinking blocks were sent back empty when a research turn continued (API 400), and the progress list stalled because it waited for stage markers the model did not always write (now inferred from tool activity).
 
