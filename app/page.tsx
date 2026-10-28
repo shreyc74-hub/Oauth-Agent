@@ -1,3 +1,4 @@
+import "@/lib/env";
 import { Suspense } from "react";
 import { listGuides } from "@/lib/store";
 import Explorer from "@/components/Explorer";

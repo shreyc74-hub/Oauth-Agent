@@ -1,3 +1,4 @@
+import "@/lib/env";
 import { notFound } from "next/navigation";
 import { getGuide, listGuides, listCorrections } from "@/lib/store";
 import GuidePage from "@/components/GuidePage";

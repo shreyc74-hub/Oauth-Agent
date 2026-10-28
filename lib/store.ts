@@ -1,5 +1,6 @@
 // Guide storage. Supabase when SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are set,
 // otherwise an in-memory store seeded from the library files (fine for local dev).
+import "./env";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import type { Guide } from "./schema";
 import { libraryGuides } from "./library";

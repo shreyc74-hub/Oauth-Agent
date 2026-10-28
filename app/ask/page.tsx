@@ -1,3 +1,4 @@
+import "@/lib/env";
 import ChatPanel from "@/components/ChatPanel";
 
 export const metadata = { title: "Ask the agent · OAuth Readiness Guides" };

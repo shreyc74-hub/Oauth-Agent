@@ -138,3 +138,19 @@ test("load_skill tool loads, refuses unknown and disallowed skills", async () =>
   assert.match(await t.run({ name: "" }), /No skill called/);
   assert.deepEqual(loaded, ["scope-risk", "scope-risk"]);
 });
+
+// ---------- Environment names ----------
+import { normalizeEnv } from "../lib/env";
+test("environment variables work in any case, with or without underscores", () => {
+  const env: Record<string, string | undefined> = { anthropic_api_Key: "a", supabaseurl: " https://x.supabase.co ", supabase_service_role_key: "s", GUIDE_MODEL: "keep" , guide_model: "ignored" };
+  const filled = normalizeEnv(env);
+  assert.equal(env.ANTHROPIC_API_KEY, "a");
+  assert.equal(env.SUPABASE_URL, "https://x.supabase.co");
+  assert.equal(env.SUPABASE_SERVICE_ROLE_KEY, "s");
+  assert.equal(env.GUIDE_MODEL, "keep", "an exact name always wins");
+  assert.deepEqual(filled.sort(), ["ANTHROPIC_API_KEY", "SUPABASE_SERVICE_ROLE_KEY", "SUPABASE_URL"]);
+  const e2: Record<string, string | undefined> = { Supabase_Secret_Key: "sk", empty_key: "" };
+  normalizeEnv(e2);
+  assert.equal(e2.SUPABASE_SERVICE_ROLE_KEY, "sk");
+  assert.equal(e2.ANTHROPIC_API_KEY, undefined);
+});

@@ -1,5 +1,6 @@
 // Minimal streaming client for the Claude Messages API with server tools (web search, web fetch).
 // Handles pause_turn by continuing the turn, and reports tool activity as it happens.
+import "../env";
 
 // Read at call time so tests and deployments can change them without a rebuild.
 const apiUrl = () => `${process.env.ANTHROPIC_BASE_URL || "https://api.anthropic.com"}/v1/messages`;
