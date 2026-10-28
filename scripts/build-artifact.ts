@@ -8,6 +8,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import GuideView from "../components/GuideView";
 import { libraryGuides } from "../lib/library";
 import { toMarkdown } from "../lib/markdown";
+import { SECTION_TITLES } from "../lib/schema";
 
 const root = path.join(__dirname, "..");
 const guides = libraryGuides();
@@ -23,71 +24,118 @@ css = css.slice(0, darkStart) +
   css.slice(darkEnd);
 css += `
 .view[hidden]{display:none!important}
-.shell{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
-.top nav a{cursor:pointer}
+.site{position:static}
+.lrow[hidden]{display:none!important}
+.wrap{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.livebox{margin-top:24px;max-width:760px;padding:16px 20px;border-radius:14px;background:var(--accent-soft);font-size:15px}
+.gpage.nochat{grid-template-columns:230px minmax(0,1fr)}
+.toc{top:0}
+@media (max-width:860px){.gpage.nochat{grid-template-columns:minmax(0,1fr)}}
 `;
 
 const tone = (n: number) => (n <= 2 ? "g" : n === 3 ? "a" : "r");
 const meter = (n: number) => `<span class="meter m-${tone(n)}">${[1, 2, 3, 4, 5].map((i) => `<i class="${i <= n ? "on" : ""}"></i>`).join("")}</span>`;
 const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]!));
 const EV = { tested: "Tested", docs: "Docs-checked", generated: "Generated" } as const;
+const cats = [...new Set(guides.map((g) => g.category))].sort();
 
-const cards = guides.map((g) => `
-  <a class="card" href="#g-${g.slug}">
-    <div class="row"><h3>${esc(g.name)}</h3><span class="cat">${esc(g.category)}</span></div>
-    <div class="meters"><span>Create</span><span>${meter(g.glance.creation.rating)}</span><span>Approve</span><span>${meter(g.glance.approval.rating)}</span></div>
-    <p>${esc(g.verdict)}</p>
-    <div class="foot"><span>Wait: ${esc(g.glance.waiting.value)}</span><span class="badge ev-${g.evidenceLevel}">${EV[g.evidenceLevel]}</span></div>
+const rows = guides.map((g) => `
+  <a class="lrow" href="#g-${g.slug}" data-approval="${g.glance.approval.rating}" data-ev="${g.evidenceLevel}" data-cat="${esc(g.category)}">
+    <span><span class="nm">${esc(g.name)}</span><span class="dm">${esc(g.website)}</span></span>
+    <span>${meter(g.glance.creation.rating)}</span><span>${meter(g.glance.approval.rating)}</span>
+    <span class="w">${esc(g.glance.waiting.value)}</span>
+    <span>${esc((g.oneWayDoors[0]?.title ?? "").replace(/`/g, ""))}</span>
+    <span><span class="badge ev-${g.evidenceLevel}">${EV[g.evidenceLevel]}</span></span>
   </a>`).join("");
 
-const views = guides.map((g) => `
+const live = (what: string) => SITE ? `<a href="${SITE}" target="_blank" rel="noopener">${what}</a>` : what;
+const views = guides.map((g) => {
+  const keys = Object.keys(SECTION_TITLES).filter((k) => (g as unknown as Record<string, unknown>)[k] !== undefined);
+  return `
   <div class="view" id="v-${g.slug}" hidden>
-    <a class="small" href="#library">&larr; All guides</a>
-    <div class="toolbar">
-      <button class="btn" type="button" data-md="${g.slug}">Download Markdown</button>
-      <button class="btn" type="button" data-copy="${g.slug}">Copy as Markdown</button>
-      <span class="toast" role="status"></span>
+    <div class="subbar"><div class="in">
+      <div class="crumbs"><a href="#library">Library</a><span class="sep">/</span><b>${esc(g.name)}</b></div>
+      <div class="toolbar"><span class="toast" role="status"></span>
+        <button class="btn" type="button" data-md="${g.slug}">Markdown</button>
+        <button class="btn" type="button" data-copy="${g.slug}">Copy as Markdown</button>
+        ${SITE ? `<a class="btn primary" href="${SITE}/guides/${g.slug}" target="_blank" rel="noopener">Ask about ${esc(g.name)}</a>` : ""}
+      </div>
+    </div></div>
+    <div class="gpage nochat">
+      <nav class="toc" aria-label="Sections"><div class="t">On this page</div>${keys.map((k) => `<a href="#g-${g.slug}/${k}" data-sec="s-${k}"><span>${SECTION_TITLES[k].num}</span>${SECTION_TITLES[k].title}</a>`).join("")}</nav>
+      <main class="gmain">${renderToStaticMarkup(React.createElement(GuideView, { g }))}</main>
     </div>
-    ${renderToStaticMarkup(React.createElement(GuideView, { g }))}
-  </div>`).join("");
+  </div>`;
+}).join("");
 
 const md = Object.fromEntries(guides.map((g) => [g.slug, toMarkdown(g)]));
 
 const html = `<title>OAuth Readiness Guides</title>
 <meta name="claude:viewport-fit-sides" content="cover">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600;700&display=swap">
 <style>${css}</style>
-<div class="shell">
-  <header class="top">
-    <a class="brand" href="#library"><b>OAuth Readiness</b><span>for agent builders on Composio</span></a>
-    <nav><a href="#library">Library</a></nav>
-  </header>
-  <main>
-    <div class="view" id="v-library">
-      <section class="hero">
-        <div class="eyebrow">Provider OAuth apps · ${guides.length} guides</div>
-        <h1>How long until your users can connect?</h1>
-        <p class="lede">Each guide shows whether you need your own OAuth app, which choices you can't undo, what stays capped until review, how long approval takes, and which steps an agent can do for you. Five were tested by creating a real app.</p>
-        <div class="panel"><b>Looking for another app?</b> ${SITE ? `The live research agent runs on the full site: <a href="${SITE}" target="_blank" rel="noopener">${esc(SITE.replace(/^https?:\/\//, ""))}</a>. It identifies the vendor, checks the library, then researches official docs and streams a new guide.` : "The live research agent runs on the deployed web app, where it researches official docs and streams a new guide."}</div>
-      </section>
-      <div class="sectionhead"><h2>Library</h2><span class="small">Tested = we created a real app · Docs-checked = verified against official docs</span></div>
-      <div class="grid">${cards}</div>
+<header class="site"><div class="wrap">
+  <a class="brand" href="#library"><b>OAuth Readiness</b><span>for agent builders on Composio</span></a>
+  <nav aria-label="Main"><a href="#library" aria-current="page">Library</a>${SITE ? `<a class="cta" href="${SITE}/ask" target="_blank" rel="noopener">Ask the agent</a>` : ""}</nav>
+</div></header>
+<div class="view" id="v-library"><div class="wrap">
+  <section class="hero">
+    <div class="eyebrow">Provider OAuth apps · ${guides.length} guides · ${guides.filter((g) => g.evidenceLevel === "tested").length} tested by creating real apps</div>
+    <h1>How long until your users can connect?</h1>
+    <p class="lede">Look up an app before you build. See which choices you can't undo, what stays capped until review, how long approval takes, and what an agent can do for you.</p>
+    <div class="livebox"><b>Looking for another app?</b> ${SITE ? `The research agent runs on ${live("the full site")}: type any app name or link and it identifies the vendor, researches official docs and streams a new guide. Each guide there also has a chat.` : "The research agent and chat run on the deployed web app."}</div>
+  </section>
+  <section class="block">
+    <div class="libhead"><h2>Library</h2>
+      <div class="filters" role="group" aria-label="Filter the library">
+        <button type="button" class="seg" aria-pressed="true" data-f="all">All ${guides.length}</button>
+        <button type="button" class="seg" aria-pressed="false" data-f="noreview">No review needed</button>
+        <button type="button" class="seg" aria-pressed="false" data-f="week">Live in under a week</button>
+        <button type="button" class="seg" aria-pressed="false" data-f="tested">Tested only</button>
+        <label class="sr" for="cat">Category</label>
+        <select id="cat" class="seg"><option value="all">All categories</option>${cats.map((c) => `<option>${esc(c)}</option>`).join("")}</select>
+      </div>
     </div>
-    ${views}
-  </main>
+    <div class="libtable"><div class="grid">
+      <div class="lrow h" aria-hidden="true"><span>App</span><span>Create</span><span>Approve</span><span>Waiting</span><span>The trap to know first</span><span>Evidence</span></div>
+      ${rows}
+    </div></div>
+  </section>
   <footer class="foot">Guides marked Tested were checked by creating a real app on Oct 28, 2026. Each claim carries a status: tested, official docs, secondary source, conflict or not verified.</footer>
-</div>
+</div></div>
+${views}
 <script id="md-data" type="application/json">${JSON.stringify(md).replace(/<\//g, "<\\/")}</script>
 <script>
 (function () {
   var MD = JSON.parse(document.getElementById("md-data").textContent);
+  var current = "";
   function show() {
     var h = (location.hash || "").slice(1);
-    var id = h.indexOf("g-") === 0 && document.getElementById("v-" + h.slice(2)) ? "v-" + h.slice(2) : "v-library";
-    document.querySelectorAll(".view").forEach(function (v) { v.hidden = v.id !== id; });
-    window.scrollTo(0, 0);
+    var parts = h.indexOf("g-") === 0 ? h.slice(2).split("/") : [];
+    var id = parts[0] && document.getElementById("v-" + parts[0]) ? "v-" + parts[0] : "v-library";
+    if (id !== current) { document.querySelectorAll(".view").forEach(function (v) { v.hidden = v.id !== id; }); current = id; window.scrollTo(0, 0); }
+    if (parts[1]) {
+      var view = document.getElementById(id); var sec = view && view.querySelector("#s-" + parts[1]);
+      if (sec) sec.scrollIntoView({ behavior: "smooth", block: "start" });
+      view.querySelectorAll(".toc a").forEach(function (a) { a.classList.toggle("on", a.getAttribute("data-sec") === "s-" + parts[1]); });
+    }
   }
   window.addEventListener("hashchange", show); show();
+
+  // Library filters (same rules as the web app).
+  var f = "all";
+  function filter() {
+    var cat = document.getElementById("cat").value;
+    document.querySelectorAll("#v-library a.lrow").forEach(function (r) {
+      var a = +r.getAttribute("data-approval"), ev = r.getAttribute("data-ev"), c = r.getAttribute("data-cat");
+      var ok = (cat === "all" || c === cat) && (f === "all" || (f === "noreview" && a <= 2) || (f === "week" && a <= 3) || (f === "tested" && ev === "tested"));
+      r.hidden = !ok;
+    });
+  }
+  document.querySelectorAll("[data-f]").forEach(function (b) {
+    b.addEventListener("click", function () { f = b.getAttribute("data-f"); document.querySelectorAll("[data-f]").forEach(function (x) { x.setAttribute("aria-pressed", x === b); }); filter(); });
+  });
+  document.getElementById("cat").addEventListener("change", filter);
 
   // Step filters (the static render has no React, so wire them here).
   document.querySelectorAll(".filters").forEach(function (group) {
@@ -105,7 +153,7 @@ const html = `<title>OAuth Readiness Guides</title>
     });
   });
 
-  function toast(btn, t) { var el = btn.parentElement.querySelector(".toast"); if (el) { el.textContent = t; setTimeout(function () { if (el.textContent === t) el.textContent = ""; }, 2500); } }
+  function toast(btn, t) { var el = btn.closest(".toolbar").querySelector(".toast"); if (el) { el.textContent = t; setTimeout(function () { if (el.textContent === t) el.textContent = ""; }, 2500); } }
   var downloads = null;
   if (window.claude && window.claude.use) window.claude.use("downloads").then(function (d) { downloads = d; }).catch(function () {});
   document.querySelectorAll("[data-md]").forEach(function (b) {
@@ -121,7 +169,7 @@ const html = `<title>OAuth Readiness Guides</title>
       var text = MD[b.getAttribute("data-copy")];
       navigator.clipboard.writeText(text).then(function () { toast(b, "Markdown copied"); }, function () {
         var ta = document.createElement("textarea"); ta.value = text; ta.style.width = "100%"; ta.rows = 10;
-        b.parentElement.after(ta); ta.select(); toast(b, "Select and copy the text below");
+        b.closest(".subbar").after(ta); ta.select(); toast(b, "Select and copy the text below");
       });
     });
   });
