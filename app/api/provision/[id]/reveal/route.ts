@@ -3,12 +3,15 @@ import { mockEnabled } from "@/lib/provision/mock";
 
 export const runtime = "nodejs";
 
-/** POST { label } with header x-admin-token. Returns one secret; the reveal is logged on the run. */
+/**
+ * POST { label }. Returns one secret; every reveal is logged on the run and in provision_reveals.
+ * Open by default, like the rest of the agent. Setting PROVISION_ADMIN_TOKEN requires the
+ * x-admin-token header.
+ */
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const admin = process.env.PROVISION_ADMIN_TOKEN;
   if (!mockEnabled()) {
-    if (!admin) return Response.json({ error: "Revealing secrets is off (PROVISION_ADMIN_TOKEN is not set)." }, { status: 503 });
-    if (req.headers.get("x-admin-token") !== admin) return Response.json({ error: "Admin token required." }, { status: 401 });
+    if (admin && req.headers.get("x-admin-token") !== admin) return Response.json({ error: "Admin token required.", needsToken: true }, { status: 401 });
   }
   const { id } = await params;
   const { label } = (await req.json().catch(() => ({}))) as { label?: string };

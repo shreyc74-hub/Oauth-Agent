@@ -39,7 +39,7 @@ Everything below is on `provisioning-agent`, builds cleanly, and passes `npm tes
 | Inbox, TOTP | `lib/provision/inbox.ts`, `totp.ts` | AgentMail REST; codes and links parsed by code, not the model |
 | Verification | `lib/provision/verify.ts`, `app/api/oauth/callback` | Consent on the sandbox, code exchange, identity call, refresh |
 | Tracker | `lib/provision/sheets.ts` | Google service account; one row per run; vault names only, never secrets |
-| Routes | `app/api/provision/*` | Create, advance, respond, reveal. Real runs need `PROVISION_ACCESS_CODE`; reveals need `PROVISION_ADMIN_TOKEN` and are logged. |
+| Routes | `app/api/provision/*` | Create, advance, respond, reveal. Open by default (create is rate limited); `PROVISION_ACCESS_CODE` and `PROVISION_ADMIN_TOKEN` lock runs and reveals only when set. Reveals are always logged. |
 | UI | `app/provision/*`, `components/Provision*.tsx` | Start page, run page with steps, handoff and approval cards, live-browser iframe, credentials, vault list, fixes, audit log |
 | Terminal runner | `scripts/provision.ts` | `npm run provision -- linear [--auto]` |
 | Demo mode | `lib/provision/mock.ts` | `PROVISION_MOCK=1` simulates the browser, inbox and provider APIs; "Simulate a console change" shows the recovery agent |

@@ -612,7 +612,7 @@ export async function reveal(id: string, label: string): Promise<string> {
   const v = await getSecret(name);
   if (!v) throw new Error("Not found in the vault.");
   await recordReveal(run.id, name);
-  log(run, "secret", `${label} revealed to an admin.`);
+  log(run, "secret", `${label} revealed.`);
   await saveRun(run);
   return v;
 }

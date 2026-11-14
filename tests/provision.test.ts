@@ -14,6 +14,7 @@ import { libraryGuides } from "../lib/library";
 import type { Run } from "../lib/provision/types";
 import { POST as createRoute } from "../app/api/provision/route";
 import { POST as revealRoute } from "../app/api/provision/[id]/reveal/route";
+import { gate } from "../lib/provision/http";
 
 const BASE = "https://example.test";
 
@@ -193,17 +194,25 @@ test("redaction and masking", async () => {
   assert.equal(await getSecret("x/y/z"), "v1");
 });
 
-test("routes: real runs need the access code; reveals need the admin token", async () => {
+test("routes: open by default; access code and admin token apply only when set", async () => {
   delete process.env.PROVISION_MOCK;
   delete process.env.AGENT_MOCK;
   delete process.env.PROVISION_ACCESS_CODE;
+  delete process.env.PROVISION_ADMIN_TOKEN;
   const post = (url: string, body: unknown, headers: Record<string, string> = {}) => new Request(url, { method: "POST", headers: { "content-type": "application/json", ...headers }, body: JSON.stringify(body) });
-  assert.equal((await createRoute(post(`${BASE}/api/provision`, { app: "Linear" }))).status, 503);
+  // No code set: the gate lets the request through (it then fails later for its own reasons, not 401/503).
+  assert.equal(gate(post(`${BASE}/api/provision`, { app: "Linear" })), null);
   process.env.PROVISION_ACCESS_CODE = "letmein";
   assert.equal((await createRoute(post(`${BASE}/api/provision`, { app: "Linear" }))).status, 401);
+  assert.equal(gate(post(`${BASE}/api/provision`, { app: "Linear" }, { "x-access-code": "letmein" })), null);
+  delete process.env.PROVISION_ACCESS_CODE;
+  // No token set: a reveal is not refused for lack of a token (unknown run -> 404).
+  let res = await revealRoute(post(`${BASE}/api/provision/x/reveal`, { label: "client_secret" }), { params: Promise.resolve({ id: "x" }) });
+  assert.equal(res.status, 404);
+  process.env.PROVISION_ADMIN_TOKEN = "admin";
+  res = await revealRoute(post(`${BASE}/api/provision/x/reveal`, { label: "client_secret" }), { params: Promise.resolve({ id: "x" }) });
+  assert.equal(res.status, 401);
   delete process.env.PROVISION_ADMIN_TOKEN;
-  const res = await revealRoute(post(`${BASE}/api/provision/x/reveal`, { label: "client_secret" }), { params: Promise.resolve({ id: "x" }) });
-  assert.equal(res.status, 503);
   process.env.PROVISION_MOCK = "1";
   const ok = await createRoute(post(`${BASE}/api/provision`, { app: "Linear", mode: "auto" }));
   assert.equal(ok.status, 200);
@@ -211,6 +220,6 @@ test("routes: real runs need the access code; reveals need the admin token", asy
   await drive(run.id);
   const rv = await revealRoute(post(`${BASE}/api/provision/${run.id}/reveal`, { label: "client_secret" }), { params: Promise.resolve({ id: run.id }) });
   assert.match(((await rv.json()) as { value: string }).value, /^mock_secret_/);
-  assert.ok((await getRun(run.id))!.events.some((e) => /revealed to an admin/.test(e.text)));
+  assert.ok((await getRun(run.id))!.events.some((e) => /client_secret revealed/.test(e.text)));
   void reveal;
 });

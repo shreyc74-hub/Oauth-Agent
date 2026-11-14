@@ -5,14 +5,14 @@ import { mockEnabled } from "./mock";
 import type { Run } from "./types";
 
 /**
- * Real runs create accounts and spend the owner's API credits, so they need the access code.
- * Mock mode (PROVISION_MOCK=1) is open, so reviewers can click through the whole flow.
+ * Open by default: anyone with the link can run the agent in either mode (the create route is
+ * rate limited per network). Setting PROVISION_ACCESS_CODE turns on an access code for real runs.
+ * Mock mode (PROVISION_MOCK=1) is always open.
  */
 export function gate(req: Request): Response | null {
   if (mockEnabled()) return null;
   const code = process.env.PROVISION_ACCESS_CODE;
-  if (!code) return Response.json({ error: "Provisioning is off on this deployment (PROVISION_ACCESS_CODE is not set)." }, { status: 503 });
-  if (req.headers.get("x-access-code") !== code) return Response.json({ error: "Access code required.", needsCode: true }, { status: 401 });
+  if (code && req.headers.get("x-access-code") !== code) return Response.json({ error: "Access code required.", needsCode: true }, { status: 401 });
   return null;
 }
 

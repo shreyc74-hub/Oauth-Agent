@@ -45,10 +45,16 @@ export default function ProvisionRun({ id }: { id: string }) {
   }
 
   async function revealSecret(label: string) {
-    let token = "";
-    if (!run?.mock) { token = window.prompt("Admin token to reveal this secret (the reveal is logged)") || ""; if (!token) return; }
-    const r = await fetch(`/api/provision/${id}/reveal`, { method: "POST", headers: { "content-type": "application/json", "x-admin-token": token }, body: JSON.stringify({ label }) });
-    const j = await r.json();
+    const call = (token = "") => fetch(`/api/provision/${id}/reveal`, { method: "POST", headers: { "content-type": "application/json", ...(token ? { "x-admin-token": token } : {}) }, body: JSON.stringify({ label }) });
+    let r = await call();
+    let j = await r.json();
+    if (r.status === 401 && j.needsToken) {
+      // Only when the deployment has PROVISION_ADMIN_TOKEN set.
+      const token = window.prompt("Admin token to reveal this secret (the reveal is logged)") || "";
+      if (!token) return;
+      r = await call(token);
+      j = await r.json();
+    }
     if (!r.ok) { setErr(j.error); return; }
     setShown({ label, value: j.value });
     setTimeout(() => setShown(null), 30_000);

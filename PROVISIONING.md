@@ -63,8 +63,8 @@ Bootstrap credentials shared across runs (Slack's config refresh token, the per-
 - **Codes and links from email** are pulled out with plain code.
 - **Storage:** Supabase Vault (encrypted at rest), reached only through two `security definer` SQL functions that only the service role can run (`supabase/provision.sql`). Runs and the sheet hold vault names.
 - **Logs:** every event passes through redaction of the secret values seen in that run.
-- **Reveal:** an admin token is required. Every reveal is written to the run's audit log and, with Supabase, to the append-only `provision_reveals` table first; if that write fails the reveal is refused.
-- **Access:** real runs need an access code, because they create accounts and spend the owner's credits.
+- **Reveal:** anyone with the link can reveal the credentials a run created, because handing them over is the point of the agent. Every reveal is written to the run's audit log and, with Supabase, to the append-only `provision_reveals` table first; if that write fails the reveal is refused. Setting `PROVISION_ADMIN_TOKEN` puts reveals behind a token.
+- **Access:** the deployment is open, so anyone with the link can run the agent in either mode. Starting a run is limited to 20 per network per hour. Setting `PROVISION_ACCESS_CODE` puts real runs behind a code. A production version would tie runs and reveals to signed-in users and their own workspaces.
 
 Known limit: if a console shows a secret in plain text before any reveal (Slack's config token page may), the model's page snapshot can include it during the locate step. That bootstrap runs once per workspace; a production version would read that one field with a fixed selector.
 
@@ -126,7 +126,7 @@ Otherwise the run ends as **needs review** with the reason.
 | Anthropic | Stagehand's model and planning | `ANTHROPIC_API_KEY` (optional `STAGEHAND_MODEL`) |
 | AgentMail | Agent inboxes, full automation only | `AGENTMAIL_API_KEY` |
 | Google service account | Tracker sheet (share the sheet with its email as Editor) | `GOOGLE_SERVICE_ACCOUNT_JSON`, `GOOGLE_SHEET_ID` |
-| Access | Who may run and reveal | `PROVISION_ACCESS_CODE`, `PROVISION_ADMIN_TOKEN` |
+| Access (optional) | Lock runs and reveals behind a code; open when unset | `PROVISION_ACCESS_CODE`, `PROVISION_ADMIN_TOKEN` |
 | Redirect URI | `<this>/api/oauth/callback` on every app | `PUBLIC_BASE_URL` |
 
 ## What is tested and what isn't
