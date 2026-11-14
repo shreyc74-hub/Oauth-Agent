@@ -89,7 +89,7 @@ export async function openBrowser(opts: { sessionId?: string; contextId?: string
     model: { modelName: model, apiKey: process.env.ANTHROPIC_API_KEY },
     verbose: 0,
     disablePino: true,
-  } as ConstructorParameters<typeof Stagehand>[0]);
+  });
   await sh.init();
   const sessionId = String(sh.browserbaseSessionID);
   const page = () => sh.context.activePage() ?? sh.context.pages()[0];
