@@ -58,6 +58,14 @@ export async function getSecret(name: string): Promise<string | null> {
   return (data as string | null) ?? null;
 }
 
+/** Append-only record of a reveal (Supabase only). Throws if the record cannot be written. */
+export async function recordReveal(runId: string, name: string): Promise<void> {
+  const s = supabase();
+  if (!s) return;
+  const { error } = await s.from("provision_reveals").insert({ run_id: runId, secret_name: name });
+  if (error) throw new Error(`Could not record the reveal, so it was refused: ${error.message}`);
+}
+
 export async function hasSecret(name: string): Promise<boolean> {
   return (await getSecret(name)) !== null;
 }

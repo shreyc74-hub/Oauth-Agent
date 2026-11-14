@@ -63,7 +63,7 @@ Bootstrap credentials shared across runs (Slack's config refresh token, the per-
 - **Codes and links from email** are pulled out with plain code.
 - **Storage:** Supabase Vault (encrypted at rest), reached only through two `security definer` SQL functions that only the service role can run (`supabase/provision.sql`). Runs and the sheet hold vault names.
 - **Logs:** every event passes through redaction of the secret values seen in that run.
-- **Reveal:** an admin token is required, and every reveal is written to the run's audit log.
+- **Reveal:** an admin token is required. Every reveal is written to the run's audit log and, with Supabase, to the append-only `provision_reveals` table first; if that write fails the reveal is refused.
 - **Access:** real runs need an access code, because they create accounts and spend the owner's credits.
 
 Known limit: if a console shows a secret in plain text before any reveal (Slack's config token page may), the model's page snapshot can include it during the locate step. That bootstrap runs once per workspace; a production version would read that one field with a fixed selector.

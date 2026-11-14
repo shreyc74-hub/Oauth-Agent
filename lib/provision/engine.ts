@@ -11,7 +11,7 @@ import type { Mode, Playbook, Run, RunEvent, Step } from "./types";
 import type { Driver } from "./browser";
 import { openBrowser, browserConfigured, createContext, releaseSession } from "./browser";
 import { agentMail, findCode, findLink, waitForMail, type Inbox } from "./inbox";
-import { putSecret, getSecret, hasSecret, vaultName, redact } from "./vault";
+import { putSecret, getSecret, hasSecret, vaultName, redact, recordReveal } from "./vault";
 import { saveRun, getRun } from "./runs";
 import { authorizeUrl, codeFromUrl, exchangeCode, newState, refreshTokens, whoami, type Http } from "./verify";
 import { PLAYBOOKS, planFromGuide, mockPlanFromGuide, validatePlaybook } from "./planner";
@@ -611,6 +611,7 @@ export async function reveal(id: string, label: string): Promise<string> {
   if (!name) throw new Error(`No ${label} on this run.`);
   const v = await getSecret(name);
   if (!v) throw new Error("Not found in the vault.");
+  await recordReveal(run.id, name);
   log(run, "secret", `${label} revealed to an admin.`);
   await saveRun(run);
   return v;
