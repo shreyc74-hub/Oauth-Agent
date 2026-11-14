@@ -8,6 +8,7 @@ export default function Nav() {
   return (
     <nav aria-label="Main">
       <Link href="/" aria-current={cur("/")}>Library</Link>
+      <Link href="/provision" aria-current={cur("/provision")}>Provision</Link>
       <Link href="/how-it-works" aria-current={cur("/how-it-works")}>How it works</Link>
       <Link href="/ask" className="cta">Ask the agent</Link>
     </nav>

@@ -16,13 +16,16 @@
     "typecheck": "tsc --noEmit",
     "seed:sql": "tsx scripts/seed-sql.ts > supabase/seed.sql",
     "build:artifact": "tsx --tsconfig tsconfig.scripts.json scripts/build-artifact.ts",
-    "e2e": "node scripts/e2e.cjs"
+    "e2e": "node scripts/e2e.cjs",
+    "provision": "tsx --tsconfig tsconfig.scripts.json scripts/provision.ts"
   },
   "dependencies": {
+    "@browserbasehq/stagehand": "^3.7.3",
     "@supabase/supabase-js": "2.117.2",
     "next": "16.4.1",
     "react": "19.3.1",
-    "react-dom": "19.3.1"
+    "react-dom": "19.3.1",
+    "zod": "^4.6.7"
   },
   "devDependencies": {
     "@types/node": "20.14.10",

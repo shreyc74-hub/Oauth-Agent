@@ -6,6 +6,10 @@
 - **Repo:** https://github.com/shreyc74-hub/Oauth-Agent
 - **Evidence:** [`VERIFICATION.md`](VERIFICATION.md) (what we tested, corrected and could not verify) and [`attempts/`](attempts/) (setup logs)
 
+## New: provisioning agent
+
+Type an app name and the agent gets a sandbox, creates the OAuth app, stores the secrets in a vault and proves they work with a real authorization and API call. Human in the loop or full automation. See [`PROVISIONING.md`](PROVISIONING.md) for the approach, and `/provision` on the site (set `PROVISION_MOCK=1` to try it without accounts).
+
 ## What it does
 
 - **Library of 8 guides.** Slack, Linear, Notion, Gmail and Confluence were tested by creating real OAuth apps. HubSpot, Salesforce and LinkedIn were checked against official docs.
