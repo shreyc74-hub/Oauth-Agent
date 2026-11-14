@@ -397,3 +397,10 @@ ol.rsteps { list-style: none; padding: 0; margin: 16px 0 0; }
 .ev-secret .v { color: var(--accent); } .ev-handoff .v, .ev-approval .v { color: var(--wait); } .ev-error .v { color: var(--bad); } .ev-done .v, .ev-step .v { color: var(--ok); }
 .mhead { display: none; margin-bottom: 16px; }
 @media (max-width: 900px) { .mhead { display: block; } .ppage .rside .ptitle, .ppage .rside > .badge { display: none; } }
+.simulate { display: flex; gap: 8px; align-items: flex-start; margin-top: 12px; font-size: 13.5px; color: var(--muted); max-width: 760px; }
+.simulate input { margin-top: 3px; }
+.ev-agent .v { color: var(--agent); }
+.fixes { margin-top: 20px; border: 1px solid var(--agent); border-radius: 16px; padding: 18px 22px; background: var(--agent-soft); }
+.fixes h2 { font-size: 16px; }
+.fix { margin-top: 10px; font-size: 14px; }
+.fix p { margin: 2px 0 0; }

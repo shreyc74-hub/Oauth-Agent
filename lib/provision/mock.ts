@@ -10,7 +10,11 @@ export const mockEnabled = () => process.env.PROVISION_MOCK === "1" || process.e
 
 const sessions = new Map<string, { url: string; pendingState?: string; redirect?: string; blockerShown?: boolean }>();
 
-export async function mockBrowser(opts: { sessionId?: string }): Promise<Driver> {
+/**
+ * `mockFail` simulates a console that changed: browser steps whose instruction starts with one of the
+ * listed step titles' words fail until the recovery agent takes another route (via the sidebar).
+ */
+export async function mockBrowser(opts: { sessionId?: string; mockFail?: string }): Promise<Driver> {
   const id = opts.sessionId || `mock-session-${randomBytes(4).toString("hex")}`;
   if (!sessions.has(id)) sessions.set(id, { url: "about:blank" });
   const s = sessions.get(id)!;
@@ -31,7 +35,11 @@ export async function mockBrowser(opts: { sessionId?: string }): Promise<Driver>
         s.url = `${s.redirect}?code=mock_code_${randomBytes(3).toString("hex")}&state=${s.pendingState}`;
       }
       if (/FAIL_ACT/.test(instruction)) return { ok: false, message: "Element not found" };
+      if (opts.mockFail && instruction.startsWith(opts.mockFail) && !/left sidebar/.test(instruction)) return { ok: false, message: "No element matches: the console layout changed" };
       return { ok: true, message: "done" };
+    },
+    async look() {
+      return { url: s.url, title: "Developer settings", elements: ["Left sidebar menu", "Applications list", "Button: New application", "Credentials panel (masked)"] };
     },
     async blocker(): Promise<Blocker | null> {
       const want = process.env.PROVISION_MOCK_BLOCKER;

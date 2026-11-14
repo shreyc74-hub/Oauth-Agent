@@ -20,6 +20,8 @@ const BASE = "https://example.test";
 beforeEach(() => {
   process.env.PROVISION_MOCK = "1";
   delete process.env.PROVISION_MOCK_BLOCKER;
+  delete process.env.PROVISION_MOCK_RECOVERY;
+  delete process.env.PROVISION_RECOVERY;
   delete process.env.SUPABASE_URL;
   delete process.env.GOOGLE_SHEET_ID;
   _resetRuns(); _resetVault();
@@ -133,6 +135,7 @@ test("Slack uses the manifest API, and the config token is bootstrapped only onc
 });
 
 test("if the agent can't read a value, a person can paste it straight into the vault", async () => {
+  process.env.PROVISION_MOCK_RECOVERY = "giveup";
   const run = await createRun({ app: "HubSpot", mode: "auto", baseUrl: BASE });
   // Break the client secret capture by making the step unreadable.
   const deps = defaultDeps();

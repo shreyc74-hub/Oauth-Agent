@@ -77,7 +77,7 @@ export type RunStatus =
 export interface RunEvent {
   at: string;
   step?: string;
-  kind: "info" | "step" | "handoff" | "approval" | "secret" | "error" | "done";
+  kind: "info" | "step" | "handoff" | "approval" | "secret" | "error" | "done" | "agent";
   text: string;
   shot?: string; // screenshot URL or data URI (never of a revealed secret)
 }
@@ -91,7 +91,7 @@ export interface Run {
   status: RunStatus;
   strategy: Strategy;
   cursor: number; // index of the next step
-  steps: { id: string; title: string; kind: Step["kind"]; state: "todo" | "doing" | "done" | "skipped" | "blocked" }[];
+  steps: { id: string; title: string; kind: Step["kind"]; state: "todo" | "doing" | "done" | "skipped" | "blocked"; recovered?: boolean }[];
   pending?: {
     kind: "human" | "approval";
     step: string;
@@ -99,6 +99,8 @@ export interface Run {
     /** When set, the person can type a value that goes straight into the vault (e.g. a secret the agent could not read). */
     field?: { into: string; secret: boolean; label: string };
     blocker?: string;
+    /** Set when the recovery agent (not the playbook) wants to do this write. */
+    recovery?: string;
   };
   /** Non-secret values the steps use: app name, workspace name, redirect URI, base URL. */
   vars: Record<string, string>;
@@ -112,6 +114,8 @@ export interface Run {
   public: { clientId?: string; sandboxUrl?: string; appId?: string; authorizeUrl?: string };
   verify?: { state: string; verifier: string; code?: string; who?: string; refresh?: "ok" | "failed" | "not-offered"; at?: string };
   goLive?: Playbook["goLive"];
+  /** Where the recovery agent found a different route: suggested playbook changes for a person to review. */
+  fixes?: { step: string; suggestion: string; at: string }[];
   sheetRow?: number;
   events: RunEvent[];
   createdAt: string;

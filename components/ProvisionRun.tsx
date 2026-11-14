@@ -72,7 +72,7 @@ export default function ProvisionRun({ id }: { id: string }) {
           {run.steps.map((s, i) => (
             <li key={s.id} className={`rstep ${s.state === "done" ? "done" : s.state === "skipped" ? "skipped" : i === run.cursor && !done ? "active" : ""} ${s.state === "blocked" ? "blocked" : ""}`}>
               <span className="dot" aria-hidden />
-              <div><div className="tt">{s.title}</div><div className="nt">{s.kind}{s.state === "skipped" ? " · skipped" : ""}{s.state === "blocked" ? " · waiting for you" : ""}</div></div>
+              <div><div className="tt">{s.title}</div><div className="nt">{s.kind}{s.recovered ? " · recovered by agent" : ""}{s.state === "skipped" ? " · skipped" : ""}{s.state === "blocked" ? " · waiting for you" : ""}</div></div>
             </li>
           ))}
         </ol>
@@ -87,7 +87,7 @@ export default function ProvisionRun({ id }: { id: string }) {
 
         {p ? (
           <div className={`review ${p.kind === "approval" ? "approve" : "handoff"}`}>
-            <div className="eyebrow">{p.kind === "approval" ? "Approve before the agent acts" : p.blocker ? `Handoff: ${p.blocker}` : "Handoff"}</div>
+            <div className="eyebrow">{p.recovery ? "The recovery agent wants to act" : p.kind === "approval" ? "Approve before the agent acts" : p.blocker ? `Handoff: ${p.blocker}` : "Handoff"}</div>
             <h2>{run.steps[run.cursor]?.title}</h2>
             <p>{p.reason}</p>
             {p.field ? (
@@ -144,6 +144,16 @@ export default function ProvisionRun({ id }: { id: string }) {
             </div>
           ) : null}
         </div>
+
+        {run.fixes?.length ? (
+          <div className="fixes">
+            <h2>Suggested playbook fixes</h2>
+            <p className="small">The recovery agent found another route. A person reviews these before the playbook changes.</p>
+            {run.fixes.map((f, i) => (
+              <div key={i} className="fix"><b>{run.steps.find((s) => s.id === f.step)?.title || f.step}</b><p>{f.suggestion}</p></div>
+            ))}
+          </div>
+        ) : null}
 
         <div className="activity">
           <div className="eyebrow">Audit log</div>

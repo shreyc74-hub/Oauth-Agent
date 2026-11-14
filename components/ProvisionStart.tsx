@@ -16,6 +16,7 @@ export default function ProvisionStart({ mock }: { mock: boolean }) {
   const [err, setErr] = useState<{ text: string; research?: string; needsCode?: boolean } | null>(null);
   const [code, setCode] = useState("");
   const [runs, setRuns] = useState<Row[]>([]);
+  const [simulate, setSimulate] = useState(true);
 
   useEffect(() => { fetch("/api/provision").then((r) => r.json()).then(setRuns).catch(() => undefined); }, []);
 
@@ -23,7 +24,7 @@ export default function ProvisionStart({ mock }: { mock: boolean }) {
     if (!name.trim()) return;
     setBusy(true); setErr(null);
     try {
-      const res = await fetch("/api/provision", { method: "POST", headers: { "content-type": "application/json", ...codeHeader() }, body: JSON.stringify({ app: name, mode }) });
+      const res = await fetch("/api/provision", { method: "POST", headers: { "content-type": "application/json", ...codeHeader() }, body: JSON.stringify({ app: name, mode, simulateChange: mock && simulate }) });
       const j = await res.json();
       if (!res.ok) { setErr({ text: j.error, research: j.research, needsCode: j.needsCode }); return; }
       router.push(`/provision/${j.id}`);
@@ -52,6 +53,12 @@ export default function ProvisionStart({ mock }: { mock: boolean }) {
       <div className="tries">Try: {["Linear", "Slack", "HubSpot"].map((n) => <button key={n} type="button" className="chip" onClick={() => { setApp(n); start(n); }}>{n}</button>)}
         {mock ? <span className="badge st-unverified">Demo mode: simulated browser and providers</span> : null}
       </div>
+      {mock ? (
+        <label className="simulate">
+          <input type="checkbox" checked={simulate} onChange={(e) => setSimulate(e.target.checked)} />
+          Simulate a console change, so a step fails and the recovery agent has to find another route
+        </label>
+      ) : null}
       {err ? (
         <div className="card err" role="alert">
           <p>{err.text}</p>

@@ -18,20 +18,23 @@ import { PLAYBOOKS, planFromGuide, mockPlanFromGuide, validatePlaybook } from ".
 import { slackManifest } from "./playbooks/slack";
 import { upsertRow, sheetConfigured } from "./sheets";
 import { mockBrowser, mockInbox, mockHttp, mockEnabled } from "./mock";
+import { recover, claudeBrain, mockBrain, type Brain } from "./recover";
 import { libraryGuides, matchLibrary, slugify } from "../library";
 import { getGuide } from "../store";
 import type { Guide } from "../schema";
 
 export interface Deps {
-  openBrowser: (o: { sessionId?: string; contextId?: string }) => Promise<Driver>;
+  openBrowser: (o: { sessionId?: string; contextId?: string; mockFail?: string }) => Promise<Driver>;
   inbox: Inbox;
   http: Http;
+  /** Picks the recovery agent's next actions. */
+  brain: Brain;
   mock: boolean;
 }
 
 export function defaultDeps(): Deps {
-  if (mockEnabled()) return { openBrowser: mockBrowser, inbox: mockInbox, http: mockHttp, mock: true };
-  return { openBrowser, inbox: agentMail, http: (u, i) => fetch(u, i), mock: false };
+  if (mockEnabled()) return { openBrowser: mockBrowser, inbox: mockInbox, http: mockHttp, brain: mockBrain, mock: true };
+  return { openBrowser, inbox: agentMail, http: (u, i) => fetch(u, i), brain: claudeBrain, mock: false };
 }
 
 /** Missing keys or setup. Retrying or handing over won't help, so the run stops with the reason. */
@@ -69,7 +72,7 @@ export function missingSetup(mode: Mode, deps: Deps): string[] {
   return need.filter((k) => !process.env[k]);
 }
 
-export async function createRun(input: { app: string; mode: Mode; baseUrl: string }, deps = defaultDeps()): Promise<Run> {
+export async function createRun(input: { app: string; mode: Mode; baseUrl: string; simulateChange?: boolean }, deps = defaultDeps()): Promise<Run> {
   const missing = missingSetup(input.mode, deps);
   if (missing.length) throw new ConfigError(`Not set up for ${input.mode === "auto" ? "full automation" : "human-in-the-loop"} runs yet. Missing: ${missing.join(", ")}.`);
   const playbook = await planFor(input.app, deps);
@@ -93,6 +96,11 @@ export async function createRun(input: { app: string; mode: Mode; baseUrl: strin
     playbook,
     vault: {}, public: {}, events: [], createdAt: now, updatedAt: now,
   };
+  if (deps.mock && input.simulateChange) {
+    // Demo only: make the first form-filling browser step fail, as if the provider redesigned its console.
+    const target = steps.find((s) => s.kind === "browser" && s.instruction && /fill|create|open the developer/i.test(s.title) && !s.write);
+    if (target && "instruction" in target && target.instruction) { run.vars.mock_fail = target.instruction.slice(0, 30); log(run, "info", `Demo: simulating a console change on "${target.title}".`); }
+  }
   log(run, "info", `Plan: ${playbook.name}, ${playbook.strategy} strategy, evidence ${playbook.evidence}. Sandbox: ${playbook.sandbox.kind}. ${input.mode === "auto" ? "Full automation" : "Human in the loop"}, ${steps.length} steps.`);
   await saveRun(run);
   await syncSheet(run);
@@ -144,7 +152,7 @@ async function variablesFor(run: Run, text: string, extra: Record<string, string
 
 type Outcome = "done" | "pause" | "wait";
 
-interface Ctx { run: Run; deps: Deps; deadline: number; seen: Set<string>; driver?: Driver }
+interface Ctx { run: Run; deps: Deps; deadline: number; seen: Set<string>; driver?: Driver; recovered?: Set<string> }
 
 async function browser(ctx: Ctx): Promise<Driver> {
   if (ctx.driver) return ctx.driver;
@@ -157,7 +165,7 @@ async function browser(ctx: Ctx): Promise<Driver> {
     if (!contextId) { contextId = await createContext(); await putSecret(name, contextId, `${run.app} browser context`); }
   }
   if (!deps.mock && !browserConfigured()) throw new ConfigError("The browser isn't configured: set BROWSERBASE_API_KEY and BROWSERBASE_PROJECT_ID.");
-  ctx.driver = await deps.openBrowser({ sessionId: run.browser?.sessionId, contextId });
+  ctx.driver = await deps.openBrowser({ sessionId: run.browser?.sessionId, contextId, mockFail: deps.mock ? run.vars.mock_fail : undefined });
   run.browser = { sessionId: ctx.driver.sessionId, liveUrl: ctx.driver.liveUrl || run.browser?.liveUrl };
   return ctx.driver;
 }
@@ -178,6 +186,10 @@ async function checkBlocker(ctx: Ctx, s: Step): Promise<Outcome | null> {
   const b = await (await browser(ctx)).blocker();
   if (!b) return null;
   if (b.kind === "signin" && ctx.run.mode === "auto" && s.kind === "browser" && /sign ?up|signup/i.test(s.title)) return null;
+  return wallPause(ctx, s, b);
+}
+
+function wallPause(ctx: Ctx, s: Step, b: { kind: string; detail: string }): Outcome {
   const why: Record<string, string> = {
     captcha: "A captcha is showing. The agent does not solve captchas. Complete it in the live browser, then press Continue.",
     phone: "The provider wants a phone number or SMS code. Enter it in the live browser, then press Continue.",
@@ -383,6 +395,92 @@ const HANDLERS: Record<string, (ctx: Ctx) => Promise<void>> = {
   },
 };
 
+// ---------- Recovery agent ----------
+
+/** The provider's own sites: hosts from the playbook's URLs (base domain), plus this site. */
+export function allowedHosts(run: Run): string[] {
+  const p = run.playbook;
+  const urls = [...p.steps[run.mode].map((s) => ("url" in s ? s.url : undefined)), p.oauth.authorizeUrl, p.oauth.tokenUrl, p.oauth.whoami.url];
+  const hosts = new Set<string>();
+  for (const u of urls) {
+    try { hosts.add(new URL(String(u)).hostname.split(".").slice(-2).join(".")); } catch { /* not a URL */ }
+  }
+  try { hosts.add(new URL(run.vars.base_url).hostname); } catch { /* none */ }
+  return [...hosts];
+}
+
+/**
+ * A browser or capture step failed. Give its goal to the recovery agent before asking a person.
+ * Returns the outcome, or a note for the handoff when the agent couldn't do it either.
+ */
+async function tryRecovery(ctx: Ctx, s: Step, error: string): Promise<{ out: Outcome } | { note: string } | null> {
+  const { run, deps } = ctx;
+  if (s.kind !== "browser" && s.kind !== "capture") return null;
+  if (process.env.PROVISION_RECOVERY === "0") return null;
+  ctx.recovered ??= new Set();
+  if (ctx.recovered.has(s.id) || Date.now() + 15_000 > ctx.deadline) return null;
+  ctx.recovered.add(s.id);
+
+  // Everything secret this run holds, so nothing the page shows can reach the model.
+  for (const name of Object.values(run.vault)) { const v = await getSecret(name).catch(() => null); if (v) ctx.seen.add(v); }
+  const driver = await browser(ctx);
+  const names = new Set([...(("instruction" in s && s.instruction) || "").matchAll(/%([a-z_]+)%/g)].map((m) => m[1]));
+  for (const n of ["app_name", "dev_name", "dev_url", "redirect_uri", "workspace_name"]) names.add(n);
+  if (run.identity?.email) { names.add("email"); names.add("password"); }
+  const approved = JSON.parse(run.vars[`recovery-approved:${s.id}`] || "[]") as string[];
+  log(run, "agent", `Step failed (${error}). Recovery agent takes over with the step's goal.`, s.id, ctx.seen);
+
+  const result = await recover({
+    driver, brain: deps.brain, mode: run.mode, app: run.app,
+    step: s.kind === "capture"
+      ? { id: s.id, title: s.title, kind: "capture", find: s.find, into: s.into }
+      : { id: s.id, title: s.title, kind: "browser", instruction: s.instruction, url: s.url },
+    error,
+    allowedHosts: allowedHosts(run),
+    captureLabels: s.kind === "capture" ? [s.into] : [],
+    variableNames: [...names],
+    approved,
+    hasInbox: Boolean(run.identity?.inboxId),
+    resolveVars: (text, extra) => variablesFor(run, text, extra),
+    storeValue: async (label, value) => {
+      ctx.seen.add(value);
+      await store(ctx, label, value, s.kind === "capture" && label === s.into ? s.secret : label !== "client_id");
+    },
+    readInboxCode: async () => {
+      if (!run.identity?.inboxId) return null;
+      const mail = await waitForMail(deps.inbox, run.identity.inboxId, { since: Date.now() - 10 * 60_000, timeoutMs: deps.mock ? 10 : 20_000, pollMs: deps.mock ? 1 : 4000 });
+      const code = mail ? findCode(mail) : null;
+      if (code) ctx.seen.add(code);
+      return code;
+    },
+    redact: (t) => redact(t, [...ctx.seen]),
+    trace: (t) => log(run, "agent", t, s.id, ctx.seen),
+    deadline: Math.min(ctx.deadline - 10_000, Date.now() + 120_000),
+  });
+
+  switch (result.outcome) {
+    case "recovered": {
+      if (s.kind === "capture" && !run.vault[s.into.replace(/^shared:/, "")] && !(s.into === "client_id" && run.public.clientId)) {
+        return { note: "The recovery agent said it was done, but the value never reached the vault." };
+      }
+      run.steps[run.cursor].recovered = true;
+      log(run, "step", `${s.title}: recovered by the agent. ${result.summary}`, s.id, ctx.seen);
+      if (result.fix) {
+        (run.fixes ??= []).push({ step: s.id, suggestion: result.fix, at: new Date().toISOString() });
+        log(run, "agent", `Suggested playbook fix for "${s.title}": ${result.fix}`, s.id, ctx.seen);
+      }
+      return { out: "done" };
+    }
+    case "wall":
+      return { out: wallPause(ctx, s, result.blocker) };
+    case "needs_approval":
+      pause(run, { kind: "approval", step: s.id, reason: `The recovery agent wants to: ${result.instruction}`, recovery: result.instruction }, "approval");
+      return { out: "pause" };
+    case "gave_up":
+      return { note: `The recovery agent tried${result.tried.length ? `: ${result.tried.slice(-4).join("; ")}` : " but couldn't act"}. It said: ${result.reason}` };
+  }
+}
+
 /** Runs steps until the run finishes, pauses, or the time budget is used up. Safe to call repeatedly. */
 export async function advance(id: string, deps = defaultDeps(), budgetMs = 240_000): Promise<Run> {
   const run = await getRun(id);
@@ -412,9 +510,22 @@ export async function advance(id: string, deps = defaultDeps(), budgetMs = 240_0
           log(run, "error", `Stopped: ${msg}.`, s.id, ctx.seen);
           break;
         }
+        // A failed browser or capture step goes to the recovery agent first.
+        let note = "";
+        try {
+          const rec = await tryRecovery(ctx, s, msg);
+          if (rec && "out" in rec) {
+            if (rec.out === "pause") break;
+            run.steps[run.cursor].state = "done"; run.cursor++; await saveRun(run); continue;
+          }
+          if (rec) note = ` ${rec.note}`;
+        } catch (re) {
+          if ((re as Error).name === "ConfigError") { run.status = "failed"; log(run, "error", `Stopped: ${(re as Error).message}.`, s.id, ctx.seen); break; }
+          note = ` The recovery agent hit an error: ${(re as Error).message.slice(0, 160)}.`;
+        }
         // Anything else the agent can't finish becomes a handoff, not a dead run.
         const field = s.kind === "capture" ? { into: s.into, secret: s.secret, label: s.find } : undefined;
-        pause(run, { kind: "human", step: s.id, reason: `The agent couldn't finish this: ${msg}. Do it in the live browser${field ? ", or paste the value below (it goes straight to the vault)" : ""}, then press Continue.`, field }, "handoff");
+        pause(run, { kind: "human", step: s.id, reason: `The agent couldn't finish this: ${msg}.${note} Do it in the live browser${field ? ", or paste the value below (it goes straight to the vault)" : ""}, then press Continue.`, field }, "handoff");
         run.vars[`retry:${s.id}`] = "1";
         log(run, "error", msg, s.id, ctx.seen);
         out = "pause";
@@ -455,7 +566,13 @@ export async function respond(id: string, action: "continue" | "approve" | "skip
   if (!run.pending) return run;
   const p = run.pending;
   const s = run.playbook.steps[run.mode][run.cursor];
-  if (action === "approve" && p.kind === "approval") {
+  if (action === "approve" && p.kind === "approval" && p.recovery) {
+    // Approve exactly this action for the recovery agent; the step runs again and the agent may do it.
+    const list = JSON.parse(run.vars[`recovery-approved:${p.step}`] || "[]") as string[];
+    run.vars[`recovery-approved:${p.step}`] = JSON.stringify([...list, p.recovery]);
+    run.steps[run.cursor].state = "todo";
+    log(run, "approval", `Approved for the recovery agent: ${p.recovery}`, p.step);
+  } else if (action === "approve" && p.kind === "approval") {
     run.vars[`approved:${p.step}`] = "1";
     run.steps[run.cursor].state = "todo";
     log(run, "approval", `Approved: ${run.steps[run.cursor].title}.`, p.step);

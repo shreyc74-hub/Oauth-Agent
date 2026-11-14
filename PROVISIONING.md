@@ -20,7 +20,7 @@ A tracker row per run goes to a Google Sheet: status, sandbox, masked client ID,
 
 - **Demo mode** (no accounts): `PROVISION_MOCK=1 npm run dev`, open `/provision`. The browser, inbox and provider APIs are simulated; the plans, state machine, pauses, approvals, vault writes, reveal logging and sheet rows are the real code.
 - **Real runs:** set the keys in [Setup](#setup), then use `/provision` or the terminal: `npm run provision -- linear` (add `--auto` for full automation).
-- **Tests:** `npm test` (104 tests; 16 for provisioning, all offline).
+- **Tests:** `npm test` (111 tests; 23 for provisioning and the recovery agent, all offline).
 
 ## How an app gets its OAuth app: three strategies
 
@@ -80,6 +80,31 @@ A run is a state machine stored in Supabase after every step, so it survives ser
 - Anything else the agent can't finish also becomes a handoff, not a dead run. If it can't read a value, the person can paste it into a field that writes straight to the vault.
 - Missing setup (no browser key, no inbox key) stops the run with the reason instead of looping.
 
+## Workflow and agent: which part is which
+
+The backbone is a workflow, on purpose. Code decides the order of steps, keeps the run state, stores secrets, stops for approvals and runs verification. That is what makes the vault boundary, the approvals and the audit log dependable.
+
+The model makes decisions in four places:
+
+| Where | What the model decides | What code still controls |
+|---|---|---|
+| Planner | The playbook for an app with no hand-written one | Structural checks; plan marked unverified |
+| Each browser step | What to click and type on the page (Stagehand) | The step's goal, order and approval point |
+| Wall check | Whether a captcha, phone check or similar is showing | What happens next: a handoff |
+| **Recovery agent** | How to reach a failed step's goal another way | Tools, budget, allowed sites, approvals, secrets |
+
+**The recovery agent.** When a browser or capture step fails (the console changed, a button moved, a dialog got in the way), the step's goal goes to a short agent loop before a person is asked. It has six tools: look, act, capture (page to vault), read inbox code, ask a human, and done. Code decides what it is allowed to do:
+
+- It never receives a secret. Values go page to vault through capture, it is told only "stored", and anything it reads from the page is redacted against every secret the run holds.
+- In human-in-the-loop mode, any create, submit or consent action it attempts stops for approval. The person approves that exact action; the step runs again and the agent may do it.
+- A captcha, phone check, device prompt or payment form ends the loop with a handoff.
+- It can only navigate to the provider's own sites; anything else is refused or reversed.
+- It has 8 actions and 2 minutes. If it gives up, the handoff tells the person what it tried.
+
+When it recovers, it suggests a playbook fix ("the control moved into the sidebar menu"). Fixes are shown on the run for a person to review, not applied automatically. That is how playbooks keep up with consoles that change.
+
+Switch it off with `PROVISION_RECOVERY=0`. In demo mode, tick "Simulate a console change" to watch it work on Linear.
+
 ## Verification
 
 A run is **verified** only if all of this works against the sandbox:
@@ -106,7 +131,7 @@ Otherwise the run ends as **needs review** with the reason.
 
 ## What is tested and what isn't
 
-- **Tested offline (16 tests):** both modes end to end for Linear, Slack and HubSpot plans; approvals before every write in human mode and none in auto; captcha handoff and retry of the same step; Slack bootstrap skipped on the second run; pasting a value straight into the vault; cancel; callback state matching; plan checks; secrets absent from run records and sheet rows; TOTP against the RFC 6238 vector; email code and link parsing; access and reveal rules.
+- **Tested offline (23 tests):** recovery of a failed browser step and of a failed capture with a fix suggested; no secret in the agent's transcript even when the page shows one; the agent's own writes stopping for approval; walls, budget and give-up ending in a handoff; staying on the provider's sites; both modes end to end for Linear, Slack and HubSpot plans; approvals before every write in human mode and none in auto; captcha handoff and retry of the same step; Slack bootstrap skipped on the second run; pasting a value straight into the vault; cancel; callback state matching; plan checks; secrets absent from run records and sheet rows; TOTP against the RFC 6238 vector; email code and link parsing; access and reveal rules.
 - **Not yet run against the live providers.** The Linear and Slack console flows were walked by hand in the first assignment; the HubSpot playbook is from docs. The first live runs will correct instructions the way the first assignment's setup attempts corrected the guides.
 
 ## What I'd want to decide with the team before production
@@ -124,6 +149,7 @@ Otherwise the run ends as **needs review** with the reason.
 - `lib/provision/playbooks/` Linear (browser), Slack (API), HubSpot (browser, sandbox)
 - `lib/provision/planner.ts` playbook lookup, Claude planner for other apps, plan checks
 - `lib/provision/engine.ts` the state machine, handoffs, approvals, verification, Slack handler
+- `lib/provision/recover.ts` the recovery agent: tools, guardrails, Claude and scripted brains
 - `lib/provision/browser.ts` Browserbase + Stagehand driver (variables, masked capture, wall detection)
 - `lib/provision/vault.ts` Supabase Vault (memory fallback for local dev), redaction
 - `lib/provision/inbox.ts`, `totp.ts`, `verify.ts`, `sheets.ts`, `runs.ts`, `mock.ts`

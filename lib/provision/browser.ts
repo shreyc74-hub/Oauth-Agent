@@ -16,6 +16,8 @@ export interface Driver {
   liveUrl?: string;
   goto(url: string): Promise<void>;
   act(instruction: string, variables?: Record<string, string>): Promise<{ ok: boolean; message: string }>;
+  /** What the page shows: URL, title and the visible controls (for the recovery agent). */
+  look(): Promise<{ url: string; title: string; elements: string[] }>;
   /** Anything on screen the agent must not or cannot get past by itself. */
   blocker(): Promise<Blocker | null>;
   /** Locates `find`, optionally clicks `reveal`, then reads the value without the model seeing it. */
@@ -99,6 +101,10 @@ export async function openBrowser(opts: { sessionId?: string; contextId?: string
     async act(instruction, variables) {
       const r = await sh.act(instruction, { variables });
       return { ok: r.success, message: r.message };
+    },
+    async look() {
+      const found = await sh.observe("List the visible headings, buttons, links, toggles and form fields on this page.");
+      return { url: page().url(), title: await page().title().catch(() => ""), elements: found.slice(0, 40).map((a) => a.description) };
     },
     async blocker() {
       const r = await sh.extract(
