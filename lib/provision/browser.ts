@@ -109,6 +109,24 @@ export async function openBrowser(opts: { sessionId?: string; contextId?: string
   // The connection to the hosted browser can drop mid-run (Stagehand then reports itself uninitialized).
   // Reconnect to the same session, so the page a person or the agent reached is kept, and retry once.
   const DEAD = /uninitiali[sz]ed|reading 'activePage'|Target (page, context or browser )?(has been )?closed|has been closed|not connected|WebSocket/i;
+  /**
+   * What code can see but the model's page snapshot can't: whether form fields are filled (never their
+   * values) and whether a Cloudflare Turnstile check on the page is still unpassed.
+   */
+  const formState = async (): Promise<{ fields: string; turnstilePending: boolean }> => {
+    try {
+      return await page().evaluate(() => {
+        const vis = (e: Element) => !!((e as HTMLElement).offsetWidth || (e as HTMLElement).offsetHeight);
+        const fields = [...document.querySelectorAll("input, textarea")]
+          .filter((e) => vis(e) && !["hidden", "submit", "button", "checkbox", "radio"].includes((e as HTMLInputElement).type))
+          .slice(0, 12)
+          .map((e) => { const i = e as HTMLInputElement; const label = i.getAttribute("aria-label") || i.placeholder || i.name || i.type; return `${label}: ${i.value ? "filled" : "empty"}`; })
+          .join("; ");
+        const ts = document.querySelector("input[name='cf-turnstile-response']") as HTMLInputElement | null;
+        return { fields, turnstilePending: Boolean(ts && !ts.value) };
+      });
+    } catch { return { fields: "", turnstilePending: false }; }
+  };
   const guard = <A extends unknown[], R>(fn: (...a: A) => Promise<R>) => async (...a: A): Promise<R> => {
     try { return await fn(...a); }
     catch (e) {
@@ -133,6 +151,12 @@ export async function openBrowser(opts: { sessionId?: string; contextId?: string
       return { url: page().url(), title: await page().title().catch(() => ""), elements: found.slice(0, 40).map((a) => a.description) };
     }),
     blocker: guard(async (): Promise<Blocker | null> => {
+      // Code first: an invisible Turnstile on a form that hasn't passed blocks submitting, with nothing
+      // on screen for the model to see. Checked after the agent acted, so it is a real wall here.
+      let fs = await formState();
+      // Invisible Turnstile often passes by itself within a few seconds: give it that chance first.
+      for (let i = 0; fs.turnstilePending && i < 3; i++) { await new Promise((r) => setTimeout(r, 2000)); fs = await formState(); }
+      if (fs.turnstilePending) return { kind: "captcha", detail: "This form has a Cloudflare Turnstile check that hasn't passed for the automated browser, so the form won't submit. Submit it in the live browser (complete the check if one shows)." };
       const r = await sh.extract(
         "Is something on this page stopping an automated agent from continuing? Answer captcha for any CAPTCHA, 'verify you are human' or Turnstile check; phone for a phone number or SMS code request; device for approve-on-another-device or passkey prompts; payment for a card form; signin when the page asks to sign in; error for an error page. Otherwise answer none.",
         blockerSchema,
@@ -140,8 +164,9 @@ export async function openBrowser(opts: { sessionId?: string; contextId?: string
       return r.blocker === "none" ? null : { kind: r.blocker, detail: r.detail };
     }),
     goalCheck: guard(async (goal: string) => {
+      const fs = await formState();
       const r = await sh.extract(
-        `A browser agent was given this task: "${goal}". Look at the page now. Is the task fully finished (every field filled and the form submitted, or the page it leads to showing)? Answer done=true only if nothing is left to do for this task. If something is left, say what in a few words in "missing".`,
+        `A browser agent was given this task: "${goal}".${fs.fields ? ` Form fields as code sees them (the page text may not show typed values): ${fs.fields}.` : ""} Look at the page now. Is the task fully finished (every field filled and the form submitted, or the page it leads to showing)? Answer done=true only if nothing is left to do for this task. If something is left, say what in a few words in "missing".`,
         goalSchema,
       );
       return { done: r.done, missing: r.missing };
