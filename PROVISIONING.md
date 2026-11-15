@@ -24,7 +24,7 @@ A tracker row per run goes to a Google Sheet: status, sandbox, masked client ID,
 
 - **Demo mode** (no accounts): `PROVISION_MOCK=1 npm run dev`, open `/provision`. The browser, inbox and provider APIs are simulated; the plans, state machine, pauses, approvals, vault writes, reveal logging and sheet rows are the real code.
 - **Real runs:** set the keys in [Setup](#setup), then use `/provision` or the terminal: `npm run provision -- linear` (add `--auto` for full automation).
-- **Tests:** `npm test` (153 tests, all offline, including the sandbox check and use-case scopes).
+- **Tests:** `npm test` (155 tests, all offline, including the sandbox check and use-case scopes).
 
 ## How an app gets its OAuth app: three strategies
 
@@ -37,6 +37,8 @@ Browser automation is the fallback, not the strategy.
 | **Human** | The step needs a person by policy or law | Captchas, phone checks, payment, signing an acceptable-use policy, production review. |
 
 **Choosing the mode last.** Picking human in the loop or full automation before the agent knows the vendor would decide how a person gets involved without knowing what the job is. So a run is created research-first and stops at "Ready to start" with the findings. The agent recommends a mode: full automation when the plan is tested or from the vendor's docs and the agent's inbox is configured, a person when the plan is generated and unverified or a sandbox wasn't confirmed. The person picks and starts.
+
+**One research call, not a guide.** The sandbox check's research also collects what provisioning needs from the vendor's official pages: the sign-up and app-creation pages, the steps in order, the OAuth endpoints and a minimal scope set (or, for an API-key vendor, the header and a test call). Code keeps only well-formed parts. When an app has no guide, the plan is written from this brief, which is not saved to the Library; a full guide is researched only when the brief is missing. That is one research call per new vendor instead of two. The browser agent's per-click decisions run on a small model (`STAGEHAND_MODEL`); research, planning and recovery keep the default.
 
 **Zero touch.** With "Run it end to end without me" (on by default), full automation starts by itself when the research finishes. In full automation a not-confirmed sandbox is logged and tried instead of asked about (a gated verdict still stops the run before anything is created), and the OAuth part counts the guide's self-serve creation steps or a DCR endpoint as evidence when no quote says who may create apps. With `PROVISION_ACCEPT_TERMS=1`, set by the owner, the agent accepts vendor developer terms for test accounts and logs each acceptance; payment, phone, identity and business checks always go to a person. Captchas are handed over once per vendor: the shared mailbox's account and the vendor's saved browser context are reused, so later runs for that vendor don't meet them.
 

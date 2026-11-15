@@ -19,7 +19,7 @@ import { agentMail, findCode, findLink, waitForMail, type Inbox } from "./inbox"
 import { putSecret, getSecret, hasSecret, vaultName, redact, recordReveal } from "./vault";
 import { saveRun, getRun } from "./runs";
 import { authorizeUrl, codeFromUrl, exchangeCode, newState, refreshTokens, whoami, type Http } from "./verify";
-import { PLAYBOOKS, planFromGuide, mockPlanFromGuide, validatePlaybook, type PlanTarget } from "./planner";
+import { PLAYBOOKS, planFromGuide, mockPlanFromGuide, validatePlaybook, guideFromBrief, type PlanTarget } from "./planner";
 import { slackManifest } from "./playbooks/slack";
 import { upsertRow, sheetConfigured } from "./sheets";
 import { mockBrowser, mockInbox, mockHttp, mockEnabled } from "./mock";
@@ -107,8 +107,8 @@ export async function sandboxFor(app: string, deps: Deps, guideSlug?: string, pr
   return check;
 }
 
-export async function planFor(app: string, deps: Deps, guideSlug?: string, setup?: SandboxCheck, progress: Progress = noProgress, target?: PlanTarget): Promise<Playbook> {
-  const guide = await findGuide(app, guideSlug);
+export async function planFor(app: string, deps: Deps, guideSlug?: string, setup?: SandboxCheck, progress: Progress = noProgress, target?: PlanTarget, guideOverride?: Guide): Promise<Playbook> {
+  const guide = guideOverride || (await findGuide(app, guideSlug));
   const slug = guide?.slug || slugify(app);
   if (PLAYBOOKS[slug]) return PLAYBOOKS[slug];
   if (!guide) throw new NoGuideError(app);
@@ -139,7 +139,7 @@ export async function createRun(input: { app: string; mode?: Mode; baseUrl: stri
   }
   progress({ id: "setup", label: "Checking this deployment's setup", state: "done", detail: missing.auto.length ? `human in the loop ready; full automation missing ${missing.auto.join(", ")}` : "both modes ready" });
 
-  const guide = await stage("guide", "Finding the readiness guide", input.app, () => findGuide(input.app, input.guideSlug),
+  let guide = await stage("guide", "Finding the readiness guide", input.app, () => findGuide(input.app, input.guideSlug),
     (g) => (g ? `${g.name}: ${g.evidenceLevel === "generated" ? "agent-generated guide" : "researched library guide"}${PLAYBOOKS[g.slug] ? ", plus a hand-written playbook" : ""}` : "no guide yet: checking the sandbox first, so a gated vendor costs no guide"));
   const known = PLAYBOOKS[guide?.slug || slugify(input.app)];
 
@@ -148,8 +148,15 @@ export async function createRun(input: { app: string; mode?: Mode; baseUrl: stri
     () => sandboxFor(input.app, deps, input.guideSlug, progress),
     (c) => (c ? `${c.summary ? `${c.summary} ` : ""}${c.verdict.replace(/_/g, " ")}${c.relation ? `; sandbox is ${c.relation === "same" ? "the same account as the developer side" : c.relation === "separate" ? "a separate account" : "not confirmed as same or separate"}` : ""}` : "skipped (no guide)"));
   if (sandbox?.verdict === "gated") throw new SandboxGatedError(input.app, sandbox);
-  // A test setup is possible (or not ruled out): now the guide is worth writing. The start page researches
-  // it and calls again; the sandbox verdict is cached, so it isn't researched twice.
+  // A test setup is possible (or not ruled out). The same research collected the official pages, steps and
+  // endpoints, which is enough to plan from: no full guide needed. Only without that brief does the start
+  // page write a full guide (and call again; the sandbox verdict is cached, so it isn't researched twice).
+  let fromBrief = false;
+  if (!guide && !known && sandbox?.resources) {
+    guide = guideFromBrief({ name: input.app, slug: slugify(input.app) }, sandbox.resources, sandbox.summary);
+    fromBrief = true;
+    progress({ id: "brief", label: "Planning from the research brief (no full guide needed)", state: "done", detail: `${sandbox.resources.steps.length} steps and ${sandbox.resources.docs.length} official pages${sandbox.resources.oauth ? ", OAuth endpoints" : ""}${sandbox.resources.apiKey ? ", API key details" : ""}` });
+  }
   if (!guide && !known) throw new NoGuideError(input.app);
 
   // 2. Which credentials does the vendor offer, and which one gets provisioned?
@@ -176,7 +183,7 @@ export async function createRun(input: { app: string; mode?: Mode; baseUrl: stri
   // 4. The plan, for that credential and route.
   const target: PlanTarget = { credential: chosen, dcr: route.method === "Dynamic Client Registration", keyWhere: sandbox?.offered?.find((o) => o.type === "api_key")?.where };
   let playbook = await stage("plan", "Planning the steps", known ? "hand-written playbook" : deps.mock ? "demo plan from the guide" : "Claude writes the plan from the guide, then code checks it",
-    () => planFor(input.app, deps, input.guideSlug, sandbox, progress, target),
+    () => planFor(input.app, deps, input.guideSlug, sandbox, progress, target, fromBrief ? guide || undefined : undefined),
     (p) => `${p.strategy} strategy; ${p.steps.human.length} steps with a person, ${p.steps.auto.length} fully automated; evidence ${p.evidence}`);
   if (target.dcr && dcr?.authorizationEndpoint && dcr.tokenEndpoint) {
     // Clients registered there authorize against that server's own endpoints.

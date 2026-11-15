@@ -2,7 +2,7 @@
 // planner turns that app's readiness guide (the first assignment's output) into a playbook with Claude.
 // The guide is the agent's map: no guide, no plan. Generated playbooks are marked "unverified".
 import type { Guide } from "../schema";
-import type { Progress, SandboxCheck } from "./types";
+import type { Progress, ProvisionBrief, SandboxCheck } from "./types";
 import type { Mode, Playbook, Step } from "./types";
 import { linear } from "./playbooks/linear";
 import { slack } from "./playbooks/slack";
@@ -80,6 +80,25 @@ Rules:
 - Scopes: the smallest set from the guide's minimal sets.`;
 
 /** Builds a playbook for an app that has a guide but no hand-written playbook. */
+/**
+ * A minimal guide built from the research brief, for planning only. It is never saved to the Library:
+ * provisioning needs the steps, endpoints and scopes, not a full readiness guide.
+ */
+export function guideFromBrief(app: { name: string; slug: string }, brief: ProvisionBrief, summary?: string): Guide {
+  return {
+    slug: app.slug, name: app.name, website: brief.website || "", category: "", oauth: { supported: Boolean(brief.oauth) || !brief.apiKey },
+    evidenceLevel: "generated", checkedOn: new Date().toISOString().slice(0, 10), verdict: summary || "",
+    glance: { creation: { rating: 3, label: "", note: "" }, approval: { rating: 3, label: "", note: "" }, handsOn: { value: "", note: "" }, waiting: { value: "", note: "" }, ownApp: { managedByComposio: "unknown", headline: "", note: "" } },
+    oneWayDoors: [], appTypes: { items: [], notes: [] },
+    scopes: { intro: "", rows: [], minimalSets: brief.oauth?.scopes.length ? [{ label: "Minimal (from the docs)", scopes: brief.oauth.scopes, note: "" }] : [], changingLater: [] },
+    prerequisites: { toCreate: [], forApproval: [] },
+    steps: brief.steps.map((s) => ({ owner: s.owner, title: s.title, detail: s.detail, time: "" })),
+    approval: { whenNeeded: brief.goLive || "", cost: "", renewal: "", stages: [], submit: [], rejections: [] },
+    limits: { ladder: [], notes: [] }, tokens: { rows: [] }, dataUse: { rules: [] }, credentialHandoff: { level: 2, summary: "", status: "unverified" },
+    blockers: [], evidence: [], sources: brief.docs.map((d) => ({ title: d.label, url: d.url })),
+  };
+}
+
 /** What the research decided the plan must provision, and how. */
 export interface PlanTarget { credential: "oauth" | "api_key"; dcr?: boolean; keyWhere?: string }
 
@@ -94,7 +113,9 @@ export async function planFromGuide(guide: Guide, setup?: SandboxCheck, progress
   const goal = target.credential === "api_key"
     ? `\nProvision: an API KEY, not an OAuth app (OAuth is not self-serve for this vendor).${target.keyWhere ? ` Where keys are created: ${target.keyWhere}.` : ""}`
     : target.dcr ? "\nProvision: an OAuth app through Dynamic Client Registration (strategy \"dcr\")." : "\nProvision: an OAuth app.";
-  const ask = `Guide for ${guide.name} (slug ${guide.slug}):\n${JSON.stringify(brief)}${map ? `\nSetup map (checked against the vendor's pages):\n${JSON.stringify(map)}` : ""}${goal}`;
+  // Endpoints, official pages and key details from the research brief, when there is one.
+  const res = setup?.resources ? { officialPages: setup.resources.docs, oauth: setup.resources.oauth, apiKey: setup.resources.apiKey } : undefined;
+  const ask = `Guide for ${guide.name} (slug ${guide.slug}):\n${JSON.stringify(brief)}${map ? `\nSetup map (checked against the vendor's pages):\n${JSON.stringify(map)}` : ""}${res ? `\nFrom the vendor's official pages (use these exact URLs and endpoints):\n${JSON.stringify(res)}` : ""}${goal}`;
   const parse = async (text: string): Promise<Playbook> => {
     const p = await jsonFromModel<Playbook>(text);
     p.slug = guide.slug; p.name = guide.name; p.evidence = "unverified";

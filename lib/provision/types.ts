@@ -146,6 +146,12 @@ export interface SandboxCheck {
   offered?: { type: CredentialType; where?: string; selfServe: "yes" | "no" | "unclear"; quote?: { quote: string; url: string; found: boolean } }[];
   /** A way to create the OAuth app without the console, if the vendor documents one. */
   creation?: { kind: "management_api" | "cli" | "manifest"; detail: string; quote?: { quote: string; url: string; found: boolean } };
+  /**
+   * What provisioning needs, collected in the same research call: official pages, the steps to create the
+   * developer account and the app (or key), OAuth endpoints and a minimal scope set. Enough to plan from
+   * without writing a full readiness guide.
+   */
+  resources?: ProvisionBrief;
   verdict: SandboxVerdict;
   reason: string;
   /** What a person has to do when it is gated, e.g. "Apply to the partner programme". */
@@ -156,6 +162,15 @@ export interface SandboxCheck {
   probe?: { url: string; finalUrl?: string; status?: number; signals: string[]; looks: "signup_form" | "sales_gate" | "unclear" | "unreachable" };
   source: "playbook" | "research" | "run";
   checkedOn: string;
+}
+
+export interface ProvisionBrief {
+  website?: string;
+  docs: { label: string; url: string }[];
+  steps: { title: string; detail: string; owner: "agent" | "you" }[];
+  oauth?: { authorizeUrl: string; tokenUrl: string; identity?: { url: string; method?: "GET" | "POST"; pick: string }; scopes: string[]; clientAuth?: "body" | "basic" };
+  apiKey?: { header: string; prefix?: string; testUrl: string; pick?: string };
+  goLive?: string;
 }
 
 /** Use case -> scopes, and one read-only call from that use case that verification makes. */

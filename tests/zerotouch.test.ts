@@ -73,3 +73,35 @@ test("only developer terms are accepted automatically; payment, phone and identi
   assert.ok(!isTermsOnly(h("Business verification", "Upload an ID document")));
   assert.ok(!isTermsOnly(h("Sign in", "Sign in to your workspace")));
 });
+
+test("no guide needed: the sandbox research's brief is enough to plan and run, and nothing is saved to the Library", async () => {
+  const { getGuide } = await import("../lib/store");
+  const withBrief: SandboxIo = {
+    research: async () => ({
+      summary: "Free developer account; apps are created in the developer console.",
+      relation: "same",
+      developerAccount: { name: "Brief portal", signupUrl: "https://briefco.example/signup", quotes: [{ quote: "Sign up free for a developer account", url: "https://briefco.example/dev", says: "yes" }] },
+      oauthApp: { available: "self_serve", quotes: [{ quote: "Any developer can create an OAuth app", url: "https://briefco.example/dev", says: "yes" }] },
+      resources: {
+        website: "briefco.example",
+        docs: [{ label: "Create an OAuth app", url: "https://briefco.example/docs/oauth" }, { label: "bad", url: "javascript:alert(1)" }],
+        steps: [{ title: "Sign up for a developer account", detail: "Use the sign-up form", owner: "agent" }, { title: "Create an OAuth app", detail: "Developer console > New app", owner: "agent" }],
+        oauth: { authorizeUrl: "https://briefco.example/oauth/authorize", tokenUrl: "https://briefco.example/oauth/token", identity: { url: "https://api.briefco.example/me", pick: "id" }, scopes: ["read"] },
+      },
+    }),
+    pageText: async () => "Sign up free for a developer account. Any developer can create an OAuth app.",
+    probe: async (u) => ({ url: u, signals: ["password field"], looks: "signup_form" }),
+  };
+  const deps = { ...defaultDeps(), sandboxIo: withBrief };
+  const run = await createRun({ app: "BriefCo", baseUrl: BASE, autoStart: true }, deps);
+  assert.ok(run.sandbox?.resources);
+  assert.deepEqual(run.sandbox!.resources!.docs.map((d) => d.label), ["Create an OAuth app"], "the bad URL was dropped");
+  assert.equal(await getGuide("briefco"), null, "no guide written or saved");
+  assert.equal((await hands_off(run.id, deps)).status, "verified");
+});
+
+test("without a usable brief, a vendor with no guide still falls back to writing the full guide", async () => {
+  const { NoGuideError } = await import("../lib/provision/engine");
+  const deps = { ...defaultDeps(), sandboxIo: { ...unclear, research: async () => ({ relation: "same", developerAccount: { name: "x", quotes: [{ quote: "Free developer accounts for everyone", url: "https://nobrief.example", says: "yes" as const }] }, oauthApp: { available: "self_serve" }, resources: { docs: [], steps: [] } }), pageText: async () => "Free developer accounts for everyone" } };
+  await assert.rejects(createRun({ app: "NoBriefCo", baseUrl: BASE, autoStart: true }, deps), NoGuideError);
+});

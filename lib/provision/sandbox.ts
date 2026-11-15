@@ -14,7 +14,7 @@ import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { cleanSupabaseUrl } from "../store";
 import { runClaude, webTools, RESOLVE_MODEL, jsonFromModel } from "../agent/claude";
 import { htmlToText, isThin, publicUrl, renderPage, renderProvider } from "../agent/render";
-import { noProgress, type Playbook, type Progress, type SandboxCheck, type SetupPart } from "./types";
+import { noProgress, type Playbook, type Progress, type ProvisionBrief, type SandboxCheck, type SetupPart } from "./types";
 
 const TTL_MS = 14 * 24 * 3600_000;
 const today = () => new Date().toISOString().slice(0, 10);
@@ -123,6 +123,13 @@ Use web_search and web_fetch on official pages (developer docs, partner pages, p
  "oauthApp":{"available":"self_serve"|"partner_only"|"none"|"unclear","apiKeySelfServe":boolean,"reason":string,"humanPath":string,"quotes":[Quote]},
  "credentials":[{"type":"oauth2"|"oauth1"|"client_credentials"|"api_key"|"jwt"|"service_account"|"basic"|"bearer","where":"where in the product it is created, e.g. Settings > API > Generate key","selfServe":"yes"|"no"|"unclear","quote":Quote}]}
 credentials: every way the vendor's API can be authenticated, one entry per type, each with one quote from the vendor's docs.
+Also add "resources", collected from the vendor's OFFICIAL pages, so a provisioning plan can be written from it without a separate guide:
+"resources":{"website":"vendor.com","docs":[{"label":"Sign up / developer account","url":string},{"label":"Create an OAuth app","url":string},{"label":"OAuth endpoints","url":string},{"label":"Scopes","url":string}],
+ "steps":[{"title":"imperative, under 9 words","detail":"what to click or fill, from the docs","owner":"agent"|"you"}],   // in order: create the developer account (and the separate sandbox, if any), then create the OAuth app (or API key) and read its credentials. "you" only for payment, phone, identity or legal steps.
+ "oauth":{"authorizeUrl":"https://...","tokenUrl":"https://...","identity":{"url":"https://... an endpoint that returns the signed-in user or account","method":"GET"|"POST","pick":"JSON path to a name or id"},"scopes":["the smallest set that lets the identity call work"],"clientAuth":"body"|"basic"},
+ "apiKey":{"header":"Authorization or the vendor's header","prefix":"Bearer, or omit","testUrl":"https://... a read-only GET that needs the key"},   // only when an API key is the self-serve credential
+ "goLive":"one sentence: what review or approval going to production needs, or 'none'"}
+Use exact URLs and scope names from the docs. Omit anything you could not find rather than guessing.
 Also add "appCreation":{"kind":"management_api"|"cli"|"manifest"|"none","detail":"the documented API endpoint, CLI command or manifest flow that creates an OAuth app without the web console","quote":Quote}. Use "none" unless the vendor's own docs describe one.
 Quote is {"quote":"a sentence copied word for word from the page","url":"the exact page URL","says":"yes"|"no"} where "yes" supports self-serve and "no" supports gated.
 When relation is "same", the sandbox may repeat the developer account's name and URL with no quotes of its own.
@@ -140,13 +147,33 @@ export type Found = {
   oauthApp?: { available?: string; apiKeySelfServe?: boolean; reason?: string; humanPath?: string; quotes?: RawQuote[] };
   credentials?: { type?: string; where?: string; selfServe?: string; quote?: RawQuote }[];
   appCreation?: { kind?: string; detail?: string; quote?: RawQuote };
+  resources?: Partial<ProvisionBrief> & { oauth?: Partial<NonNullable<ProvisionBrief["oauth"]>>; apiKey?: Partial<NonNullable<ProvisionBrief["apiKey"]>> };
 };
+
+const https = (u: unknown) => typeof u === "string" && /^https:\/\/[^/\s]+\.[^/\s]+/.test(u) && !/[{}<>]/.test(u);
+
+/** Pure: keeps only well-formed parts of the brief (https URLs, non-empty steps). */
+export function cleanBrief(r: Found["resources"]): ProvisionBrief | undefined {
+  if (!r) return undefined;
+  const docs = (r.docs || []).filter((d) => d && https(d.url)).slice(0, 8).map((d) => ({ label: String(d.label || "Docs").slice(0, 60), url: String(d.url) }));
+  const steps = (r.steps || []).filter((s) => s && s.title).slice(0, 14).map((s) => ({ title: String(s.title).slice(0, 80), detail: String(s.detail || "").slice(0, 400), owner: s.owner === "you" ? "you" as const : "agent" as const }));
+  const o = r.oauth;
+  const oauth = o && https(o.authorizeUrl) && https(o.tokenUrl) ? {
+    authorizeUrl: String(o.authorizeUrl), tokenUrl: String(o.tokenUrl),
+    identity: o.identity && https(o.identity.url) ? { url: String(o.identity.url), method: o.identity.method === "POST" ? "POST" as const : "GET" as const, pick: String(o.identity.pick || "id") } : undefined,
+    scopes: (o.scopes || []).map(String).filter((x) => x && !/\s/.test(x)).slice(0, 20), clientAuth: o.clientAuth === "basic" ? "basic" as const : o.clientAuth === "body" ? "body" as const : undefined,
+  } : undefined;
+  const k = r.apiKey;
+  const apiKey = k && k.header && https(k.testUrl) ? { header: String(k.header), prefix: k.prefix ? String(k.prefix) : undefined, testUrl: String(k.testUrl), pick: k.pick ? String(k.pick) : undefined } : undefined;
+  if (!steps.length && !oauth && !apiKey) return undefined;
+  return { website: r.website ? String(r.website).replace(/^https?:\/\//, "").split("/")[0] : undefined, docs, steps, oauth, apiKey, goLive: r.goLive ? String(r.goLive).slice(0, 300) : undefined };
+}
 
 const CRED_TYPES = new Set(["oauth2", "oauth1", "client_credentials", "api_key", "jwt", "service_account", "basic", "bearer"]);
 
 export async function researchSandbox(app: { name: string; website?: string }, onTool: (name: string, input: Record<string, unknown>) => void = () => undefined): Promise<Found> {
   const text = await runClaude({
-    model: RESOLVE_MODEL, system: SYSTEM, maxTokens: 4000, tools: webTools(5, 6),
+    model: RESOLVE_MODEL, system: SYSTEM, maxTokens: 7000, tools: webTools(6, 8),
     messages: [{ role: "user", content: `Vendor: ${app.name}${app.website ? ` (${app.website})` : ""}` }],
   }, { onToolUse: onTool });
   return jsonFromModel<Found>(text);
@@ -240,7 +267,7 @@ export async function checkSandbox(app: { name: string; slug: string; website?: 
     ? `Developer side: ${dev.name}. Sandbox: ${box.name}${relation === "same" ? " (same account)" : relation === "separate" ? " (a separate account)" : ""}${box.expires ? `, expires: ${box.expires}` : ""}.`
     : worst.map((p) => `${label(p)} (${p.name}): ${p.reason}`).join(" ");
   return {
-    verdict, reason, relation, parts, credential, offered, creation, summary: found.summary ? String(found.summary).slice(0, 300) : undefined,
+    verdict, reason, relation, parts, credential, offered, creation, summary: found.summary ? String(found.summary).slice(0, 300) : undefined, resources: cleanBrief(found.resources),
     humanPath: worst.map((p) => p.humanPath).filter(Boolean).join(" ") || undefined,
     signupUrl: dev.url, quotes: parts.flatMap((p) => p.quotes), probe: dev.probe,
     source: "research", checkedOn: today(),
