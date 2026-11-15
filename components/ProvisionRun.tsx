@@ -93,6 +93,20 @@ function AssessmentCard({ run, onStart }: { run: Run; onStart: (m: "human" | "au
   );
 }
 
+/** What the agent is waiting for, with a countdown, so a long wait never looks like a hang. */
+function Waiting({ w }: { w: NonNullable<Run["waitingFor"]> }) {
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => { const t = setInterval(() => setNow(Date.now()), 1000); return () => clearInterval(t); }, []);
+  const left = Math.max(0, Math.round((w.until - now) / 1000));
+  const mmss = `${Math.floor(left / 60)}:${String(left % 60).padStart(2, "0")}`;
+  return (
+    <div className="notice" role="status">
+      <b><span className="spin" /> Waiting for {w.what}.</b> {left ? `${mmss} left before it asks you.` : "About to ask you."}
+      {w.hint ? <div className="small" style={{ marginTop: 4 }}>{w.hint}</div> : null}
+    </div>
+  );
+}
+
 export default function ProvisionRun({ id }: { id: string }) {
   const [run, setRun] = useState<View | null>(null);
   const [err, setErr] = useState("");
@@ -106,6 +120,13 @@ export default function ProvisionRun({ id }: { id: string }) {
   }, [id]);
 
   useEffect(() => { load(); const t = setInterval(load, 2500); return () => clearInterval(t); }, [load]);
+
+  // The tab title says when the run needs a person, so it is noticed from another tab.
+  useEffect(() => {
+    if (!run) return;
+    const yours = run.status === "waiting_human" || run.status === "waiting_approval" || run.status === "ready";
+    document.title = `${yours ? "● Your turn · " : ""}${run.app} · ${STATUS[run.status] || run.status}`;
+  }, [run]);
 
   // Drive the run forward whenever it is ready to work.
   useEffect(() => {
@@ -187,6 +208,7 @@ export default function ProvisionRun({ id }: { id: string }) {
             </div>
           ) : null;
         })() : null}
+        {run.waitingFor && (run.status === "running" || run.status === "queued") ? <Waiting w={run.waitingFor} /> : null}
         {run.assessment ? <AssessmentCard run={run} onStart={start} /> : null}
 
         {p ? (
@@ -211,7 +233,11 @@ export default function ProvisionRun({ id }: { id: string }) {
 
         {showLive ? (
           <div className="live">
-            <div className="small">Live browser{p?.kind === "human" ? ": you can click and type here" : ""}</div>
+            <div className={`small live-who ${p?.kind === "human" ? "yours" : ""}`}>
+              {p?.kind === "human"
+                ? <><b>Your turn:</b> click and type here, then press Continue above.</>
+                : <><span className="spin" /> <b>The agent is using this browser.</b> Wait for &quot;Your turn&quot; before typing, or your input and the agent&apos;s will collide.</>}
+            </div>
             <iframe src={live} title="Live browser" sandbox="allow-same-origin allow-scripts" allow="clipboard-read; clipboard-write" />
           </div>
         ) : null}

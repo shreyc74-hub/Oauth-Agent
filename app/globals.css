@@ -425,3 +425,5 @@ ol.rsteps { list-style: none; padding: 0; margin: 16px 0 0; }
 .alog .al-done .al-i { color: var(--ok); } .alog .al-fail .al-i, .alog .al-fail .al-l { color: var(--bad); }
 .alog .al-info .al-l { color: var(--muted); }
 @media (max-width: 640px) { .alog li { grid-template-columns: 46px 16px minmax(0, 1fr); padding: 4px 10px; } }
+.live-who { padding: 6px 10px; border-radius: 8px; background: var(--sunk); }
+.live-who.yours { background: var(--wait-soft); color: var(--wait); }

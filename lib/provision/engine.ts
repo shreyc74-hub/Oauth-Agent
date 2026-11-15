@@ -415,6 +415,11 @@ async function runStep(ctx: Ctx, s: Step): Promise<Outcome> {
       }
       const b = await checkBlocker(ctx, s);
       if (b) return b;
+      if (s.instruction && d.goalCheck) {
+        // One act() is one action; multi-action steps (fill a form and submit) need the page to confirm.
+        const g = await d.goalCheck(`${s.title}: ${s.instruction}`).catch(() => ({ done: true, missing: "" }));
+        if (!g.done) throw new Error(`the step isn't finished yet: ${g.missing.slice(0, 160)}`);
+      }
       log(run, "step", `${s.title}: done.`, s.id);
       return "done";
     }
@@ -431,11 +436,18 @@ async function runStep(ctx: Ctx, s: Step): Promise<Outcome> {
       run.vars[`since:${s.id}`] = String(since);
       const left = Math.max(5_000, Math.min(60_000, ctx.deadline - Date.now() - 15_000));
       const mail = await waitForMail(deps.inbox, run.identity.inboxId, { from: s.from, since, timeoutMs: deps.mock ? 10 : left, pollMs: deps.mock ? 1 : 4000 });
+      const address = run.identity.email || "the agent's inbox";
       if (!mail) {
-        if (Date.now() - since > EMAIL_WAIT_MS) throw new Error(`no email from ${s.from || "the provider"} after 5 minutes`);
+        run.waitingFor = { what: `an email from ${s.from || run.app} at ${address}`, since, until: since + EMAIL_WAIT_MS,
+          hint: `If you are finishing the sign-up yourself in the live browser, use ${address}; mail to any other address can't reach the agent.` };
+        if (Date.now() - since > EMAIL_WAIT_MS) {
+          run.waitingFor = undefined;
+          throw new Error(`no email from ${s.from || "the provider"} reached ${address} after 5 minutes. The sign-up was probably not submitted with that address: finish it in the live browser using ${address}, or confirm the email yourself`);
+        }
         if (!run.vars[`waitlog:${s.id}`]) { run.vars[`waitlog:${s.id}`] = "1"; log(run, "info", `Waiting for the ${s.from || "provider"} email…`, s.id); }
         return "wait";
       }
+      run.waitingFor = undefined;
       const d = await browser(ctx);
       if (s.extract === "link") {
         const link = findLink(mail, s.from);

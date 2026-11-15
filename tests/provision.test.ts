@@ -269,3 +269,16 @@ test("Browserbase out of minutes (402) stops the run with a clear reason instead
   assert.ok(r.events.some((e) => /out of browser minutes \(402 Payment Required\)/.test(e.text)));
   assert.ok(!r.events.some((e) => e.kind === "handoff"));
 });
+
+test("a browser step whose single action 'succeeded' but left the form unfinished is not ticked off; recovery finishes it", async () => {
+  // The Workday run: act() clicked once on the sign-up form and reported success; nothing was submitted.
+  process.env.PROVISION_MOCK_UNFINISHED = "sign-up";
+  try {
+    const done = await drive((await createRun({ app: "Linear", mode: "auto", baseUrl: BASE })).id);
+    const signup = done.events.find((e) => /isn't finished yet/.test(e.text) || /isn.t finished yet/.test(e.text));
+    assert.ok(done.events.some((e) => /not filled in and the form is not submitted|isn't finished yet/.test(e.text)), "the unfinished form was noticed");
+    assert.ok(done.steps.some((s) => s.recovered), "the recovery agent took over the step");
+    assert.equal(done.status, "verified");
+    void signup;
+  } finally { delete process.env.PROVISION_MOCK_UNFINISHED; }
+});

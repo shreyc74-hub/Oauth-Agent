@@ -20,6 +20,11 @@ export interface Driver {
   look(): Promise<{ url: string; title: string; elements: string[] }>;
   /** Anything on screen the agent must not or cannot get past by itself. */
   blocker(): Promise<Blocker | null>;
+  /**
+   * Is a step's goal actually reached on the page? act() does one action, so "Sign up with an email and
+   * password" can report success after a single click. This asks the page instead of trusting act().
+   */
+  goalCheck?(goal: string): Promise<{ done: boolean; missing: string }>;
   /** Locates `find`, optionally clicks `reveal`, then reads the value without the model seeing it. */
   capture(find: string, reveal?: string): Promise<string>;
   url(): string;
@@ -59,6 +64,11 @@ async function liveViewUrl(sessionId: string): Promise<string | undefined> {
   const j = (await res.json()) as { debuggerFullscreenUrl?: string };
   return j.debuggerFullscreenUrl;
 }
+
+const goalSchema = z.object({
+  done: z.boolean(),
+  missing: z.string(),
+});
 
 const blockerSchema = z.object({
   blocker: z.enum(["none", "captcha", "phone", "device", "payment", "signin", "error"]),
@@ -114,6 +124,13 @@ export async function openBrowser(opts: { sessionId?: string; contextId?: string
         blockerSchema,
       );
       return r.blocker === "none" ? null : { kind: r.blocker, detail: r.detail };
+    },
+    async goalCheck(goal) {
+      const r = await sh.extract(
+        `A browser agent was given this task: "${goal}". Look at the page now. Is the task fully finished (every field filled and the form submitted, or the page it leads to showing)? Answer done=true only if nothing is left to do for this task. If something is left, say what in a few words in "missing".`,
+        goalSchema,
+      );
+      return { done: r.done, missing: r.missing };
     },
     async capture(find, reveal) {
       // Locate first (the field is still masked), then reveal, then read with a fixed selector.

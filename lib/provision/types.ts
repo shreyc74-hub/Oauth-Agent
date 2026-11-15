@@ -203,6 +203,8 @@ export interface Run {
   verify?: { state: string; verifier: string; code?: string; who?: string; refresh?: "ok" | "failed" | "not-offered"; at?: string; useCase?: string; useCaseOk?: boolean };
   sandbox?: SandboxCheck;
   assessment?: Assessment;
+  /** What the run is waiting for while it waits (an email), so the page can say so instead of "Working". */
+  waitingFor?: { what: string; since: number; until: number; hint?: string };
   scopePlan?: ScopePlan;
   /** Dynamic Client Registration probe: could the app be created with one API call? */
   dcr?: import("./dcr").DcrResult;

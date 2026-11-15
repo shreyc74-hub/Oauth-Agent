@@ -8,7 +8,7 @@ import type { Http } from "./verify";
 
 export const mockEnabled = () => process.env.PROVISION_MOCK === "1" || process.env.AGENT_MOCK === "1";
 
-const sessions = new Map<string, { url: string; pendingState?: string; redirect?: string; blockerShown?: boolean }>();
+const sessions = new Map<string, { url: string; pendingState?: string; redirect?: string; blockerShown?: boolean; unfinishedShown?: boolean }>();
 
 /**
  * `mockFail` simulates a console that changed: browser steps whose instruction starts with one of the
@@ -45,6 +45,13 @@ export async function mockBrowser(opts: { sessionId?: string; mockFail?: string 
       const want = process.env.PROVISION_MOCK_BLOCKER;
       if (want && !s.blockerShown && /email/i.test(lastInstruction)) { s.blockerShown = true; return { kind: want as Blocker["kind"], detail: `A ${want} check is showing.` }; }
       return null;
+    },
+    async goalCheck(goal: string) {
+      // Tests: PROVISION_MOCK_UNFINISHED=<text> makes the first matching step look half done, like a
+      // sign-up form where act() clicked one field and reported success.
+      const want = process.env.PROVISION_MOCK_UNFINISHED;
+      if (want && goal.includes(want) && !s.unfinishedShown) { s.unfinishedShown = true; return { done: false, missing: "the email and password are not filled in and the form is not submitted" }; }
+      return { done: true, missing: "" };
     },
     async capture(find) {
       if (/secret|token/i.test(find)) return `mock_secret_${randomBytes(12).toString("hex")}`;
