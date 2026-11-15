@@ -79,13 +79,13 @@ const blockerSchema = z.object({
 export async function openBrowser(opts: { sessionId?: string; contextId?: string }): Promise<Driver> {
   const { Stagehand } = await import("@browserbasehq/stagehand");
   const model = process.env.STAGEHAND_MODEL || `anthropic/${process.env.GUIDE_MODEL || "claude-sonnet-5-5"}`;
-  const sh = new Stagehand({
+  const make = (sessionId?: string) => new Stagehand({
     env: "BROWSERBASE",
     apiKey: process.env.BROWSERBASE_API_KEY,
     projectId: process.env.BROWSERBASE_PROJECT_ID,
-    browserbaseSessionID: opts.sessionId,
+    browserbaseSessionID: sessionId,
     keepAlive: true,
-    browserbaseSessionCreateParams: opts.sessionId ? undefined : {
+    browserbaseSessionCreateParams: sessionId ? undefined : {
       projectId: process.env.BROWSERBASE_PROJECT_ID,
       keepAlive: true,
       // Each live minute counts against the Browserbase plan, and a run waiting for a person keeps
@@ -102,37 +102,51 @@ export async function openBrowser(opts: { sessionId?: string; contextId?: string
     verbose: 0,
     disablePino: true,
   });
+  let sh = make(opts.sessionId);
   await sh.init();
   const sessionId = String(sh.browserbaseSessionID);
   const page = () => sh.context.activePage() ?? sh.context.pages()[0];
+  // The connection to the hosted browser can drop mid-run (Stagehand then reports itself uninitialized).
+  // Reconnect to the same session, so the page a person or the agent reached is kept, and retry once.
+  const DEAD = /uninitiali[sz]ed|reading 'activePage'|Target (page, context or browser )?(has been )?closed|has been closed|not connected|WebSocket/i;
+  const guard = <A extends unknown[], R>(fn: (...a: A) => Promise<R>) => async (...a: A): Promise<R> => {
+    try { return await fn(...a); }
+    catch (e) {
+      if (!DEAD.test(String((e as Error)?.message || e))) throw e;
+      await sh.close().catch(() => undefined);
+      sh = make(sessionId);
+      await sh.init();
+      return fn(...a);
+    }
+  };
 
   return {
     sessionId,
     liveUrl: (await liveViewUrl(sessionId)) || sh.browserbaseDebugURL,
-    async goto(url) { await page().goto(url); },
-    async act(instruction, variables) {
+    goto: guard(async (url: string) => { await page().goto(url); }),
+    act: guard(async (instruction: string, variables?: Record<string, string>) => {
       const r = await sh.act(instruction, { variables });
       return { ok: r.success, message: r.message };
-    },
-    async look() {
+    }),
+    look: guard(async () => {
       const found = await sh.observe("List the visible headings, buttons, links, toggles and form fields on this page.");
       return { url: page().url(), title: await page().title().catch(() => ""), elements: found.slice(0, 40).map((a) => a.description) };
-    },
-    async blocker() {
+    }),
+    blocker: guard(async (): Promise<Blocker | null> => {
       const r = await sh.extract(
         "Is something on this page stopping an automated agent from continuing? Answer captcha for any CAPTCHA, 'verify you are human' or Turnstile check; phone for a phone number or SMS code request; device for approve-on-another-device or passkey prompts; payment for a card form; signin when the page asks to sign in; error for an error page. Otherwise answer none.",
         blockerSchema,
       );
       return r.blocker === "none" ? null : { kind: r.blocker, detail: r.detail };
-    },
-    async goalCheck(goal) {
+    }),
+    goalCheck: guard(async (goal: string) => {
       const r = await sh.extract(
         `A browser agent was given this task: "${goal}". Look at the page now. Is the task fully finished (every field filled and the form submitted, or the page it leads to showing)? Answer done=true only if nothing is left to do for this task. If something is left, say what in a few words in "missing".`,
         goalSchema,
       );
       return { done: r.done, missing: r.missing };
-    },
-    async capture(find, reveal) {
+    }),
+    capture: guard(async (find: string, reveal?: string) => {
       // Locate first (the field is still masked), then reveal, then read with a fixed selector.
       const [target] = await sh.observe(`Find ${find}. Return the element that contains or holds the value itself.`);
       if (!target) throw new Error(`Could not find ${find}.`);
@@ -145,8 +159,8 @@ export async function openBrowser(opts: { sessionId?: string; contextId?: string
       value = value.trim();
       if (!value || /^[•*·.\s]+$/.test(value)) throw new Error(`The value for ${find} is empty or still masked.`);
       return value;
-    },
-    url: () => page().url(),
+    }),
+    url: () => { try { return page().url(); } catch { return ""; } },
     async detach() {
       // keepAlive: closing the client leaves the hosted browser running for the next step.
       await sh.close().catch(() => undefined);

@@ -115,3 +115,20 @@ test("in full automation a sign-in or sign-up form is not handed over: the agent
     assert.equal(done.status, "verified");
   } finally { delete process.env.PROVISION_MOCK_BLOCKER; }
 });
+
+test("after a person clears a captcha the step continues from that page; it is not started over (the Linear loop)", async () => {
+  const { respond } = await import("../lib/provision/engine");
+  process.env.PROVISION_MOCK_BLOCKER = "captcha";
+  try {
+    const run = await createRun({ app: "Linear", baseUrl: BASE, autoStart: true });
+    let r = await advance(run.id, defaultDeps(), 30_000);
+    assert.equal(r.status, "waiting_human");
+    assert.equal(r.pending?.blocker, "captcha");
+    r = await respond(run.id, "continue");
+    assert.ok(r.events.some((e) => /Agent continues from that page/.test(e.text)));
+    const done = await hands_off(run.id);
+    assert.ok(done.events.some((e) => /the page moved on after the person's help/.test(e.text)), "resumed instead of restarting");
+    assert.equal(done.events.filter((e) => e.kind === "handoff" && /captcha/i.test(e.text)).length, 1, "one hand-over, no loop");
+    assert.equal(done.status, "verified");
+  } finally { delete process.env.PROVISION_MOCK_BLOCKER; }
+});

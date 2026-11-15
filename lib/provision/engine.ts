@@ -322,6 +322,14 @@ async function variablesFor(run: Run, text: string, extra: Record<string, string
   return out;
 }
 
+/** Bookkeeping once a browser step is done: a sign-up with the shared mailbox means the account now exists. */
+async function afterBrowserStep(ctx: Ctx, s: Step) {
+  const { run } = ctx;
+  if (process.env.PROVISION_INBOX_ID && isSignUp(s) && run.identity?.email && !run.vars.account_exists) {
+    await putSecret(vaultName(run.slug, run.id, "shared:account_email"), run.identity.email, `${run.app} account exists for ${run.identity.email}`);
+  }
+}
+
 /** A human step that is only about agreeing to developer terms (not payment, phone, identity or business checks). */
 export function isTermsOnly(s: Step): boolean {
   if (s.kind !== "human") return false;
@@ -482,11 +490,25 @@ async function runStep(ctx: Ctx, s: Step): Promise<Outcome> {
       return "pause";
     }
     case "browser": {
+      // After a person cleared a wall the page has usually moved on (e.g. to "enter the emailed code").
+      // Starting the step over would navigate back and meet the wall again, so check the page first.
+      const resuming = run.vars[`resume:${s.id}`] === "1";
+      if (resuming) {
+        run.vars[`resume:${s.id}`] = "";
+        const d = await browser(ctx);
+        const goal = run.vars.account_exists && isSignUp(s) ? "Log in with the existing account" : `${s.title}: ${s.instruction || ""}`;
+        const g = d.goalCheck ? await d.goalCheck(goal).catch(() => ({ done: false, missing: "" })) : { done: false, missing: "" };
+        if (g.done) {
+          await afterBrowserStep(ctx, s);
+          log(run, "step", `${s.title}: done; the page moved on after the person's help, so the agent continues from there.`, s.id);
+          return "done";
+        }
+      }
       if (run.vars.account_exists && isSignUp(s)) {
         if (run.vars.signed_in) { log(run, "step", `${s.title}: skipped, the shared account already exists.`, s.id); return "done"; }
         // Same goal, as a sign-in: the goal check and the recovery agent make sure it really happened.
         const d = await browser(ctx);
-        if (s.url) await d.goto(s.url);
+        if (s.url && (!resuming || !d.url().startsWith("http"))) await d.goto(s.url); // resume, unless the browser was replaced and is blank
         const signIn = "Log in (do not sign up: this email already has an account). If a sign-up form is showing, switch to the log-in page first. Log in with %email% and %password%.";
         const r = await d.act(signIn, await variablesFor(run, signIn));
         const b = await checkBlocker(ctx, s);
@@ -503,7 +525,7 @@ async function runStep(ctx: Ctx, s: Step): Promise<Outcome> {
         return "pause";
       }
       const d = await browser(ctx);
-      if (s.url) await d.goto(s.url);
+      if (s.url && (!resuming || !d.url().startsWith("http"))) await d.goto(s.url); // resume, unless the browser was replaced and is blank
       if (s.instruction) {
         const r = await d.act(s.instruction, await variablesFor(run, s.instruction));
         if (!r.ok) {
@@ -519,10 +541,7 @@ async function runStep(ctx: Ctx, s: Step): Promise<Outcome> {
         const g = await d.goalCheck(`${s.title}: ${s.instruction}`).catch(() => ({ done: true, missing: "" }));
         if (!g.done) throw new Error(`the step isn't finished yet: ${g.missing.slice(0, 160)}`);
       }
-      if (process.env.PROVISION_INBOX_ID && isSignUp(s) && run.identity?.email) {
-        // The shared mailbox now has an account here: later runs sign in.
-        await putSecret(vaultName(run.slug, run.id, "shared:account_email"), run.identity.email, `${run.app} account exists for ${run.identity.email}`);
-      }
+      await afterBrowserStep(ctx, s);
       log(run, "step", `${s.title}: done.`, s.id);
       return "done";
     }
@@ -944,9 +963,11 @@ export async function respond(id: string, action: "continue" | "approve" | "skip
     } else if (run.vars[`retry:${p.step}`] === "1" && action === "continue") {
       // A wall was cleared; run the same step again.
       run.vars[`retry:${p.step}`] = "";
+      // Resume from the page the person left, instead of starting the step over.
+      run.vars[`resume:${p.step}`] = "1";
       if (s.kind === "verify" && run.verify && !run.verify.code) { /* keep state, re-read the URL */ }
       run.steps[run.cursor].state = "todo";
-      log(run, "handoff", `Person finished: ${run.steps[run.cursor].title}. Agent retries the step.`, p.step);
+      log(run, "handoff", `Person finished: ${run.steps[run.cursor].title}. Agent continues from that page.`, p.step);
     } else if (s.kind === "verify" && action === "continue") {
       run.steps[run.cursor].state = "todo";
       log(run, "handoff", "Person approved consent. Agent reads the code.", p.step);
