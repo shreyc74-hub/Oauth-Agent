@@ -105,3 +105,13 @@ test("without a usable brief, a vendor with no guide still falls back to writing
   const deps = { ...defaultDeps(), sandboxIo: { ...unclear, research: async () => ({ relation: "same", developerAccount: { name: "x", quotes: [{ quote: "Free developer accounts for everyone", url: "https://nobrief.example", says: "yes" as const }] }, oauthApp: { available: "self_serve" }, resources: { docs: [], steps: [] } }), pageText: async () => "Free developer accounts for everyone" } };
   await assert.rejects(createRun({ app: "NoBriefCo", baseUrl: BASE, autoStart: true }, deps), NoGuideError);
 });
+
+test("in full automation a sign-in or sign-up form is not handed over: the agent has its own login", async () => {
+  // The live Linear run: the sign-up page (email field, 'Continue with email') was read as "wants you to sign in".
+  process.env.PROVISION_MOCK_BLOCKER = "signin";
+  try {
+    const run = await createRun({ app: "Linear", baseUrl: BASE, autoStart: true });
+    const done = await hands_off(run.id);
+    assert.equal(done.status, "verified");
+  } finally { delete process.env.PROVISION_MOCK_BLOCKER; }
+});

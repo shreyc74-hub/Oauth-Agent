@@ -405,7 +405,9 @@ async function store(ctx: Ctx, label: string, value: string, secret: boolean, qu
 async function checkBlocker(ctx: Ctx, s: Step): Promise<Outcome | null> {
   const b = await (await browser(ctx)).blocker();
   if (!b) return null;
-  if (b.kind === "signin" && ctx.run.mode === "auto" && s.kind === "browser" && /sign ?up|signup/i.test(s.title)) return null;
+  // In full automation the agent has its own login (mailbox + vaulted password): a sign-in or sign-up
+  // form is something it fills in, not a wall. The step's goal check decides whether it is finished.
+  if (b.kind === "signin" && ctx.run.mode === "auto" && ctx.run.identity?.email) return null;
   return wallPause(ctx, s, b);
 }
 
