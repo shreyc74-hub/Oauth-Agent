@@ -10,13 +10,13 @@ export const maxDuration = 60;
 export async function POST(req: Request) {
   const denied = gate(req);
   if (denied) return denied;
-  const body = (await req.json().catch(() => ({}))) as { app?: string; mode?: string; simulateChange?: boolean };
+  const body = (await req.json().catch(() => ({}))) as { app?: string; mode?: string; simulateChange?: boolean; guideSlug?: string };
   const app = String(body.app || "").trim().slice(0, 80);
   const mode = body.mode === "auto" ? "auto" : "human";
   if (!app) return Response.json({ error: "Name an app." }, { status: 400 });
   if (limited(req, "provision", 20)) return Response.json({ error: "Too many runs from this network. Try later." }, { status: 429 });
   try {
-    const run = await createRun({ app, mode, baseUrl: baseUrl(req), simulateChange: Boolean(body.simulateChange) });
+    const run = await createRun({ app, mode, baseUrl: baseUrl(req), simulateChange: Boolean(body.simulateChange), guideSlug: body.guideSlug ? String(body.guideSlug).slice(0, 120) : undefined });
     return Response.json(publicRun(run));
   } catch (e) {
     if (e instanceof NoGuideError) return Response.json({ error: e.message, noGuide: true, research: `/research?name=${encodeURIComponent(app)}` }, { status: 404 });

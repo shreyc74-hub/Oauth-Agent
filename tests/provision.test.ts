@@ -11,6 +11,7 @@ import { findCode, findLink } from "../lib/provision/inbox";
 import { authorizeUrl, codeFromUrl } from "../lib/provision/verify";
 import { rowFor } from "../lib/provision/sheets";
 import { libraryGuides } from "../lib/library";
+import { saveGuide } from "../lib/store";
 import type { Run } from "../lib/provision/types";
 import { POST as createRoute } from "../app/api/provision/route";
 import { POST as revealRoute } from "../app/api/provision/[id]/reveal/route";
@@ -176,6 +177,14 @@ test("apps without a playbook are planned from their guide; apps without a guide
   const run = await createRun({ app: "Notion", mode: "human", baseUrl: BASE });
   assert.equal(run.playbook.evidence, "unverified");
   await assert.rejects(createRun({ app: "Totally Unknown App", mode: "human", baseUrl: BASE }), NoGuideError);
+});
+
+test("a guide researched on the provision page is used even when its slug differs from the typed name", async () => {
+  const notion = libraryGuides().find((g) => g.slug === "notion")!;
+  await saveGuide({ ...notion, slug: "zoho-invoice", name: "Zoho Invoice", evidenceLevel: "generated" });
+  await assert.rejects(createRun({ app: "Zoho", mode: "human", baseUrl: BASE }), NoGuideError);
+  const run = await createRun({ app: "Zoho", mode: "human", baseUrl: BASE, guideSlug: "zoho-invoice" });
+  assert.equal(run.playbook.evidence, "unverified");
 });
 
 test("tracker row has masked values and vault names, never secrets", async () => {

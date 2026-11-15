@@ -49,14 +49,16 @@ const EMAIL_WAIT_MS = 5 * 60_000;
 
 // ---------- Creating a run ----------
 
-async function findGuide(app: string): Promise<Guide | null> {
+async function findGuide(app: string, guideSlug?: string): Promise<Guide | null> {
+  // A guide the provision page just researched and saved can have a slug that differs from the typed name.
+  if (guideSlug) { const g = await getGuide(slugify(guideSlug)); if (g) return g; }
   const lib = matchLibrary(app, libraryGuides());
   if (lib) return lib;
   return getGuide(slugify(app));
 }
 
-export async function planFor(app: string, deps: Deps): Promise<Playbook> {
-  const guide = await findGuide(app);
+export async function planFor(app: string, deps: Deps, guideSlug?: string): Promise<Playbook> {
+  const guide = await findGuide(app, guideSlug);
   const slug = guide?.slug || slugify(app);
   if (PLAYBOOKS[slug]) return PLAYBOOKS[slug];
   if (!guide) throw new NoGuideError(app);
@@ -72,10 +74,10 @@ export function missingSetup(mode: Mode, deps: Deps): string[] {
   return need.filter((k) => !process.env[k]);
 }
 
-export async function createRun(input: { app: string; mode: Mode; baseUrl: string; simulateChange?: boolean }, deps = defaultDeps()): Promise<Run> {
+export async function createRun(input: { app: string; mode: Mode; baseUrl: string; simulateChange?: boolean; guideSlug?: string }, deps = defaultDeps()): Promise<Run> {
   const missing = missingSetup(input.mode, deps);
   if (missing.length) throw new ConfigError(`Not set up for ${input.mode === "auto" ? "full automation" : "human-in-the-loop"} runs yet. Missing: ${missing.join(", ")}.`);
-  const playbook = await planFor(input.app, deps);
+  const playbook = await planFor(input.app, deps, input.guideSlug);
   const problems = validatePlaybook(playbook);
   if (problems.length) throw new Error(`Plan for ${playbook.name} failed checks: ${problems.join("; ")}`);
   const id = `${playbook.slug}-${new Date().toISOString().slice(0, 10).replace(/-/g, "")}-${randomBytes(3).toString("hex")}`;
