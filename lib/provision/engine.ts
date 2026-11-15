@@ -18,6 +18,7 @@ import { openBrowser, browserConfigured, createContext, releaseSession } from ".
 import { agentMail, findCode, findLink, waitForMail, type Inbox } from "./inbox";
 import { putSecret, getSecret, hasSecret, vaultName, redact, recordReveal } from "./vault";
 import { saveRun, getRun } from "./runs";
+import { browserUseViaComposio, hostedConfigured, agentTask, continueTask, consentTask, parseAgentResult, vendorDomains, type HostedAgent, type AgentResult } from "./hosted";
 import { authorizeUrl, codeFromUrl, exchangeCode, newState, refreshTokens, whoami, type Http } from "./verify";
 import { PLAYBOOKS, planFromGuide, mockPlanFromGuide, validatePlaybook, guideFromBrief, type PlanTarget } from "./planner";
 import { slackManifest } from "./playbooks/slack";
@@ -39,11 +40,13 @@ export interface Deps {
   sandboxIo?: SandboxIo;
   /** Tests inject the DCR probe's fetcher; mock mode without it skips the probe. */
   dcrFetch?: Fetcher;
+  /** Hosted browser agent (Browser Use via Composio). When set, full automation's browser route uses it. */
+  hosted?: HostedAgent;
 }
 
 export function defaultDeps(): Deps {
   if (mockEnabled()) return { openBrowser: mockBrowser, inbox: mockInbox, http: mockHttp, brain: mockBrain, mock: true };
-  return { openBrowser, inbox: agentMail, http: (u, i) => fetch(u, i), brain: claudeBrain, mock: false };
+  return { openBrowser, inbox: agentMail, http: (u, i) => fetch(u, i), brain: claudeBrain, mock: false, hosted: hostedConfigured() ? browserUseViaComposio() : undefined };
 }
 
 /** Missing keys or setup. Retrying or handing over won't help, so the run stops with the reason. */
@@ -119,7 +122,8 @@ export async function planFor(app: string, deps: Deps, guideSlug?: string, setup
 /** What a real run needs before it starts. Empty when ready. */
 export function missingSetup(mode: Mode, deps: Deps): string[] {
   if (deps.mock) return [];
-  const need = ["BROWSERBASE_API_KEY", "BROWSERBASE_PROJECT_ID", "ANTHROPIC_API_KEY"];
+  // Full automation through the hosted agent runs its own browser: no Browserbase needed.
+  const need = mode === "auto" && deps.hosted ? ["ANTHROPIC_API_KEY", "COMPOSIO_API_KEY"] : ["BROWSERBASE_API_KEY", "BROWSERBASE_PROJECT_ID", "ANTHROPIC_API_KEY"];
   if (mode === "auto") need.push("AGENTMAIL_API_KEY");
   return need.filter((k) => !process.env[k]);
 }
@@ -177,7 +181,7 @@ export async function createRun(input: { app: string; mode?: Mode; baseUrl: stri
     dcr = await stage("dcr", "Looking for Dynamic Client Registration", "public OAuth and MCP metadata; read-only, nothing is registered",
       () => probeDcr(known, guide?.website, get), (d) => describeDcr(d)).catch(() => undefined);
   }
-  const route = chooseRoute({ chosen, playbook: known, dcr, sandbox });
+  let route = chooseRoute({ chosen, playbook: known, dcr, sandbox });
   progress({ id: "route", label: `How the ${chosen === "oauth" ? "OAuth app" : "API key"} gets created`, state: "done", detail: `${route.method}${route.fallback ? ` (${route.fallback})` : ""}` });
 
   // 4. The plan, for that credential and route.
@@ -204,6 +208,12 @@ export async function createRun(input: { app: string; mode?: Mode; baseUrl: stri
     const check: Step = { kind: "human", id: "sandbox-check", title: "Decide: no confirmed self-serve sandbox", noBrowser: true,
       reason: `Couldn't confirm a self-serve test account for ${playbook.name}. ${sandbox.summary ? `${sandbox.summary} ` : ""}${sandbox.humanPath ? `If it turns out to be gated: ${sandbox.humanPath} ` : ""}The evidence is under "Sandbox check" below. Press Continue to try anyway, or Cancel.` };
     playbook = { ...playbook, steps: { human: [check, ...playbook.steps.human], auto: [check, ...playbook.steps.auto] } };
+  }
+  if (deps.hosted && playbook.strategy === "browser") {
+    // Full automation hands the browser part to the hosted agent; human in the loop keeps our live browser.
+    playbook = withHostedSteps(playbook, sandbox);
+    route = { ...route, method: "Hosted browser agent", detail: `Browser Use (through Composio) signs up and creates the ${chosen === "oauth" ? "OAuth app" : "API key"} from the research. This app reads email codes for it, stores the secret in the vault and verifies it.`, executable: true };
+    progress({ id: "route", label: "Browser route", state: "info", detail: "full automation uses the hosted browser agent (Browser Use via Composio)" });
   }
   const problems = validatePlaybook(playbook);
   if (problems.length) throw new Error(`Plan for ${playbook.name} failed checks: ${problems.join("; ")}`);
@@ -437,6 +447,227 @@ function wallPause(ctx: Ctx, s: Step, b: { kind: string; detail: string }): Outc
   return "pause";
 }
 
+// ---------- Hosted browser agent (Browser Use via Composio) ----------
+
+const HOSTED_MAX_RUNS = 8;
+const HOSTED_RUN_MS = 20 * 60_000;
+
+/** Full automation's steps when the hosted agent does the browser work: identity, agent, verify. */
+export function withHostedSteps(p: Playbook, sandbox?: SandboxCheck): Playbook {
+  const auto = p.steps.auto;
+  const credential = p.credential === "api_key" ? "api_key" : "oauth";
+  const clean = (t: string) => t.replace(/%([a-z_]+)%/gi, "<$1>").replace(/\s+/g, " ").trim().slice(0, 300);
+  const r = sandbox?.resources;
+  const hints = (r?.steps || []).map((x) => clean(`${x.title}: ${x.detail}`));
+  if (!hints.length) for (const s of auto) if (s.kind === "browser" && s.instruction) hints.push(clean(`${s.title}: ${s.instruction}`));
+  const startUrl = sandbox?.signupUrl || auto.find((s): s is Extract<Step, { kind: "browser" }> => s.kind === "browser" && Boolean(s.url))?.url;
+  const agent: Step = {
+    kind: "agent", id: "hosted-agent", credential, startUrl, hints: hints.slice(0, 10), docs: (r?.docs || []).map((d) => d.url).slice(0, 5),
+    title: credential === "api_key" ? "Sign up and create the API key (hosted browser agent)" : "Sign up and create the OAuth app (hosted browser agent)",
+  };
+  const steps: Step[] = [
+    ...auto.filter((s) => s.id === "sandbox-check"),
+    { kind: "identity", id: "identity", title: "Agent identity (shared inbox and password)" },
+    agent,
+    { kind: "verify", id: "verify", title: credential === "api_key" ? "Verify the API key" : "Verify: OAuth sign-in, token and refresh" },
+    ...auto.filter((s) => s.kind === "golive"),
+  ];
+  return { ...p, steps: { ...p.steps, auto: steps } };
+}
+
+function hostedAgent(ctx: Ctx): HostedAgent {
+  if (!ctx.deps.hosted) throw new ConfigError("No hosted browser agent is set up (COMPOSIO_API_KEY)");
+  return ctx.deps.hosted;
+}
+
+async function hostedTask(ctx: Ctx, s: Extract<Step, { kind: "agent" }>): Promise<string> {
+  const { run } = ctx;
+  if (run.hosted?.task) return run.hosted.task;
+  const sharePassword = Boolean(run.vault.password) && run.vars.hosted_no_secrets !== "1";
+  const task = agentTask({
+    app: run.app, credential: s.credential, email: run.identity?.email || "", accountExists: run.vars.account_exists === "1",
+    passwordAlias: sharePassword ? "account_password" : undefined, startUrl: s.startUrl, hints: s.hints, docs: s.docs,
+    values: { first_name: run.vars.first_name, last_name: run.vars.last_name, company: run.vars.company, app_name: run.vars.app_name, workspace_name: run.vars.workspace_name, redirect_uri: run.vars.redirect_uri, dev_url: run.vars.dev_url },
+    scopes: run.playbook.oauth.scopes,
+  });
+  run.hosted = { runs: 0, ...run.hosted, task };
+  return task;
+}
+
+/** Starts the next hosted run in the job's browser session. The password goes as a bound secret, never in the task. */
+async function startHosted(ctx: Ctx, s: Extract<Step, { kind: "agent" }>, task: string, label: string): Promise<Outcome> {
+  const { run } = ctx;
+  const agent = hostedAgent(ctx);
+  const h = (run.hosted ??= { runs: 0 });
+  if (h.runs >= HOSTED_MAX_RUNS) throw new Error(`the hosted agent needed more than ${HOSTED_MAX_RUNS} runs without finishing`);
+  const secrets: { alias: string; value: string; domains: string[] }[] = [];
+  if (run.vault.password && run.vars.hosted_no_secrets !== "1") {
+    const pw = await getSecret(run.vault.password);
+    const domains = vendorDomains([s.startUrl, ...s.docs, run.playbook.oauth.authorizeUrl, run.playbook.oauth.tokenUrl]);
+    if (pw && domains.length) { ctx.seen.add(pw); secrets.push({ alias: "account_password", value: pw, domains }); }
+  }
+  let started: { runId: string; sessionId: string };
+  try { started = await agent.start({ task, sessionId: h.sessionId, secrets }); }
+  catch (e) {
+    if (!secrets.length || !/secret|binding|integration/i.test((e as Error).message)) throw e;
+    // The account can't pass a bound secret: let the agent pick its own password (later runs sign in by email).
+    run.vars.hosted_no_secrets = "1";
+    h.task = undefined;
+    const plain = await hostedTask(ctx, s);
+    log(run, "info", `The hosted agent's account doesn't accept bound secrets, so the agent chooses its own ${run.app} password. Later runs sign in with the email code or link.`, s.id);
+    started = await agent.start({ task: label === "first" ? plain : task, sessionId: h.sessionId });
+  }
+  h.sessionId = started.sessionId;
+  h.runId = started.runId;
+  h.runs++;
+  run.vars.hosted_started = String(Date.now());
+  log(run, "agent", `Hosted agent run ${h.runs} started${h.runs > 1 ? " in the same browser" : ""}: ${label === "first" ? `sign up and create the ${s.credential === "api_key" ? "API key" : "OAuth app"}` : label}.`, s.id, ctx.seen);
+  if (!run.browser?.liveUrl) { const u = await agent.liveUrl(started.runId).catch(() => undefined); if (u) run.browser = { sessionId: "", liveUrl: u }; }
+  await saveRun(run);
+  return "wait";
+}
+
+/** Near the end of this invocation: idle so the loop ends, instead of calling the APIs in a tight loop. */
+async function idleUntilDeadline(ctx: Ctx) {
+  if (Date.now() < ctx.deadline - 25_000) return;
+  await new Promise((res) => setTimeout(res, Math.max(0, ctx.deadline - 9_000 - Date.now())));
+}
+
+/** Waits for the current hosted run; null when it is still going at the end of this invocation. */
+async function pollHosted(ctx: Ctx, runId: string) {
+  const { run, deps } = ctx;
+  const agent = hostedAgent(ctx);
+  const since = Number(run.vars.hosted_started || Date.now());
+  run.waitingFor = { what: "the hosted browser agent (Browser Use) to finish its run", since, until: since + HOSTED_RUN_MS, hint: run.browser?.liveUrl ? "Watch it in the live view." : undefined };
+  for (;;) {
+    const r = await agent.get(runId);
+    if (run.hosted) run.hosted.lastStatus = r.status;
+    if (r.status === "completed" || r.status === "failed" || r.status === "cancelled") { run.waitingFor = undefined; return r; }
+    if (Date.now() - since > HOSTED_RUN_MS) { run.waitingFor = undefined; throw new Error(`the hosted agent's run was still ${r.status} after ${HOSTED_RUN_MS / 60_000} minutes`); }
+    if (!run.browser?.liveUrl) { const u = await agent.liveUrl(runId).catch(() => undefined); if (u) run.browser = { sessionId: "", liveUrl: u }; }
+    if (deps.mock) return null;
+    if (Date.now() > ctx.deadline - 25_000) { await idleUntilDeadline(ctx); return null; }
+    await new Promise((res) => setTimeout(res, 5000));
+  }
+}
+
+/** The agent stopped for an email: read the code or link from our inbox and resume the same browser. */
+async function hostedMail(ctx: Ctx, s: Extract<Step, { kind: "agent" }>, base: string): Promise<Outcome> {
+  const { run, deps } = ctx;
+  if (!run.identity?.inboxId) throw new Error("no agent inbox (run the identity step first)");
+  const since = Number(run.vars.hosted_started || Date.now());
+  const used = new Set<string>(JSON.parse(run.vars.hosted_mails || "[]"));
+  const words = [run.slug.split(/[-_]/)[0], run.app.toLowerCase().split(/\s+/)[0]].filter((w) => w && w.length > 2);
+  const end = Math.min(ctx.deadline - 20_000, Date.now() + (deps.mock ? 0 : 60_000));
+  let mail: Awaited<ReturnType<Inbox["list"]>>[number] | undefined;
+  do {
+    const mails = (await deps.inbox.list(run.identity.inboxId)).filter((m) => !used.has(m.id) && (!m.at || Date.parse(m.at) >= since - 60_000));
+    const late = Date.now() - since > 120_000; // after two minutes, any new mail will do
+    mail = mails.find((m) => words.some((w) => `${m.from} ${m.subject}`.toLowerCase().includes(w))) || (late ? mails[0] : undefined);
+    if (mail || Date.now() >= end) break;
+    await new Promise((res) => setTimeout(res, 4000));
+  } while (Date.now() < end);
+  if (!mail) {
+    run.waitingFor = { what: `an email from ${run.app} at ${run.identity.email || "the agent's inbox"}`, since, until: since + EMAIL_WAIT_MS };
+    if (Date.now() - since > EMAIL_WAIT_MS) { run.waitingFor = undefined; throw new Error(`the hosted agent is waiting for an email from ${run.app}, but none reached ${run.identity.email} in 5 minutes`); }
+    if (!deps.mock) await idleUntilDeadline(ctx);
+    return "wait";
+  }
+  run.waitingFor = undefined;
+  used.add(mail.id);
+  run.vars.hosted_mails = JSON.stringify([...used].slice(-20));
+  const wantLink = run.vars.hosted_expects === "link";
+  const code = wantLink ? null : findCode(mail);
+  const link = code ? null : findLink(mail, words[0]);
+  if (!code && !link) throw new Error(`the email "${mail.subject.slice(0, 60)}" had no code or link the agent could read`);
+  ctx.seen.add(String(code || link));
+  run.vars.hosted_expects = "";
+  log(run, "step", `${s.title}: ${code ? "code" : "sign-in link"} read from "${mail.subject.slice(0, 80)}" and passed to the hosted agent.`, s.id, ctx.seen);
+  return startHosted(ctx, s, continueTask(base, code ? { code } : { link: link! }), code ? "enter the emailed code and continue" : "open the emailed link and continue");
+}
+
+/** What the agent reported: store secrets, resume for email, hand walls to a person, or finish. */
+async function hostedResult(ctx: Ctx, s: Extract<Step, { kind: "agent" }>, a: AgentResult, base: string): Promise<Outcome> {
+  const { run } = ctx;
+  if (a.clientSecret) ctx.seen.add(a.clientSecret);
+  if (a.apiKey) ctx.seen.add(a.apiKey);
+  if (a.clientId) await store(ctx, "client_id", a.clientId, false);
+  if (a.clientSecret) await store(ctx, "client_secret", a.clientSecret, true);
+  if (a.apiKey) await store(ctx, "api_key", a.apiKey, true);
+  if (a.appUrl) run.public.sandboxUrl = a.appUrl;
+  const notes = a.notes.length ? ` Notes: ${a.notes.join("; ").slice(0, 300)}` : "";
+  if (a.status === "waiting_for_email") {
+    run.vars.hosted_expects = a.expects || "code";
+    log(run, "agent", `The hosted agent is waiting for an email ${a.expects === "link" ? "link" : "code"} from ${run.app}.${notes}`, s.id, ctx.seen);
+    return hostedMail(ctx, s, base);
+  }
+  if (a.status === "wall") {
+    run.vars.hosted_wall = a.wall || "a mandatory check";
+    run.vars[`retry:${s.id}`] = "1";
+    pause(run, { kind: "human", step: s.id, reason: `The hosted agent stopped at a mandatory check it must not solve: ${run.vars.hosted_wall}. Do that step in the live view${run.browser?.liveUrl ? "" : " (Browser Use's live view)"}, then press Continue; the agent carries on in the same browser.`, blocker: run.vars.hosted_wall }, "handoff");
+    return "pause";
+  }
+  const need = s.credential === "api_key" ? (a.apiKey ? [] : ["API key"]) : [a.clientId ? "" : "client ID", a.clientSecret ? "" : "client secret"].filter(Boolean);
+  if (a.status === "done" && !need.length) {
+    log(run, "step", `${s.title}: done in ${run.hosted?.runs || 1} hosted run(s).${a.clientId ? ` Client ID ${a.clientId}.` : ""}${a.appUrl ? ` App page: ${a.appUrl}.` : ""} The ${s.credential === "api_key" ? "key" : "secret"} went straight to the vault.${notes}`, s.id, ctx.seen);
+    return "done";
+  }
+  if (a.status === "done") {
+    // Created, but a value didn't come back: a person reads it off the page into the vault.
+    const into = s.credential === "api_key" ? "api_key" : a.clientId ? "client_secret" : "client_id";
+    pause(run, { kind: "human", step: s.id, reason: `The hosted agent created it but didn't return the ${need.join(" and ")}.${a.appUrl ? ` Open ${a.appUrl} (signed in as ${run.identity?.email}),` : " Open the app's page in the live view,"} reveal it, and paste it below. It goes straight to the vault.${notes}`, field: { into, secret: into !== "client_id", label: need[0] } }, "handoff");
+    return "pause";
+  }
+  throw new Error(`the hosted agent couldn't finish.${notes || " It gave no reason."}`);
+}
+
+async function hostedStep(ctx: Ctx, s: Extract<Step, { kind: "agent" }>): Promise<Outcome> {
+  const { run } = ctx;
+  const base = await hostedTask(ctx, s);
+  const h = run.hosted!;
+  if (run.vars[`resume:${s.id}`] === "1") {
+    run.vars[`resume:${s.id}`] = "";
+    if (!h.runId) return startHosted(ctx, s, continueTask(base, { personHandled: run.vars.hosted_wall }), "continue after the person's help");
+  }
+  if (!h.runId) {
+    if (run.vars.hosted_expects) return hostedMail(ctx, s, base);
+    return startHosted(ctx, s, base, "first");
+  }
+  const r = await pollHosted(ctx, h.runId);
+  if (!r) return "wait";
+  h.runId = undefined;
+  if (r.status !== "completed") throw new Error(`the hosted agent's run ${r.status}${r.error ? `: ${r.error.slice(0, 160)}` : ""}`);
+  return hostedResult(ctx, s, parseAgentResult(r.result), base);
+}
+
+/** Verification consent in the hosted browser, which is already signed in. The callback route catches the code. */
+async function hostedConsent(ctx: Ctx, s: Step, url: string): Promise<Outcome | "code"> {
+  const { run } = ctx;
+  const h = (run.hosted ??= { runs: 0 });
+  await saveRun(run); // picks up a code the callback stored meanwhile
+  if (run.verify?.code) return "code";
+  if (!h.consent) {
+    h.consent = true;
+    await saveRun(run); // the state must be stored before the browser can reach the callback
+    return startHosted(ctx, { kind: "agent", id: s.id, title: s.title, credential: "oauth", hints: [], docs: [] }, consentTask(run.app, url, run.vars.redirect_uri), "approve the OAuth consent screen");
+  }
+  if (h.runId) {
+    const r = await pollHosted(ctx, h.runId);
+    if (!r) return "wait";
+    h.runId = undefined;
+    await saveRun(run); // picks up a code the callback stored meanwhile
+    if (run.verify?.code) return "code";
+    const a = parseAgentResult(r.result);
+    if (a.status === "waiting_for_email") { run.vars.hosted_expects = a.expects || "code"; }
+    else {
+      pause(run, { kind: "human", step: s.id, reason: `The hosted agent couldn't complete the consent screen${a.notes.length ? ` (${a.notes.join("; ").slice(0, 200)})` : ""}. Approve it in the live view, then press Continue.` }, "handoff");
+      return "pause";
+    }
+  }
+  if (run.vars.hosted_expects) return hostedMail(ctx, { kind: "agent", id: s.id, title: s.title, credential: "oauth", hints: [], docs: [] }, consentTask(run.app, url, run.vars.redirect_uri));
+  return "wait";
+}
+
 async function runStep(ctx: Ctx, s: Step): Promise<Outcome> {
   const { run, deps } = ctx;
   switch (s.kind) {
@@ -630,6 +861,7 @@ async function runStep(ctx: Ctx, s: Step): Promise<Outcome> {
       await h(ctx);
       return "done";
     }
+    case "agent": return hostedStep(ctx, s);
     case "verify": return verifyStep(ctx, s);
     case "golive": {
       run.goLive = run.playbook.goLive;
@@ -676,6 +908,13 @@ async function verifyStep(ctx: Ctx, s: Step): Promise<Outcome> {
     await browser(ctx);
     return "pause";
   }
+  if (run.hosted?.sessionId && ctx.deps.hosted) {
+    // The hosted agent's browser is signed in already: it approves consent; the callback route catches the code.
+    if (!run.verify) { run.verify = { state: newState(), verifier: "" }; run.public.authorizeUrl = authorizeUrl(o, clientId, run.vars.redirect_uri, run.verify.state); }
+    const c = await hostedConsent(ctx, s, run.public.authorizeUrl || authorizeUrl(o, clientId, run.vars.redirect_uri, run.verify.state));
+    if (c !== "code") return c;
+    return finishVerify(ctx, s, run.verify.code!, clientId, secret);
+  }
   const d = await browser(ctx);
   // The callback route may have stored the code while we were paused.
   const fresh = await getRun(run.id);
@@ -698,6 +937,14 @@ async function verifyStep(ctx: Ctx, s: Step): Promise<Outcome> {
     pause(run, { kind: "human", step: s.id, reason: "Approve the consent screen in the live browser, then press Continue." }, "handoff");
     return "pause";
   }
+  return finishVerify(ctx, s, code, clientId, secret);
+}
+
+/** Code in hand: exchange it, call the identity endpoint and the use-case call, test refresh. */
+async function finishVerify(ctx: Ctx, s: Step, code: string, clientId: string, secret: string): Promise<Outcome> {
+  const { run, deps } = ctx;
+  const o = run.playbook.oauth;
+  run.verify ??= { state: "", verifier: "" };
   ctx.seen.add(code);
   try {
     const t = await exchangeCode(deps.http, o, code, run.vars.redirect_uri, clientId, secret);

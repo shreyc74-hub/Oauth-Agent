@@ -44,7 +44,9 @@ export const agentMail: Inbox = {
 
 /** Finds a one-time code. Prefers codes near words like "code"/"verification"; handles "ABC-123". */
 export function findCode(mail: Pick<Mail, "subject" | "text" | "html">): string | null {
-  const plain = `${mail.subject}\n${mail.text || mail.html.replace(/<[^>]+>/g, " ")}`;
+  // HTML-only mails (Zoom's sign-in code) carry CSS whose six-digit colours look like codes: drop it first.
+  const html = mail.html.replace(/<(style|head|script)[^>]*>[\s\S]*?<\/\1>/gi, " ").replace(/<[^>]+>/g, " ").replace(/&nbsp;/g, " ");
+  const plain = `${mail.subject}\n${mail.text || html}`;
   // "…copy the verification code into your browser: Ab12Cd34Ef" (Linear): whatever follows the colon,
   // 4 to 16 letters, digits or hyphens, case kept. Must contain a digit or be mixed/upper case letters,
   // so an ordinary word after a colon isn't taken for a code.

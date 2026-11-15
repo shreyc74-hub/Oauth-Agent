@@ -239,6 +239,7 @@ export default function ProvisionRun({ id }: { id: string }) {
                 : <><span className="spin" /> <b>The agent is using this browser.</b> Wait for &quot;Your turn&quot; before typing, or your input and the agent&apos;s will collide.</>}
             </div>
             <iframe src={live} title="Live browser" sandbox="allow-same-origin allow-scripts" allow="clipboard-read; clipboard-write" />
+            <div className="small"><a href={live} target="_blank" rel="noreferrer">Open the live browser in a new tab</a>{run.hosted?.sessionId ? " · hosted by Browser Use" : ""}</div>
           </div>
         ) : null}
 

@@ -11,7 +11,7 @@ import { runClaude, RESOLVE_MODEL, jsonFromModel } from "../agent/claude";
 
 export const PLAYBOOKS: Record<string, Playbook> = { linear, slack, hubspot };
 
-const KINDS = new Set(["identity", "browser", "capture", "email", "totp", "api", "human", "verify", "golive"]);
+const KINDS = new Set(["identity", "browser", "capture", "email", "totp", "api", "human", "verify", "golive", "agent"]);
 
 /** Structural checks for any playbook, hand-written or generated. Returns a list of problems. */
 const HTTPS = /^https:\/\/[^/]+\.[^/]+/;
@@ -41,7 +41,9 @@ export function validatePlaybook(p: Playbook): string[] {
       }
     }
     const captures = steps.filter((s): s is Extract<Step, { kind: "capture" }> => s.kind === "capture").map((s) => s.into);
-    if (key) { if (!captures.includes("api_key")) errs.push(`${mode}: must capture api_key`); }
+    // A hosted agent step hands back the credential itself; code stores it in the vault.
+    if (steps.some((s) => s.kind === "agent")) { /* credentials come from the agent step */ }
+    else if (key) { if (!captures.includes("api_key")) errs.push(`${mode}: must capture api_key`); }
     else if (p.strategy === "dcr") { if (!steps.some((s) => s.kind === "api" && s.handler === "dcrRegister")) errs.push(`${mode}: a dcr plan needs the dcrRegister api step`); }
     else if (p.strategy !== "api" && !(captures.includes("client_id") && captures.includes("client_secret"))) errs.push(`${mode}: must capture client_id and client_secret`);
     if (!steps.some((s) => s.kind === "verify")) errs.push(`${mode}: no verify step`);

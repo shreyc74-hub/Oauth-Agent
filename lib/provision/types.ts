@@ -49,6 +49,11 @@ export type Step =
   | (Base & { kind: "api"; handler: string; write?: boolean })
   /** Something only a person can do (captcha, phone check, legal terms in some modes). */
   | (Base & { kind: "human"; reason: string; url?: string; noBrowser?: boolean })
+  /**
+   * A hosted browser agent (Browser Use via Composio) does the sign-up and creates the app or key from
+   * a goal plus research hints. Our app handles email codes, walls, the vault and verification between its runs.
+   */
+  | (Base & { kind: "agent"; credential: "oauth" | "api_key"; startUrl?: string; hints: string[]; docs: string[] })
   /** Run the OAuth flow against the sandbox, call an identity endpoint, test the refresh token. */
   | (Base & { kind: "verify" })
   /** Mark what production approval needs. Never automated. */
@@ -214,6 +219,8 @@ export interface Run {
   /** Short lease so two browser tabs can't advance the same run at once. */
   lockUntil?: number;
   browser?: { sessionId: string; liveUrl?: string };
+  /** The hosted browser agent's session (one browser for the whole job) and its current run. */
+  hosted?: { sessionId?: string; runId?: string; runs: number; task?: string; lastStatus?: string; consent?: boolean };
   identity?: { email?: string; inboxId?: string };
   vault: Record<string, string>; // label -> vault name, e.g. client_secret -> "linear/2026-11-14/client_secret"
   public: { clientId?: string; sandboxUrl?: string; appId?: string; authorizeUrl?: string };

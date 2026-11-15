@@ -18,6 +18,11 @@ const mem = new Map<string, Run>();
 
 export async function saveRun(run: Run): Promise<void> {
   run.updatedAt = new Date().toISOString();
+  if (run.verify?.state && !run.verify.code) {
+    // The OAuth callback may have stored the code on the saved run while this copy was in use: keep it.
+    const stored = await getRun(run.id).catch(() => null);
+    if (stored?.verify?.code && stored.verify.state === run.verify.state) run.verify.code = stored.verify.code;
+  }
   const s = supabase();
   if (!s) { mem.set(run.id, structuredClone(run)); return; }
   const { error } = await s.from("provision_runs").upsert({ id: run.id, app: run.app, slug: run.slug, mode: run.mode, status: run.status, data: run, updated_at: run.updatedAt });

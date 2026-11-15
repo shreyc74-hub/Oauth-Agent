@@ -96,6 +96,26 @@ In production, nobody should have to type the use case. The toolkit factory alre
 
 The only difference between the modes is who handles identity and approvals. Walls stay with a person in both. Browserbase's automatic captcha solving is switched off on purpose.
 
+## Full automation's browser route: a hosted browser agent
+
+When `COMPOSIO_API_KEY` is set, full automation hands the browser part to **Browser Use**, called through Composio's tool API, instead of our own step-by-step browser playbook. Our app stays in charge; Browser Use only drives the browser.
+
+1. Research as before: sandbox check, credential choice, route. DCR, management API and manifest routes still come first and need no browser.
+2. For the browser route the plan becomes three steps: agent identity (shared inbox and password), **hosted agent**, verify.
+3. Our app writes the hosted agent's task from the research: the goal (OAuth app or API key), the values (names, redirect URL, scopes), the vendor's steps as hints ("trust the screen over these"), the rules (skip optional prompts such as "add your phone number"; stop only at a mandatory phone, payment, captcha or bot check; never solve a captcha), and a fixed JSON answer shape.
+4. The account password goes as a Browser Use bound secret for the vendor's own domains, never in the task text.
+5. Between Browser Use runs, in the same browser session:
+   - **Email:** the agent stops with `waiting_for_email`; our app reads the code or sign-in link from our inbox (codes in HTML-only mails included) and starts the next run with it.
+   - **Wall:** the run pauses for a person with Browser Use's live view; after Continue the agent carries on in the same browser.
+   - **Done:** the client ID is stored, the secret or key goes straight to the vault and is redacted from the log. If the secret didn't come back, the run asks a person to paste it into the vault.
+6. Verification: the hosted browser, already signed in, approves the consent screen; our callback route catches the code; our app exchanges it, calls the identity endpoint and tests refresh.
+
+Human in the loop keeps the Browserbase live browser. `PROVISION_BROWSER_AGENT=stagehand` turns the hosted route off.
+
+**What this costs in trust:** the client secret or API key passes through Browser Use's run result (and so Browser Use's records) on its way to our vault. Attaching our own code to Browser Use's browser to read the secret directly would avoid that; it was not reachable in testing and is a follow-up.
+
+**What is tested:** Browser Use was run by hand through Composio on 2026-11-15 for Zoom (OAuth app; two emailed codes), Linear (OAuth app; Cloudflare passed on its own) and the Anthropic Console (API key; emailed sign-in link). Each created the account and the app or key with no person, on Composio's free shared Browser Use account (gpt-5.6-luna). The secrets were deliberately not returned in those tests, so none of them was verified end to end. This app's own calls to Composio's REST API, the email resume and verification through the hosted browser are tested offline only.
+
 ## Three kinds of credentials, and where each goes
 
 1. **Developer account login** (email, password, TOTP seed). Only in full automation. Generated straight into the vault.
@@ -174,6 +194,7 @@ Otherwise the run ends as **needs review** with the reason.
 | Browserbase | Hosted browser with live view | `BROWSERBASE_API_KEY`, `BROWSERBASE_PROJECT_ID` |
 | Anthropic | Stagehand's model and planning | `ANTHROPIC_API_KEY` (optional `STAGEHAND_MODEL`) |
 | AgentMail | Agent inboxes, full automation only | `AGENTMAIL_API_KEY` |
+| Composio (Browser Use) | Hosted browser agent for full automation. Connect Browser Use in Composio for the user below. | `COMPOSIO_API_KEY`, optional `COMPOSIO_USER_ID`, `COMPOSIO_CONNECTED_ACCOUNT_ID`, `BROWSER_USE_MODEL` |
 | Google service account | Tracker sheet (share the sheet with its email as Editor) | `GOOGLE_SERVICE_ACCOUNT_JSON`, `GOOGLE_SHEET_ID` |
 | Access (optional) | Lock runs and reveals behind a code; open when unset | `PROVISION_ACCESS_CODE`, `PROVISION_ADMIN_TOKEN` |
 | Redirect URI | `<this>/api/oauth/callback` on every app | `PUBLIC_BASE_URL` |
