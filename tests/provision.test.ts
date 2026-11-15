@@ -2,7 +2,7 @@
 // verification, and the routes' access rules. Runs offline with the mock browser, inbox and APIs.
 import { test, beforeEach } from "node:test";
 import assert from "node:assert/strict";
-import { PLAYBOOKS, validatePlaybook, mockPlanFromGuide } from "../lib/provision/planner";
+import { PLAYBOOKS, validatePlaybook, mockPlanFromGuide, fillSecretLists } from "../lib/provision/planner";
 import { createRun, advance, respond, reveal, NoGuideError, defaultDeps } from "../lib/provision/engine";
 import { getRun, attachCode, _resetRuns } from "../lib/provision/runs";
 import { getSecret, mask, redact, vaultName, _resetVault, putSecret } from "../lib/provision/vault";
@@ -246,4 +246,16 @@ test("a browser session that expired while the run waited is replaced, and the r
   assert.notEqual(r.browser?.sessionId, first);
   assert.ok(r.events.some((e) => /previous browser session had ended/.test(e.text)));
   assert.notEqual(r.status, "failed");
+});
+
+test("a generated plan that types %password% but forgot its secrets list is repaired, a bare 'password' is still refused", () => {
+  const notion = libraryGuides().find((g) => g.slug === "notion")!;
+  const plan = mockPlanFromGuide(notion);
+  const signup = plan.steps.auto.find((s) => s.id === "signup")! as Extract<typeof plan.steps.auto[number], { kind: "browser" }>;
+  delete signup.secrets;
+  assert.ok(validatePlaybook(plan).some((e) => /mentions a secret/.test(e)));
+  assert.deepEqual(validatePlaybook(fillSecretLists(plan)), []);
+  signup.instruction = "Sign up and choose a strong password.";
+  delete signup.secrets;
+  assert.ok(validatePlaybook(fillSecretLists(plan)).some((e) => /mentions a secret/.test(e)));
 });

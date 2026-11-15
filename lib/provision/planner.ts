@@ -57,6 +57,7 @@ type Playbook = {slug,name,strategy:"browser"|"human",evidence:"unverified",
 Rules:
 - Use only facts from the guide. If the guide does not give the token endpoint or an identity endpoint, use the provider's documented ones you are confident about and add a note saying they are unverified.
 - Browser instructions are plain English for one screen at a time. Put values in %placeholders%: %app_name%, %dev_name%, %dev_url%, %redirect_uri%, %workspace_name%, %email%, %password%, %code%.
+- Every browser step lists each %placeholder% its instruction uses in "secrets" (e.g. "Sign up with %email% and %password%." has secrets ["email","password"]). Any step that types a password, token or secret must type it through a %placeholder%.
 - Never put a secret value in an instruction. Secrets are captured with "capture" steps (into "client_id" secret:false, "client_secret" secret:true).
 - Mark any step that creates, submits, accepts terms or installs as write:true.
 - human mode starts with a human step "Sign in" and has no identity/email steps. auto mode starts with identity, then sign-up via %email%, email verification, then the same creation steps.
@@ -71,17 +72,41 @@ export async function planFromGuide(guide: Guide): Promise<Playbook> {
     steps: guide.steps, prerequisites: guide.prerequisites, appTypes: guide.appTypes?.items,
     scopes: guide.scopes?.minimalSets, approval: guide.approval, tokens: (guide as unknown as Record<string, unknown>).tokens,
   };
-  const text = await runClaude({
-    model: RESOLVE_MODEL,
-    system: PLAN_SYSTEM,
-    maxTokens: 6000,
-    messages: [{ role: "user", content: `Guide for ${guide.name} (slug ${guide.slug}):\n${JSON.stringify(brief)}` }],
-  });
-  const json = text.slice(text.indexOf("{"), text.lastIndexOf("}") + 1);
-  const p = JSON.parse(json) as Playbook;
-  p.slug = guide.slug; p.name = guide.name; p.evidence = "unverified";
-  const errs = validatePlaybook(p);
-  if (errs.length) throw new Error(`The generated plan for ${guide.name} failed checks: ${errs.slice(0, 4).join("; ")}`);
+  const ask = `Guide for ${guide.name} (slug ${guide.slug}):\n${JSON.stringify(brief)}`;
+  const parse = (text: string): Playbook => {
+    const p = JSON.parse(text.slice(text.indexOf("{"), text.lastIndexOf("}") + 1)) as Playbook;
+    p.slug = guide.slug; p.name = guide.name; p.evidence = "unverified";
+    return fillSecretLists(p);
+  };
+  const first = await runClaude({ model: RESOLVE_MODEL, system: PLAN_SYSTEM, maxTokens: 6000, messages: [{ role: "user", content: ask }] });
+  let p = parse(first);
+  let errs = validatePlaybook(p);
+  if (errs.length) {
+    // One correction round: the planner sees exactly which checks failed and returns a fixed plan.
+    const second = await runClaude({
+      model: RESOLVE_MODEL, system: PLAN_SYSTEM, maxTokens: 6000,
+      messages: [
+        { role: "user", content: ask },
+        { role: "assistant", content: first },
+        { role: "user", content: `That plan failed these checks:\n- ${errs.join("\n- ")}\nReturn the whole corrected plan as JSON only.` },
+      ],
+    });
+    p = parse(second);
+    errs = validatePlaybook(p);
+  }
+  if (errs.length) throw new Error(`The agent couldn't write a safe plan for ${guide.name} (checked twice): ${errs.slice(0, 4).join("; ")}`);
+  return p;
+}
+
+/** Browser steps must list the %placeholders% they type. Fills in a list the planner forgot. */
+export function fillSecretLists(p: Playbook): Playbook {
+  for (const mode of ["human", "auto"] as Mode[]) {
+    for (const s of p.steps?.[mode] || []) {
+      if (s.kind !== "browser" || !s.instruction) continue;
+      const used = [...s.instruction.matchAll(/%([a-z_][a-z0-9_]*)%/gi)].map((m) => m[1]);
+      if (used.length) s.secrets = [...new Set([...(s.secrets || []), ...used])];
+    }
+  }
   return p;
 }
 
