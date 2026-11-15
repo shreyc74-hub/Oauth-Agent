@@ -29,7 +29,7 @@ export function combine(quotes: SandboxCheck["quotes"], probe: Probe | undefined
   const no = quotes.filter((q) => q.found && q.says === "no").length;
   const looks = probe?.looks;
   if (no && !yes) return { verdict: "gated", why: "The vendor's own pages say a test account needs sales, a partner programme or an existing subscription." };
-  if (yes && no) return { verdict: "unknown", why: "The vendor's pages disagree: some offer a free account, others say access goes through sales or partners." };
+  if (yes && no) return { verdict: "unknown", why: `The vendor's pages point both ways: ${yes} quote${yes > 1 ? "s" : ""} support${yes > 1 ? "" : "s"} self-serve access and ${no} say${no > 1 ? "" : "s"} access is limited or gated.` };
   if (yes && looks === "signup_form") return { verdict: "self_serve", why: "The docs offer a free account and the sign-up page is a self-serve form." };
   if (yes && looks === "sales_gate") return { verdict: "unknown", why: "The docs mention a free account, but the sign-up page leads to sales or a demo request." };
   if (yes) return { verdict: "likely_self_serve", why: "The docs offer a free account; the sign-up page could not be confirmed." };
@@ -112,10 +112,12 @@ There are three separate questions. Answer each with evidence from the vendor's 
 3. oauthApp: can anyone create an OAuth app, or is OAuth only for approved partners or marketplace members? Can anyone get an API key instead? (BambooHR: API key from the dashboard, OAuth for marketplace partners.)
 
 "yes" (self-serve): a free account, free plan, free trial, developer sandbox or developer programme that anyone can join today.
-"no" (gated): contact sales, book a demo, partner programme application, approval or invitation, or existing paying customers only.
+"no" (gated or limited): contact sales, book a demo, partner programme application, approval, invitation, a waitlist or limited availability, or existing paying customers only.
+Only quotes about access TODAY count. History ("used to require an invitation") is not evidence, and neither are policies that say nothing about who may get access (deletion after inactivity, rate limits, pricing of paid tiers).
 
 Use web_search and web_fetch on official pages (developer docs, partner pages, pricing, sign-up). Return ONLY this JSON:
-{"relation":"same"|"separate",
+{"summary":"one plain sentence a busy product manager understands, e.g. 'Free developer account for anyone; test tenants come from a limited beta and are approved only when capacity allows.'",
+ "relation":"same"|"separate",
  "developerAccount":{"name":string,"signupUrl":string,"selfServe":"yes"|"no"|"unclear","reason":string,"humanPath":string,"quotes":[Quote]},
  "sandbox":{"name":string,"signupUrl":string,"selfServe":"yes"|"no"|"unclear","expires":string,"reason":string,"humanPath":string,"quotes":[Quote]},
  "oauthApp":{"available":"self_serve"|"partner_only"|"none"|"unclear","apiKeySelfServe":boolean,"reason":string,"humanPath":string,"quotes":[Quote]},
@@ -131,6 +133,7 @@ The answer must be valid JSON: inside a string, write any double quote from the 
 type RawQuote = { quote: string; url: string; says: "yes" | "no" };
 type RawPart = { name?: string; signupUrl?: string; selfServe?: string; reason?: string; humanPath?: string; expires?: string; quotes?: RawQuote[] };
 export type Found = {
+  summary?: string;
   relation?: string;
   developerAccount?: RawPart;
   sandbox?: RawPart;
@@ -237,7 +240,7 @@ export async function checkSandbox(app: { name: string; slug: string; website?: 
     ? `Developer side: ${dev.name}. Sandbox: ${box.name}${relation === "same" ? " (same account)" : relation === "separate" ? " (a separate account)" : ""}${box.expires ? `, expires: ${box.expires}` : ""}.`
     : worst.map((p) => `${label(p)} (${p.name}): ${p.reason}`).join(" ");
   return {
-    verdict, reason, relation, parts, credential, offered, creation,
+    verdict, reason, relation, parts, credential, offered, creation, summary: found.summary ? String(found.summary).slice(0, 300) : undefined,
     humanPath: worst.map((p) => p.humanPath).filter(Boolean).join(" ") || undefined,
     signupUrl: dev.url, quotes: parts.flatMap((p) => p.quotes), probe: dev.probe,
     source: "research", checkedOn: today(),

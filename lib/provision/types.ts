@@ -135,6 +135,8 @@ export interface SetupPart {
 }
 
 export interface SandboxCheck {
+  /** One plain sentence for people: the answer before the evidence. */
+  summary?: string;
   /** Is the sandbox the same account as the developer side (Linear, BambooHR) or a separate one (Slack, HubSpot, Zoho)? */
   relation?: "same" | "separate" | "unknown";
   parts?: SetupPart[];

@@ -65,7 +65,7 @@ export function browserAccountError(e: unknown): ConfigError | null {
 export class SandboxGatedError extends Error {
   name = "SandboxGatedError";
   constructor(public app: string, public check: SandboxCheck) {
-    super(`${app}: a test account isn't self-serve, so the agent stopped before creating anything. ${check.reason}`);
+    super(`${app}: a test account isn't self-serve, so the agent stopped before creating anything. ${check.summary || check.reason}`);
   }
 }
 
@@ -193,7 +193,7 @@ export async function createRun(input: { app: string; mode?: Mode; baseUrl: stri
   if (sandbox?.verdict === "unknown") {
     // No confirmed evidence either way: the person decides before any browser time is spent.
     const check: Step = { kind: "human", id: "sandbox-check", title: "Decide: no confirmed self-serve sandbox", noBrowser: true,
-      reason: `Couldn't confirm that ${playbook.name} offers a self-serve test account. ${sandbox.reason}${sandbox.humanPath ? ` If it is gated: ${sandbox.humanPath}` : ""} Press Continue to try anyway, or Cancel.` };
+      reason: `Couldn't confirm a self-serve test account for ${playbook.name}. ${sandbox.summary ? `${sandbox.summary} ` : ""}${sandbox.humanPath ? `If it turns out to be gated: ${sandbox.humanPath} ` : ""}The evidence is under "Sandbox check" below. Press Continue to try anyway, or Cancel.` };
     playbook = { ...playbook, steps: { human: [check, ...playbook.steps.human], auto: [check, ...playbook.steps.auto] } };
   }
   const problems = validatePlaybook(playbook);

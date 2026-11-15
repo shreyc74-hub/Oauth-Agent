@@ -257,7 +257,8 @@ export default function ProvisionRun({ id }: { id: string }) {
               <>
                 <h2>Sandbox check</h2>
                 <p className="small"><span className={`badge sb-${run.sandbox.verdict}`}>{SANDBOX[run.sandbox.verdict]}</span> <span className="muted">from {run.sandbox.source === "run" ? "a verified run" : run.sandbox.source === "playbook" ? "the hand-written playbook" : `research on ${run.sandbox.checkedOn}`}</span></p>
-                <p className="small">{run.sandbox.reason}</p>
+                {run.sandbox.summary ? <p><b>{run.sandbox.summary}</b></p> : null}
+                <details className="small"><summary>How the agent decided</summary><p className="small">{run.sandbox.reason}</p></details>
                 {run.sandbox.relation ? <p className="small">Sandbox is <b>{run.sandbox.relation === "same" ? "the same account" : run.sandbox.relation === "separate" ? "a separate account" : "not confirmed as same or separate"}</b> as the developer side.{run.sandbox.credential?.apiKey && run.sandbox.credential.oauth !== "self_serve" ? " An API key is self-serve." : ""}</p> : null}
                 <SetupParts check={run.sandbox} />
               </>

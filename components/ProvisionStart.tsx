@@ -193,7 +193,7 @@ export default function ProvisionStart({ mock }: { mock: boolean }) {
           {err.gated ? (
             <>
               <p><b>No self-serve test account.</b> The agent stopped before signing up or opening a browser.</p>
-              <p>{err.gated.reason}</p>
+              <p>{err.gated.summary || err.gated.reason}</p>
               <SetupParts check={err.gated} />
             </>
           ) : <p>{err.text}</p>}
