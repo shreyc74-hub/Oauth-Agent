@@ -282,3 +282,19 @@ test("a browser step whose single action 'succeeded' but left the form unfinishe
     void signup;
   } finally { delete process.env.PROVISION_MOCK_UNFINISHED; }
 });
+
+test("one shared mailbox: the first run signs up, later runs for the same vendor sign in with the same login", async () => {
+  process.env.PROVISION_INBOX_ID = "linear-shared@agentmail.to";
+  try {
+    const first = await drive((await createRun({ app: "Linear", mode: "auto", baseUrl: BASE })).id);
+    assert.equal(first.status, "verified");
+    assert.equal(first.identity?.email, "linear-shared@agentmail.to");
+    assert.ok(first.events.some((e) => /First Linear account for it: the agent signs up/.test(e.text)));
+    const second = await drive((await createRun({ app: "Linear", mode: "auto", baseUrl: BASE })).id);
+    assert.equal(second.status, "verified");
+    assert.equal(second.identity?.email, "linear-shared@agentmail.to", "same mailbox, no new inbox");
+    assert.equal(second.vault.password, first.vault.password, "same vendor login from the vault");
+    assert.ok(second.events.some((e) => /already has a Linear account, so the agent signs in/.test(e.text)));
+    assert.ok(second.events.some((e) => /Signed in with the shared account instead of signing up/.test(e.text)));
+  } finally { delete process.env.PROVISION_INBOX_ID; }
+});

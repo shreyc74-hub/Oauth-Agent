@@ -8,6 +8,8 @@ export interface Mail { id: string; from: string; subject: string; text: string;
 
 export interface Inbox {
   create(username: string): Promise<{ inboxId: string; email: string }>;
+  /** An existing inbox (PROVISION_INBOX_ID): one mailbox for every run. */
+  get(inboxId: string): Promise<{ inboxId: string; email: string }>;
   list(inboxId: string): Promise<Mail[]>;
 }
 
@@ -22,6 +24,10 @@ async function call(path: string, init: RequestInit = {}) {
 export const agentMail: Inbox = {
   async create(username) {
     const r = await call("/inboxes", { method: "POST", body: JSON.stringify({ username, display_name: "Toolkit Agent", client_id: username }) });
+    return { inboxId: r.inbox_id, email: r.email || r.inbox_id };
+  },
+  async get(inboxId) {
+    const r = await call(`/inboxes/${encodeURIComponent(inboxId)}`);
     return { inboxId: r.inbox_id, email: r.email || r.inbox_id };
   },
   async list(inboxId) {

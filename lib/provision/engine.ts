@@ -302,10 +302,16 @@ async function variablesFor(run: Run, text: string, extra: Record<string, string
   for (const n of names) {
     if (extra[n] !== undefined) out[n] = extra[n];
     else if (n === "email" && run.identity?.email) out[n] = run.identity.email;
-    else if (n === "password") out[n] = (await getSecret(vaultName(run.slug, run.id, "password"))) || "";
+    else if (n === "password") out[n] = (await getSecret(run.vault.password || vaultName(run.slug, run.id, "password"))) || "";
     else if (run.vars[n] !== undefined) out[n] = run.vars[n];
   }
   return out;
+}
+
+/** Steps that create the vendor account (as opposed to using it). */
+function isSignUp(s: Step): boolean {
+  if (s.kind !== "browser") return false;
+  return /sign ?-?up|register|create (an |your |a )?(free )?(developer )?account|join the .*program/i.test(`${s.title} ${s.instruction || ""}`);
 }
 
 // ---------- Advancing ----------
@@ -381,6 +387,23 @@ async function runStep(ctx: Ctx, s: Step): Promise<Outcome> {
   const { run, deps } = ctx;
   switch (s.kind) {
     case "identity": {
+      const shared = process.env.PROVISION_INBOX_ID?.trim();
+      if (shared) {
+        // One mailbox for every run, and one login per vendor: the first run signs up, later runs sign in.
+        const inbox = await deps.inbox.get(shared);
+        run.identity = { email: inbox.email, inboxId: inbox.inboxId };
+        const pwName = vaultName(run.slug, run.id, "shared:password");
+        let password = await getSecret(pwName);
+        const exists = Boolean(password) && (await hasSecret(vaultName(run.slug, run.id, "shared:account_email")));
+        if (!password) { password = `${randomBytes(15).toString("base64url")}!a1`; await putSecret(pwName, password, `${run.app} login for ${inbox.email}`); }
+        ctx.seen.add(password);
+        run.vault.password = pwName;
+        if (exists) run.vars.account_exists = "1";
+        log(run, "step", exists
+          ? `Using the shared mailbox ${inbox.email}. It already has a ${run.app} account, so the agent signs in instead of signing up.`
+          : `Using the shared mailbox ${inbox.email}. First ${run.app} account for it: the agent signs up; the password goes straight into the vault and is reused by later runs.`, s.id);
+        return "done";
+      }
       const username = `${run.slug}-${run.id.slice(-6)}`;
       const inbox = await deps.inbox.create(username);
       run.identity = { email: inbox.email, inboxId: inbox.inboxId };
@@ -398,6 +421,21 @@ async function runStep(ctx: Ctx, s: Step): Promise<Outcome> {
       return "pause";
     }
     case "browser": {
+      if (run.vars.account_exists && isSignUp(s)) {
+        if (run.vars.signed_in) { log(run, "step", `${s.title}: skipped, the shared account already exists.`, s.id); return "done"; }
+        // Same goal, as a sign-in: the goal check and the recovery agent make sure it really happened.
+        const d = await browser(ctx);
+        if (s.url) await d.goto(s.url);
+        const signIn = "Log in (do not sign up: this email already has an account). If a sign-up form is showing, switch to the log-in page first. Log in with %email% and %password%.";
+        const r = await d.act(signIn, await variablesFor(run, signIn));
+        const b = await checkBlocker(ctx, s);
+        if (b) return b;
+        const g = d.goalCheck ? await d.goalCheck(`Log in with the existing account: ${signIn}`).catch(() => ({ done: r.ok, missing: "" })) : { done: r.ok, missing: r.message };
+        if (!g.done) throw new Error(`signing in with the shared account isn't finished yet: ${g.missing.slice(0, 160)}`);
+        run.vars.signed_in = "1";
+        log(run, "step", `Signed in with the shared account instead of signing up.`, s.id);
+        return "done";
+      }
       if (needsApproval(run, s)) {
         pause(run, { kind: "approval", step: s.id, reason: `About to: ${s.instruction ? s.instruction.replace(/%([a-z_]+)%/g, (_, n) => (n === "password" ? "[password]" : run.vars[n] || (n === "email" ? run.identity?.email || n : n))) : s.title}` }, "approval");
         await browser(ctx);
@@ -420,6 +458,10 @@ async function runStep(ctx: Ctx, s: Step): Promise<Outcome> {
         const g = await d.goalCheck(`${s.title}: ${s.instruction}`).catch(() => ({ done: true, missing: "" }));
         if (!g.done) throw new Error(`the step isn't finished yet: ${g.missing.slice(0, 160)}`);
       }
+      if (process.env.PROVISION_INBOX_ID && isSignUp(s) && run.identity?.email) {
+        // The shared mailbox now has an account here: later runs sign in.
+        await putSecret(vaultName(run.slug, run.id, "shared:account_email"), run.identity.email, `${run.app} account exists for ${run.identity.email}`);
+      }
       log(run, "step", `${s.title}: done.`, s.id);
       return "done";
     }
@@ -437,6 +479,12 @@ async function runStep(ctx: Ctx, s: Step): Promise<Outcome> {
       const left = Math.max(5_000, Math.min(60_000, ctx.deadline - Date.now() - 15_000));
       const mail = await waitForMail(deps.inbox, run.identity.inboxId, { from: s.from, since, timeoutMs: deps.mock ? 10 : left, pollMs: deps.mock ? 1 : 4000 });
       const address = run.identity.email || "the agent's inbox";
+      if (!mail && run.vars.account_exists && Date.now() - since > 60_000) {
+        // Signing in to an existing account often sends no email at all: don't stall on it.
+        run.waitingFor = undefined;
+        log(run, "step", `${s.title}: no email within a minute; not needed when signing in to an existing account.`, s.id);
+        return "done";
+      }
       if (!mail) {
         run.waitingFor = { what: `an email from ${s.from || run.app} at ${address}`, since, until: since + EMAIL_WAIT_MS,
           hint: `If you are finishing the sign-up yourself in the live browser, use ${address}; mail to any other address can't reach the agent.` };

@@ -65,6 +65,7 @@ export async function mockBrowser(opts: { sessionId?: string; mockFail?: string 
 
 export const mockInbox: Inbox = {
   async create(username) { return { inboxId: `${username}@agentmail.to`, email: `${username}@agentmail.to` }; },
+  async get(inboxId) { return { inboxId, email: inboxId }; },
   async list(inboxId): Promise<Mail[]> {
     const provider = inboxId.split("-")[0];
     return [{ id: "m1", from: `no-reply@${provider}.example`, subject: "Your verification code", text: "Your verification code is 482913. Or click https://provider.example/verify?token=abc", html: "", at: new Date().toISOString() }];
