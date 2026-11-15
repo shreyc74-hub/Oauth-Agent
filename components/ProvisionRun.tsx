@@ -1,6 +1,7 @@
 "use client";
 import type { SandboxCheck } from "@/lib/provision/types";
 import { signInOnly, SIGN_IN_ONLY, SIGN_IN_ONLY_WHY } from "@/lib/provision/labels";
+import { describeDcr } from "@/lib/provision/dcr";
 // One provisioning run: steps on the left, the current handoff or approval, the live browser, the
 // credential card and the audit log. The page drives the run: while it is running and nobody else
 // holds the lease, it calls /advance; each call runs steps until a pause or the time budget.
@@ -147,6 +148,15 @@ export default function ProvisionRun({ id }: { id: string }) {
           </div>
         ) : null}
 
+        {run.dcr ? (
+          <div className="creds" style={{ marginBottom: 18 }}>
+            <h2>Creating the app without a browser</h2>
+            <p className="small"><span className={`badge ${run.dcr.available ? "sb-self_serve" : "sb-unknown"}`}>{run.dcr.available ? "Dynamic Client Registration offered" : "No Dynamic Client Registration"}</span></p>
+            <p className="small">{describeDcr(run.dcr)}</p>
+            {run.dcr.found.length ? <ul className="small">{run.dcr.found.map((f) => <li key={f.url}><code>{f.url}</code> {f.kind === "mcp" ? "(MCP)" : ""} {f.registration ? "· registration endpoint" : "· no registration endpoint"}</li>)}</ul> : null}
+            <p className="small muted">Checked {run.dcr.checkedOn}. Read-only: nothing was registered.</p>
+          </div>
+        ) : null}
         {run.sandbox || run.scopePlan ? (
           <div className="creds" style={{ marginBottom: 18 }}>
             {run.sandbox ? (

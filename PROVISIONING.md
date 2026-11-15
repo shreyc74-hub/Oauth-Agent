@@ -21,7 +21,7 @@ A tracker row per run goes to a Google Sheet: status, sandbox, masked client ID,
 
 - **Demo mode** (no accounts): `PROVISION_MOCK=1 npm run dev`, open `/provision`. The browser, inbox and provider APIs are simulated; the plans, state machine, pauses, approvals, vault writes, reveal logging and sheet rows are the real code.
 - **Real runs:** set the keys in [Setup](#setup), then use `/provision` or the terminal: `npm run provision -- linear` (add `--auto` for full automation).
-- **Tests:** `npm test` (125 tests, all offline, including the sandbox check and use-case scopes).
+- **Tests:** `npm test` (132 tests, all offline, including the sandbox check and use-case scopes).
 
 ## How an app gets its OAuth app: three strategies
 
@@ -32,6 +32,8 @@ Browser automation is the fallback, not the strategy.
 | **API** | The provider lets you create apps through an API | Slack: `apps.manifest.create` returns the client ID and secret in the response. The only browser work is a one-time bootstrap of an app configuration token, kept fresh with `tooling.tokens.rotate` and reused by every later run. |
 | **Browser** | No API, but a stable console | Linear: no API for OAuth apps, so the agent fills the console form. Tested by hand on Oct 28 (see `attempts/linear.md`). |
 | **Human** | The step needs a person by policy or law | Captchas, phone checks, payment, signing an acceptable-use policy, production review. |
+
+**Looking for an API route first: Dynamic Client Registration.** Some vendors let a client register itself with one API call (RFC 7591). They say so in public metadata: a `registration_endpoint` in `/.well-known/oauth-authorization-server` or `/.well-known/openid-configuration`. MCP servers publish `/.well-known/oauth-protected-resource`, which points at their authorization server, and the MCP authorization spec builds on this kind of registration, so many SaaS MCP servers accept it. Every run probes these documents on the vendor's OAuth hosts, its site, `api.`, `auth.` and `mcp.`, in code and without the model, and shows the result on the run page: offered by the main OAuth server, offered only by the MCP server (whose tokens may only work for MCP), or not offered. A registration endpoint is trusted only over https on the vendor's own domain. The probe only reads; using the endpoint to create an app is the next step and would be a write with an approval. Other non-browser routes worth adding per vendor: management APIs (Microsoft Graph applications, Okta, Auth0, Zendesk OAuth clients), vendor CLIs and Terraform providers, and manifest flows where a person clicks once (GitHub App manifests).
 
 HubSpot sits in between: on the 2025.2+ developer platform apps are projects deployed with the CLI (`hs project upload`). A worker running the CLI with a personal access key is the API path; the browser path in this build is the fallback, and it hands over if HubSpot insists on the CLI. HubSpot is also the one demo provider with a real sandbox: developer test accounts.
 

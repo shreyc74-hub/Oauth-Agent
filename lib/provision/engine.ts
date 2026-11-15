@@ -10,6 +10,7 @@ import { randomBytes } from "node:crypto";
 import type { Mode, Playbook, Run, RunEvent, SandboxCheck, Step } from "./types";
 import { checkSandbox, cachedSandbox, saveSandbox, fromPlaybook, type SandboxIo } from "./sandbox";
 import { planScopes } from "./scopes";
+import { probeDcr, describeDcr, type Fetcher } from "./dcr";
 import { SIGN_IN_ONLY, SIGN_IN_ONLY_WHY } from "./labels";
 import type { Driver } from "./browser";
 import { openBrowser, browserConfigured, createContext, releaseSession } from "./browser";
@@ -35,6 +36,8 @@ export interface Deps {
   mock: boolean;
   /** Tests inject the sandbox check's network side; mock mode without it skips the check. */
   sandboxIo?: SandboxIo;
+  /** Tests inject the DCR probe's fetcher; mock mode without it skips the probe. */
+  dcrFetch?: Fetcher;
 }
 
 export function defaultDeps(): Deps {
@@ -118,6 +121,9 @@ export async function createRun(input: { app: string; mode: Mode; baseUrl: strin
   const useCase = String(input.useCase || "").trim().slice(0, 600);
   const scopePlan = useCase ? await planScopes({ useCase, guide: await findGuide(input.app, input.guideSlug), playbook, mock: deps.mock }) : undefined;
   if (scopePlan) playbook = { ...playbook, oauth: { ...playbook.oauth, scopes: scopePlan.scopes } };
+  // 3. Could the app be created with one API call (RFC 7591)? Read-only probe of public metadata.
+  const dcr = deps.mock && !deps.dcrFetch ? undefined
+    : await probeDcr(playbook, (await findGuide(input.app, input.guideSlug))?.website, deps.dcrFetch).catch(() => undefined);
   if (sandbox?.verdict === "unknown") {
     // No confirmed evidence either way: the person decides before any browser time is spent.
     const check: Step = { kind: "human", id: "sandbox-check", title: "Decide: no confirmed self-serve sandbox", noBrowser: true,
@@ -142,7 +148,7 @@ export async function createRun(input: { app: string; mode: Mode; baseUrl: strin
       workspace_name: `toolkit-sandbox-${short}`,
     },
     playbook,
-    sandbox, scopePlan,
+    sandbox, scopePlan, dcr,
     vault: {}, public: {}, events: [], createdAt: now, updatedAt: now,
   };
   if (useCase) run.vars.use_case = useCase;
@@ -152,6 +158,7 @@ export async function createRun(input: { app: string; mode: Mode; baseUrl: strin
     if (target && "instruction" in target && target.instruction) { run.vars.mock_fail = target.instruction.slice(0, 30); log(run, "info", `Demo: simulating a console change on "${target.title}".`); }
   }
   if (sandbox) log(run, "info", `Sandbox check: ${sandbox.verdict.replace(/_/g, " ")} (${sandbox.source}). ${sandbox.reason}`);
+  if (dcr) log(run, "info", `Dynamic Client Registration: ${describeDcr(dcr)}`);
   if (scopePlan) log(run, "info", `Scopes for "${useCase}": ${scopePlan.scopes.join(", ")}.${scopePlan.testCall ? ` Verification will also call ${scopePlan.testCall.label}.` : " No test call chosen; verification uses the identity call only."}${scopePlan.notes.length ? ` Notes: ${scopePlan.notes.join(" ")}` : ""}`);
   log(run, "info", `Plan: ${playbook.name}, ${playbook.strategy} strategy, evidence ${playbook.evidence}. Sandbox: ${playbook.sandbox.kind}. ${input.mode === "auto" ? "Full automation" : "Human in the loop"}, ${steps.length} steps.`);
   await saveRun(run);

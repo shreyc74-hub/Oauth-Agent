@@ -169,6 +169,8 @@ export interface Run {
   verify?: { state: string; verifier: string; code?: string; who?: string; refresh?: "ok" | "failed" | "not-offered"; at?: string; useCase?: string; useCaseOk?: boolean };
   sandbox?: SandboxCheck;
   scopePlan?: ScopePlan;
+  /** Dynamic Client Registration probe: could the app be created with one API call? */
+  dcr?: import("./dcr").DcrResult;
   goLive?: Playbook["goLive"];
   /** Where the recovery agent found a different route: suggested playbook changes for a person to review. */
   fixes?: { step: string; suggestion: string; at: string }[];
