@@ -3,6 +3,8 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { AgentEvent } from "@/lib/agent/parse";
 import { applyEvent, initialStages, type RunState } from "./ResearchView";
+import type { SandboxCheck } from "@/lib/provision/types";
+import { SetupParts } from "./ProvisionRun";
 
 type Row = { id: string; app: string; mode: "human" | "auto"; status: string; strategy: string; createdAt: string; who?: string };
 
@@ -15,7 +17,8 @@ export default function ProvisionStart({ mock }: { mock: boolean }) {
   const [app, setApp] = useState("");
   const [mode, setMode] = useState<"human" | "auto">("human");
   const [busy, setBusy] = useState(false);
-  const [err, setErr] = useState<{ text: string; research?: string; needsCode?: boolean } | null>(null);
+  const [err, setErr] = useState<{ text: string; research?: string; needsCode?: boolean; gated?: SandboxCheck } | null>(null);
+  const [useCase, setUseCase] = useState("");
   const [code, setCode] = useState("");
   const [runs, setRuns] = useState<Row[]>([]);
   const [simulate, setSimulate] = useState(true);
@@ -25,7 +28,7 @@ export default function ProvisionStart({ mock }: { mock: boolean }) {
   useEffect(() => { fetch("/api/provision").then((r) => r.json()).then(setRuns).catch(() => undefined); }, []);
 
   async function create(name: string, guideSlug?: string) {
-    const res = await fetch("/api/provision", { method: "POST", headers: { "content-type": "application/json", ...codeHeader() }, body: JSON.stringify({ app: name, mode, simulateChange: mock && simulate, guideSlug }) });
+    const res = await fetch("/api/provision", { method: "POST", headers: { "content-type": "application/json", ...codeHeader() }, body: JSON.stringify({ app: name, mode, simulateChange: mock && simulate, guideSlug, useCase: useCase.trim() || undefined }) });
     return { res, j: await res.json() };
   }
 
@@ -39,7 +42,7 @@ export default function ProvisionStart({ mock }: { mock: boolean }) {
         if (!slug) return;
         ({ res, j } = await create(name, slug));
       }
-      if (!res.ok) { setErr({ text: j.error, research: j.research, needsCode: j.needsCode }); return; }
+      if (!res.ok) { setErr({ text: j.error, research: j.research, needsCode: j.needsCode, gated: j.gated }); return; }
       router.push(`/provision/${j.id}`);
     } finally { setBusy(false); setResearch(null); }
   }
@@ -93,6 +96,10 @@ export default function ProvisionStart({ mock }: { mock: boolean }) {
         <input aria-label="App name" placeholder="App name, e.g. Linear" value={app} onChange={(e) => setApp(e.target.value)} />
         <button className="btn primary" disabled={busy || !app.trim()}>{busy ? <span className="spin" /> : null} Provision</button>
       </form>
+      <label className="usecase">
+        <span>What will the app do? <span className="muted">(optional, sets the scopes and the test call)</span></span>
+        <textarea rows={2} placeholder="e.g. read invoices and create customers" value={useCase} onChange={(e) => setUseCase(e.target.value)} maxLength={600} />
+      </label>
       <div className="modes" role="radiogroup" aria-label="Mode">
         <button type="button" role="radio" aria-checked={mode === "human"} className={`mode ${mode === "human" ? "on" : ""}`} onClick={() => setMode("human")}>
           <b>Human in the loop</b><span>You sign in. The agent does the rest and asks before every create, submit or consent.</span>
@@ -118,7 +125,13 @@ export default function ProvisionStart({ mock }: { mock: boolean }) {
       ) : null}
       {err ? (
         <div className="card err" role="alert">
-          <p>{err.text}</p>
+          {err.gated ? (
+            <>
+              <p><b>No self-serve test account.</b> The agent stopped before signing up or opening a browser.</p>
+              <p>{err.gated.reason}</p>
+              <SetupParts check={err.gated} />
+            </>
+          ) : <p>{err.text}</p>}
           {err.research ? <div className="row"><a className="btn" href={err.research}>Open the research page</a></div> : null}
           {err.needsCode ? (
             <form className="row" onSubmit={(e) => { e.preventDefault(); saveCode(); }}>

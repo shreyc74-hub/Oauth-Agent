@@ -28,7 +28,7 @@ export type Step =
   /** Provider API call done in code (e.g. Slack's apps.manifest.create). Named handler on the playbook. */
   | (Base & { kind: "api"; handler: string; write?: boolean })
   /** Something only a person can do (captcha, phone check, legal terms in some modes). */
-  | (Base & { kind: "human"; reason: string; url?: string })
+  | (Base & { kind: "human"; reason: string; url?: string; noBrowser?: boolean })
   /** Run the OAuth flow against the sandbox, call an identity endpoint, test the refresh token. */
   | (Base & { kind: "verify" })
   /** Mark what production approval needs. Never automated. */
@@ -55,7 +55,7 @@ export interface Playbook {
   strategy: Strategy;
   /** Where the evidence for this playbook comes from. Generated playbooks start "unverified". */
   evidence: "tested" | "docs" | "unverified";
-  sandbox: { kind: string; note: string };
+  sandbox: { kind: string; note: string; relation?: "same" | "separate" };
   oauth: OAuthSpec;
   /** Steps per mode. Modes share most steps; sign-up differs. */
   steps: Record<Mode, Step[]>;
@@ -80,6 +80,60 @@ export interface RunEvent {
   kind: "info" | "step" | "handoff" | "approval" | "secret" | "error" | "done" | "agent";
   text: string;
   shot?: string; // screenshot URL or data URI (never of a revealed secret)
+}
+
+/**
+ * Can a stranger get a working test account without sales, a partner programme or an existing
+ * subscription? Decided in code from quotes that were found on the cited pages and from a probe
+ * of the sign-up page. Only "gated" (quoted evidence) stops a run.
+ */
+export type SandboxVerdict = "self_serve" | "likely_self_serve" | "gated" | "unknown";
+
+/**
+ * One piece of the setup, judged on its own evidence:
+ *  developer_account  where the OAuth app is created and managed (api.slack.com, Zoho API Console)
+ *  sandbox            the working environment the app is installed in and tested against
+ *                     (a Slack workspace, a HubSpot test account, a Zoho Invoice organization)
+ *  oauth_app          whether anyone can create an OAuth app at all, or only partners (or API keys only)
+ */
+export interface SetupPart {
+  role: "developer_account" | "sandbox" | "oauth_app";
+  name: string;
+  url?: string;
+  verdict: SandboxVerdict;
+  reason: string;
+  humanPath?: string;
+  /** e.g. "14-day trial": the sandbox stops working after this. */
+  expires?: string;
+  quotes: { quote: string; url: string; says: "yes" | "no"; found: boolean }[];
+  probe?: { url: string; finalUrl?: string; status?: number; signals: string[]; looks: "signup_form" | "sales_gate" | "unclear" | "unreachable" };
+}
+
+export interface SandboxCheck {
+  /** Is the sandbox the same account as the developer side (Linear, BambooHR) or a separate one (Slack, HubSpot, Zoho)? */
+  relation?: "same" | "separate" | "unknown";
+  parts?: SetupPart[];
+  /** What credential a stranger can get: an OAuth app, only an API key, or OAuth for partners only. */
+  credential?: { oauth: "self_serve" | "partner_only" | "none" | "unknown"; apiKey: boolean };
+  verdict: SandboxVerdict;
+  reason: string;
+  /** What a person has to do when it is gated, e.g. "Apply to the partner programme". */
+  humanPath?: string;
+  signupUrl?: string;
+  /** Quotes the research agent cited. `found` is set by code after fetching the page. */
+  quotes: { quote: string; url: string; says: "yes" | "no"; found: boolean }[];
+  probe?: { url: string; finalUrl?: string; status?: number; signals: string[]; looks: "signup_form" | "sales_gate" | "unclear" | "unreachable" };
+  source: "playbook" | "research" | "run";
+  checkedOn: string;
+}
+
+/** Use case -> scopes, and one read-only call from that use case that verification makes. */
+export interface ScopePlan {
+  useCase: string;
+  scopes: string[];
+  mapping: { need: string; scopes: string[]; why: string }[];
+  testCall?: { method: "GET"; url: string; label: string };
+  notes: string[];
 }
 
 /** A run as stored. Holds vault references, never secret values. */
@@ -112,7 +166,9 @@ export interface Run {
   identity?: { email?: string; inboxId?: string };
   vault: Record<string, string>; // label -> vault name, e.g. client_secret -> "linear/2026-11-14/client_secret"
   public: { clientId?: string; sandboxUrl?: string; appId?: string; authorizeUrl?: string };
-  verify?: { state: string; verifier: string; code?: string; who?: string; refresh?: "ok" | "failed" | "not-offered"; at?: string };
+  verify?: { state: string; verifier: string; code?: string; who?: string; refresh?: "ok" | "failed" | "not-offered"; at?: string; useCase?: string; useCaseOk?: boolean };
+  sandbox?: SandboxCheck;
+  scopePlan?: ScopePlan;
   goLive?: Playbook["goLive"];
   /** Where the recovery agent found a different route: suggested playbook changes for a person to review. */
   fixes?: { step: string; suggestion: string; at: string }[];

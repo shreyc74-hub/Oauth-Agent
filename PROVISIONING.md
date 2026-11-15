@@ -4,13 +4,14 @@ Composio's toolkit factory can research an app and generate a production-ready t
 
 You type an app name. The agent:
 
-1. Plans from the app's readiness guide (the output of the first assignment).
-2. Gets an identity: your sign-in (human in the loop) or its own inbox and password (full automation).
-3. Gets a sandbox: a test account or workspace on the provider.
-4. Creates the OAuth app with the scopes from the toolkit spec.
-5. Puts every secret into a vault. The model never sees a secret.
-6. Proves the credentials work: a real authorization on the sandbox, a token exchange, one identity call, and a refresh.
-7. Flags what going live needs. Production review is listed as human work, not attempted.
+1. Checks that a self-serve test setup exists at all: the developer side, the sandbox and the OAuth app, each on its own evidence. If the vendor's own pages say it needs sales or a partner programme, it stops here with the reason.
+2. Plans from the app's readiness guide (the output of the first assignment). If there is no guide yet, it researches one first.
+3. Gets an identity: your sign-in (human in the loop) or its own inbox and password (full automation).
+4. Gets a sandbox: a test account or workspace on the provider, which may be a separate account from the one the app is created in.
+5. Creates the OAuth app with the scopes the use case needs.
+6. Puts every secret into a vault. The model never sees a secret.
+7. Proves the credentials work: a real authorization on the sandbox, a token exchange, one identity call, one call from the use case, and a refresh.
+8. Flags what going live needs. Production review is listed as human work, not attempted.
 
 A tracker row per run goes to a Google Sheet: status, sandbox, masked client ID, vault names, who the token works for, and what still needs a person. Never a secret.
 
@@ -20,7 +21,7 @@ A tracker row per run goes to a Google Sheet: status, sandbox, masked client ID,
 
 - **Demo mode** (no accounts): `PROVISION_MOCK=1 npm run dev`, open `/provision`. The browser, inbox and provider APIs are simulated; the plans, state machine, pauses, approvals, vault writes, reveal logging and sheet rows are the real code.
 - **Real runs:** set the keys in [Setup](#setup), then use `/provision` or the terminal: `npm run provision -- linear` (add `--auto` for full automation).
-- **Tests:** `npm test` (111 tests; 23 for provisioning and the recovery agent, all offline).
+- **Tests:** `npm test` (125 tests, all offline, including the sandbox check and use-case scopes).
 
 ## How an app gets its OAuth app: three strategies
 
@@ -34,7 +35,37 @@ Browser automation is the fallback, not the strategy.
 
 HubSpot sits in between: on the 2025.2+ developer platform apps are projects deployed with the CLI (`hs project upload`). A worker running the CLI with a personal access key is the API path; the browser path in this build is the fallback, and it hands over if HubSpot insists on the CLI. HubSpot is also the one demo provider with a real sandbox: developer test accounts.
 
-Apps without a hand-written playbook are planned by Claude from their guide, checked by code (`validatePlaybook`: https endpoints, secrets only through variables, client ID and secret captured, a verify step, no agent identity in human mode) and marked **unverified** until a run succeeds. No guide, no plan: the agent sends you to create the guide first.
+Apps without a hand-written playbook are planned by Claude from their guide, checked by code (`validatePlaybook`: https endpoints, secrets only through variables, client ID and secret captured, a verify step, no agent identity in human mode) and marked **unverified** until a run succeeds. No guide, no plan: when an app has no guide, the provision page runs the research agent first, saves the guide, then plans from it.
+
+## Step one: is a self-serve test setup possible?
+
+Before planning or opening a browser, the agent answers three separate questions, because a developer account is not always a sandbox:
+
+| Part | The question | Examples |
+|---|---|---|
+| Developer side | Where is the OAuth app created and managed, and can anyone get in? | Slack: api.slack.com/apps. Zoho: the API Console. HubSpot: a developer account. |
+| Sandbox | What working environment is the app tested in? The same account or a separate one? Can anyone create it, and does it expire? | Slack: a workspace (separate). HubSpot: a developer test account (separate). Zoho Invoice: an Invoice organization (separate). Linear: the same workspace. |
+| OAuth app | Can anyone create an OAuth app, or is OAuth for partners only, with an API key as the self-serve option? | BambooHR: API key from the dashboard, OAuth for marketplace partners. |
+
+How each answer is validated, so the model can't simply assert it:
+
+1. The research agent reads the vendor's own pages and returns, per part, a sign-up URL and quotes copied word for word: "yes" quotes (free developer account, sandbox, free trial) and "no" quotes (contact sales, partners only, existing customers only).
+2. Code fetches every cited page and keeps a quote only if it is really on that page. Paraphrased or invented quotes are dropped and shown as dropped.
+3. Code probes each sign-up URL. Email and password fields or "Sign up with Google" look self-serve; "Request a demo" or "Contact sales" with no form looks gated.
+4. Code combines the found quotes and the probe into a verdict per part, and the run takes the weakest part:
+   - **Self-serve**: found quotes say yes and the sign-up page is a real form. The run goes ahead.
+   - **Likely self-serve**: one kind of evidence says yes and nothing says no. The run goes ahead, flagged.
+   - **Gated**: a found quote says sales, partner or customers only. The run stops before planning, with the quotes, links and what a person would have to do.
+   - **Not confirmed**: no evidence either way, or the sources disagree. The run's first step asks the person to continue or cancel, without opening a browser.
+5. A verified run overrides research: the vendor is recorded as self-serve "from a verified run". Research verdicts are cached per vendor for two weeks.
+
+Only quoted evidence can stop a run. A sales-looking page on its own, or the model's opinion, cannot.
+
+For generated plans, the planner gets this map. When the sandbox is a separate account, the plan creates or opens it before authorizing, and consent picks that sandbox. Hand-written playbooks carry the same fact (Linear: same account; Slack and HubSpot: separate).
+
+## Scopes from the use case
+
+The start page asks what the app will do ("read invoices and create customers"). The agent maps that to the vendor's exact scope strings, using the guide's scope table, picks the smallest set that covers it, and picks one read-only API call from the use case. Code keeps that call only if it is a GET to the vendor's own domain, so the new token can't be sent anywhere else. Verification makes the call; if it fails, the run ends as needs review ("sign-in works, but the use-case call failed"). Without a use case, the guide's minimal scopes are used.
 
 ## Two modes
 
@@ -113,7 +144,8 @@ A run is **verified** only if all of this works against the sandbox:
 2. Read the code from the browser's address bar (checking `state`), or from the callback route as a backup.
 3. Exchange the code at the token endpoint. Slack's `ok:false` answers are treated as failures.
 4. Call an identity endpoint (Linear `viewer`, Slack `auth.test`, HubSpot account details).
-5. Use the refresh token and store the new tokens (refresh tokens can rotate, so the old one may stop working).
+5. If a use case was given: make its read-only test call, which proves the scopes cover what the app will do.
+6. Use the refresh token and store the new tokens (refresh tokens can rotate, so the old one may stop working).
 
 Otherwise the run ends as **needs review** with the reason.
 

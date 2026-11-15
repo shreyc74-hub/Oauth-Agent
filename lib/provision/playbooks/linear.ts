@@ -23,7 +23,7 @@ export const linear: Playbook = {
   name: "Linear",
   strategy: "browser",
   evidence: "tested",
-  sandbox: { kind: "Free workspace", note: "A new Linear workspace on the free plan is the sandbox. Seed a team and a few issues before toolkit tests." },
+  sandbox: { kind: "Free workspace", note: "A new Linear workspace on the free plan is the sandbox. Seed a team and a few issues before toolkit tests.", relation: "same" },
   oauth: {
     authorizeUrl: "https://linear.app/oauth/authorize",
     tokenUrl: "https://api.linear.app/oauth/token",

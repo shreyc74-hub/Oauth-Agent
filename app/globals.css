@@ -404,3 +404,12 @@ ol.rsteps { list-style: none; padding: 0; margin: 16px 0 0; }
 .fixes h2 { font-size: 16px; }
 .fix { margin-top: 10px; font-size: 14px; }
 .fix p { margin: 2px 0 0; }
+.usecase { display: flex; flex-direction: column; gap: 6px; margin-top: 14px; max-width: 760px; font-size: 14px; }
+.usecase textarea { padding: 10px 14px; border: 1px solid var(--field); border-radius: 9px; background: var(--paper); font: inherit; resize: vertical; }
+.quotes { margin: 8px 0 0; padding-left: 18px; display: flex; flex-direction: column; gap: 6px; }
+.quotes q { font-style: italic; }
+.badge.sb-self_serve, .badge.sb-likely_self_serve { background: var(--ok-soft); color: var(--ok); }
+.badge.sb-gated { background: var(--bad-soft); color: var(--bad); }
+.badge.sb-unknown { background: var(--wait-soft); color: var(--wait); }
+.parts { display: flex; flex-direction: column; gap: 12px; margin-top: 10px; }
+.part { border-left: 2px solid var(--line); padding-left: 12px; display: flex; flex-direction: column; gap: 4px; }

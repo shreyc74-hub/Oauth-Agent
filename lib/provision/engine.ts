@@ -7,7 +7,9 @@
 // Full automation: the agent signs up with its own inbox and only stops at walls it should not climb
 // (captchas, phone checks, device approvals, payment, legal terms).
 import { randomBytes } from "node:crypto";
-import type { Mode, Playbook, Run, RunEvent, Step } from "./types";
+import type { Mode, Playbook, Run, RunEvent, SandboxCheck, Step } from "./types";
+import { checkSandbox, cachedSandbox, saveSandbox, fromPlaybook, type SandboxIo } from "./sandbox";
+import { planScopes } from "./scopes";
 import type { Driver } from "./browser";
 import { openBrowser, browserConfigured, createContext, releaseSession } from "./browser";
 import { agentMail, findCode, findLink, waitForMail, type Inbox } from "./inbox";
@@ -30,6 +32,8 @@ export interface Deps {
   /** Picks the recovery agent's next actions. */
   brain: Brain;
   mock: boolean;
+  /** Tests inject the sandbox check's network side; mock mode without it skips the check. */
+  sandboxIo?: SandboxIo;
 }
 
 export function defaultDeps(): Deps {
@@ -39,6 +43,14 @@ export function defaultDeps(): Deps {
 
 /** Missing keys or setup. Retrying or handing over won't help, so the run stops with the reason. */
 export class ConfigError extends Error { name = "ConfigError"; }
+
+/** The vendor's own pages say a test account needs sales, a partner programme or a subscription. */
+export class SandboxGatedError extends Error {
+  name = "SandboxGatedError";
+  constructor(public app: string, public check: SandboxCheck) {
+    super(`${app}: a test account isn't self-serve, so the agent stopped before creating anything. ${check.reason}`);
+  }
+}
 
 export class NoGuideError extends Error {
   constructor(public app: string) { super(`There is no readiness guide for ${app} yet. The agent plans from the guide, so create the guide first.`); }
@@ -57,13 +69,33 @@ async function findGuide(app: string, guideSlug?: string): Promise<Guide | null>
   return getGuide(slugify(app));
 }
 
-export async function planFor(app: string, deps: Deps, guideSlug?: string): Promise<Playbook> {
+/** Step one: is a self-serve test account possible? Cached per vendor. */
+export async function sandboxFor(app: string, deps: Deps, guideSlug?: string): Promise<SandboxCheck | undefined> {
+  const guide = await findGuide(app, guideSlug);
+  const slug = guide?.slug || slugify(app);
+  if (PLAYBOOKS[slug]) return fromPlaybook(PLAYBOOKS[slug]);
+  if (!guide) return undefined; // planFor reports the missing guide
+  const cached = await cachedSandbox(slug);
+  if (cached) return cached;
+  if (deps.mock && !deps.sandboxIo) return { verdict: "self_serve", reason: "Demo mode: the sandbox check is skipped.", quotes: [], source: "research", checkedOn: new Date().toISOString().slice(0, 10) };
+  let check: SandboxCheck;
+  try {
+    check = await checkSandbox({ name: guide.name, slug, website: guide.website }, deps.sandboxIo);
+  } catch (e) {
+    // Research failing is not evidence of a gate: ask the person instead of guessing.
+    return { verdict: "unknown", reason: `The sandbox check couldn't finish: ${(e as Error).message.slice(0, 160)}`, quotes: [], source: "research", checkedOn: new Date().toISOString().slice(0, 10) };
+  }
+  await saveSandbox(slug, check).catch(() => undefined);
+  return check;
+}
+
+export async function planFor(app: string, deps: Deps, guideSlug?: string, setup?: SandboxCheck): Promise<Playbook> {
   const guide = await findGuide(app, guideSlug);
   const slug = guide?.slug || slugify(app);
   if (PLAYBOOKS[slug]) return PLAYBOOKS[slug];
   if (!guide) throw new NoGuideError(app);
   if (guide.oauth && guide.oauth.supported === false) throw new Error(`${guide.name} does not offer OAuth for third-party apps: ${guide.oauth.note || "see its guide"}.`);
-  return deps.mock ? mockPlanFromGuide(guide) : planFromGuide(guide);
+  return deps.mock ? mockPlanFromGuide(guide) : planFromGuide(guide, setup);
 }
 
 /** What a real run needs before it starts. Empty when ready. */
@@ -74,10 +106,23 @@ export function missingSetup(mode: Mode, deps: Deps): string[] {
   return need.filter((k) => !process.env[k]);
 }
 
-export async function createRun(input: { app: string; mode: Mode; baseUrl: string; simulateChange?: boolean; guideSlug?: string }, deps = defaultDeps()): Promise<Run> {
+export async function createRun(input: { app: string; mode: Mode; baseUrl: string; simulateChange?: boolean; guideSlug?: string; useCase?: string }, deps = defaultDeps()): Promise<Run> {
   const missing = missingSetup(input.mode, deps);
   if (missing.length) throw new ConfigError(`Not set up for ${input.mode === "auto" ? "full automation" : "human-in-the-loop"} runs yet. Missing: ${missing.join(", ")}.`);
-  const playbook = await planFor(input.app, deps, input.guideSlug);
+  // 1. Can a test account exist at all? Checked before planning or opening a browser.
+  const sandbox = await sandboxFor(input.app, deps, input.guideSlug);
+  if (sandbox?.verdict === "gated") throw new SandboxGatedError(input.app, sandbox);
+  let playbook = await planFor(input.app, deps, input.guideSlug, sandbox);
+  // 2. Scopes from the use case, plus one read-only call verification makes with the new token.
+  const useCase = String(input.useCase || "").trim().slice(0, 600);
+  const scopePlan = useCase ? await planScopes({ useCase, guide: await findGuide(input.app, input.guideSlug), playbook, mock: deps.mock }) : undefined;
+  if (scopePlan) playbook = { ...playbook, oauth: { ...playbook.oauth, scopes: scopePlan.scopes } };
+  if (sandbox?.verdict === "unknown") {
+    // No confirmed evidence either way: the person decides before any browser time is spent.
+    const check: Step = { kind: "human", id: "sandbox-check", title: "Decide: no confirmed self-serve sandbox", noBrowser: true,
+      reason: `Couldn't confirm that ${playbook.name} offers a self-serve test account. ${sandbox.reason}${sandbox.humanPath ? ` If it is gated: ${sandbox.humanPath}` : ""} Press Continue to try anyway, or Cancel.` };
+    playbook = { ...playbook, steps: { ...playbook.steps, [input.mode]: [check, ...playbook.steps[input.mode]] } };
+  }
   const problems = validatePlaybook(playbook);
   if (problems.length) throw new Error(`Plan for ${playbook.name} failed checks: ${problems.join("; ")}`);
   const id = `${playbook.slug}-${new Date().toISOString().slice(0, 10).replace(/-/g, "")}-${randomBytes(3).toString("hex")}`;
@@ -96,13 +141,17 @@ export async function createRun(input: { app: string; mode: Mode; baseUrl: strin
       workspace_name: `toolkit-sandbox-${short}`,
     },
     playbook,
+    sandbox, scopePlan,
     vault: {}, public: {}, events: [], createdAt: now, updatedAt: now,
   };
+  if (useCase) run.vars.use_case = useCase;
   if (deps.mock && input.simulateChange) {
     // Demo only: make the first form-filling browser step fail, as if the provider redesigned its console.
     const target = steps.find((s) => s.kind === "browser" && s.instruction && /fill|create|open the developer/i.test(s.title) && !s.write);
     if (target && "instruction" in target && target.instruction) { run.vars.mock_fail = target.instruction.slice(0, 30); log(run, "info", `Demo: simulating a console change on "${target.title}".`); }
   }
+  if (sandbox) log(run, "info", `Sandbox check: ${sandbox.verdict.replace(/_/g, " ")} (${sandbox.source}). ${sandbox.reason}`);
+  if (scopePlan) log(run, "info", `Scopes for "${useCase}": ${scopePlan.scopes.join(", ")}.${scopePlan.testCall ? ` Verification will also call ${scopePlan.testCall.label}.` : " No test call chosen; verification uses the identity call only."}${scopePlan.notes.length ? ` Notes: ${scopePlan.notes.join(" ")}` : ""}`);
   log(run, "info", `Plan: ${playbook.name}, ${playbook.strategy} strategy, evidence ${playbook.evidence}. Sandbox: ${playbook.sandbox.kind}. ${input.mode === "auto" ? "Full automation" : "Human in the loop"}, ${steps.length} steps.`);
   await saveRun(run);
   await syncSheet(run);
@@ -231,7 +280,8 @@ async function runStep(ctx: Ctx, s: Step): Promise<Outcome> {
       return "done";
     }
     case "human": {
-      if (s.url) { const d = await browser(ctx); if (!d.url().startsWith("http")) await d.goto(s.url); }
+      if (s.noBrowser) { /* a decision, not browser work: don't spend browser minutes */ }
+      else if (s.url) { const d = await browser(ctx); if (!d.url().startsWith("http")) await d.goto(s.url); }
       else await browser(ctx);
       pause(run, { kind: "human", step: s.id, reason: s.reason }, "handoff");
       return "pause";
@@ -366,6 +416,15 @@ async function verifyStep(ctx: Ctx, s: Step): Promise<Outcome> {
     await store(ctx, "access_token", t.access, true);
     if (t.refresh) await store(ctx, "refresh_token", t.refresh, true);
     run.verify.who = await whoami(deps.http, o, t.access);
+    const tc = run.scopePlan?.testCall;
+    if (tc) {
+      // The use-case call: proves the scopes cover what the app will do, not only sign-in.
+      const res = await deps.http(tc.url, { method: "GET", headers: { authorization: `Bearer ${t.access}`, accept: "application/json" } }).catch((e: Error) => ({ ok: false, status: 0, statusText: e.message }) as Response);
+      const j = res.ok && typeof (res as Response).json === "function" ? ((await (res as Response).json().catch(() => ({}))) as Record<string, unknown>) : {};
+      run.verify.useCaseOk = res.ok && j.ok !== false && !j.error;
+      run.verify.useCase = run.verify.useCaseOk ? `${tc.label}: ok` : `${tc.label}: ${res.status} ${String(j.error || res.statusText || "").slice(0, 80)}`;
+      log(run, run.verify.useCaseOk ? "step" : "error", `Use-case call ${tc.method} ${tc.url}: ${run.verify.useCaseOk ? "ok" : `failed (${run.verify.useCase})`}.`, s.id, ctx.seen);
+    }
     if (t.refresh) {
       try {
         const r2 = await refreshTokens(deps.http, o, t.refresh, clientId, secret);
@@ -550,10 +609,14 @@ export async function advance(id: string, deps = defaultDeps(), budgetMs = 240_0
       await saveRun(run);
     }
     if (run.cursor >= run.steps.length && run.status === "running") {
-      run.status = run.verify?.who ? "verified" : "needs_review";
+      run.status = run.verify?.who && run.verify.useCaseOk !== false ? "verified" : "needs_review";
+      if (run.status === "verified" && !deps.mock) {
+        // A real run proved a test account works: that beats any researched verdict.
+        await saveSandbox(run.slug, { verdict: "self_serve", reason: `A run on ${new Date().toISOString().slice(0, 10)} created a working test account and verified credentials.`, quotes: run.sandbox?.quotes || [], signupUrl: run.sandbox?.signupUrl, source: "run", checkedOn: new Date().toISOString().slice(0, 10) }).catch(() => undefined);
+      }
       log(run, "done", run.status === "verified"
         ? `Done. ${run.app} credentials verified against the sandbox and stored in the vault.`
-        : `Finished, but the credentials are not verified${run.vars.verify_error ? `: ${run.vars.verify_error}` : ""}.`, undefined, ctx.seen);
+        : `Finished, but the credentials are not verified${run.vars.verify_error ? `: ${run.vars.verify_error}` : run.verify?.useCaseOk === false ? `: sign-in works, but the use-case call failed (${run.verify.useCase}), so the scopes may not cover the use case` : ""}.`, undefined, ctx.seen);
       if (run.browser?.sessionId && !deps.mock) await releaseSession(run.browser.sessionId);
     }
   } finally {

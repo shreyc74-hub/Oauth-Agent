@@ -1,4 +1,5 @@
 "use client";
+import type { SandboxCheck } from "@/lib/provision/types";
 // One provisioning run: steps on the left, the current handoff or approval, the live browser, the
 // credential card and the audit log. The page drives the run: while it is running and nobody else
 // holds the lease, it calls /advance; each call runs steps until a pause or the time budget.
@@ -12,6 +13,33 @@ const STATUS: Record<string, string> = {
   queued: "Queued", running: "Working", waiting_human: "Your turn", waiting_approval: "Needs your approval",
   verified: "Verified", needs_review: "Created, not verified", failed: "Failed", cancelled: "Cancelled",
 };
+
+const SANDBOX: Record<string, string> = { self_serve: "Self-serve", likely_self_serve: "Likely self-serve", gated: "Gated", unknown: "Not confirmed" };
+
+const PART: Record<string, string> = { developer_account: "Developer side", sandbox: "Sandbox", oauth_app: "OAuth app" };
+
+/** The sandbox check per part: developer side, sandbox, OAuth app. Shared with the start page. */
+export function SetupParts({ check }: { check: SandboxCheck }) {
+  const parts = check.parts?.length ? check.parts : null;
+  if (!parts) {
+    return check.quotes.length ? <ul className="quotes small">{check.quotes.map((q, i) => <li key={i} className={q.found ? "" : "muted"}><q>{q.quote}</q> <a href={q.url} target="_blank" rel="noreferrer">source</a>{q.found ? "" : " · not found on the page, ignored"}</li>)}</ul> : null;
+  }
+  return (
+    <div className="parts">
+      {parts.map((p) => (
+        <div key={p.role} className="part">
+          <div className="small"><b>{PART[p.role]}:</b> {p.name} <span className={`badge sb-${p.verdict}`}>{SANDBOX[p.verdict]}</span>{p.expires ? <span className="muted"> · expires: {p.expires}</span> : null}</div>
+          <div className="small muted">{p.reason}</div>
+          {p.humanPath ? <div className="small"><b>A person would need to:</b> {p.humanPath}</div> : null}
+          {p.quotes.length ? <ul className="quotes small">{p.quotes.map((q, i) => (
+            <li key={i} className={q.found ? "" : "muted"}><q>{q.quote}</q> <a href={q.url} target="_blank" rel="noreferrer">source</a> · {q.says === "yes" ? "self-serve" : "gated"}{q.found ? " · found on the page" : " · not found on the page, ignored"}</li>
+          ))}</ul> : null}
+          {p.probe ? <div className="small muted">Sign-up page {p.probe.url}: {p.probe.looks.replace("_", " ")}{p.probe.signals.length ? ` (${p.probe.signals.join(", ")})` : ""}</div> : null}
+        </div>
+      ))}
+    </div>
+  );
+}
 
 export default function ProvisionRun({ id }: { id: string }) {
   const [run, setRun] = useState<View | null>(null);
@@ -118,6 +146,29 @@ export default function ProvisionRun({ id }: { id: string }) {
           </div>
         ) : null}
 
+        {run.sandbox || run.scopePlan ? (
+          <div className="creds" style={{ marginBottom: 18 }}>
+            {run.sandbox ? (
+              <>
+                <h2>Sandbox check</h2>
+                <p className="small"><span className={`badge sb-${run.sandbox.verdict}`}>{SANDBOX[run.sandbox.verdict]}</span> <span className="muted">from {run.sandbox.source === "run" ? "a verified run" : run.sandbox.source === "playbook" ? "the hand-written playbook" : `research on ${run.sandbox.checkedOn}`}</span></p>
+                <p className="small">{run.sandbox.reason}</p>
+                {run.sandbox.relation ? <p className="small">Sandbox is <b>{run.sandbox.relation === "same" ? "the same account" : run.sandbox.relation === "separate" ? "a separate account" : "not confirmed as same or separate"}</b> as the developer side.{run.sandbox.credential?.apiKey && run.sandbox.credential.oauth !== "self_serve" ? " An API key is self-serve." : ""}</p> : null}
+                <SetupParts check={run.sandbox} />
+              </>
+            ) : null}
+            {run.scopePlan ? (
+              <>
+                <h2 style={{ marginTop: run.sandbox ? 16 : 0 }}>Scopes for the use case</h2>
+                <p className="small"><b>Use case:</b> {run.scopePlan.useCase}</p>
+                <ul className="small">{run.scopePlan.mapping.map((m, i) => <li key={i}>{m.need}: <code>{m.scopes.join(" ")}</code> <span className="muted">{m.why}</span></li>)}</ul>
+                {run.scopePlan.testCall ? <p className="small">Verification also calls <code>GET {run.scopePlan.testCall.url}</code> ({run.scopePlan.testCall.label}).</p> : <p className="small muted">No test call chosen; verification uses the identity call only.</p>}
+                {run.scopePlan.notes.map((n, i) => <p key={i} className="small muted">{n}</p>)}
+              </>
+            ) : null}
+          </div>
+        ) : null}
+
         <div className="creds">
           <h2>Credentials</h2>
           <dl>
@@ -128,6 +179,7 @@ export default function ProvisionRun({ id }: { id: string }) {
             <dt>Redirect URI</dt><dd><code>{run.vars.redirect_uri}</code></dd>
             <dt>Verified as</dt><dd>{run.verify?.who ? <span className="ok-text">{run.verify.who}</span> : run.vars.verify_error ? <span className="bad-text">{run.vars.verify_error}</span> : "not yet"}</dd>
             <dt>Refresh token</dt><dd>{run.verify?.refresh || "not yet"}</dd>
+            {run.scopePlan ? <><dt>Use-case call</dt><dd>{run.verify?.useCase ? <span className={run.verify.useCaseOk ? "ok-text" : "bad-text"}>{run.verify.useCase}</span> : run.scopePlan.testCall ? `not yet (${run.scopePlan.testCall.label})` : "none chosen"}</dd></> : null}
           </dl>
           {Object.keys(run.vault).length ? (
             <div className="vault">

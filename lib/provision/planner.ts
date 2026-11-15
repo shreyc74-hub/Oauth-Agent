@@ -2,6 +2,7 @@
 // planner turns that app's readiness guide (the first assignment's output) into a playbook with Claude.
 // The guide is the agent's map: no guide, no plan. Generated playbooks are marked "unverified".
 import type { Guide } from "../schema";
+import type { SandboxCheck } from "./types";
 import type { Mode, Playbook, Step } from "./types";
 import { linear } from "./playbooks/linear";
 import { slack } from "./playbooks/slack";
@@ -62,17 +63,20 @@ Rules:
 - Mark any step that creates, submits, accepts terms or installs as write:true.
 - human mode starts with a human step "Sign in" and has no identity/email steps. auto mode starts with identity, then sign-up via %email%, email verification, then the same creation steps.
 - Steps the guide says need a person (legal terms, business verification, payment) become human steps.
+- Setup map: if relation is "separate", the sandbox is its own account or environment (a Slack workspace, a HubSpot test account, a Zoho Invoice organization). Both modes then include steps that create or open that sandbox (its name and URL from the map) before the OAuth app is authorized, and the consentInstruction picks that sandbox when the consent screen asks which account, workspace or organization to use. Put its name in sandbox.kind and how to create it in sandbox.note, and set sandbox.relation. If relation is "same", the account created at sign-up is the sandbox.
 - Both modes end with verify then golive.
 - Scopes: the smallest set from the guide's minimal sets.`;
 
 /** Builds a playbook for an app that has a guide but no hand-written playbook. */
-export async function planFromGuide(guide: Guide): Promise<Playbook> {
+export async function planFromGuide(guide: Guide, setup?: SandboxCheck): Promise<Playbook> {
   const brief = {
     name: guide.name, website: guide.website, verdict: guide.verdict,
     steps: guide.steps, prerequisites: guide.prerequisites, appTypes: guide.appTypes?.items,
     scopes: guide.scopes?.minimalSets, approval: guide.approval, tokens: (guide as unknown as Record<string, unknown>).tokens,
   };
-  const ask = `Guide for ${guide.name} (slug ${guide.slug}):\n${JSON.stringify(brief)}`;
+  // The sandbox check's map: where the app is made, and the separate environment it is tested in.
+  const map = setup?.parts ? { relation: setup.relation, parts: setup.parts.map((p) => ({ role: p.role, name: p.name, url: p.url, expires: p.expires })) } : undefined;
+  const ask = `Guide for ${guide.name} (slug ${guide.slug}):\n${JSON.stringify(brief)}${map ? `\nSetup map (checked against the vendor's pages):\n${JSON.stringify(map)}` : ""}`;
   const parse = (text: string): Playbook => {
     const p = JSON.parse(text.slice(text.indexOf("{"), text.lastIndexOf("}") + 1)) as Playbook;
     p.slug = guide.slug; p.name = guide.name; p.evidence = "unverified";

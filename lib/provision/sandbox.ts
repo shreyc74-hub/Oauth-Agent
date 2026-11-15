@@ -1,0 +1,238 @@
+// Step one of provisioning: can a stranger get a working test account for this vendor at all,
+// without sales, a partner programme or an existing paid subscription?
+//
+// The model only gathers evidence. Code decides:
+//   1. The research agent searches the vendor's docs and returns a sign-up URL plus verbatim quotes
+//      that say yes (free developer account, sandbox, trial) or no (contact sales, partners only).
+//   2. Code fetches every cited page and keeps a quote only if it is really on that page.
+//   3. Code probes the sign-up URL: a form with email/password or "Sign up with Google" looks
+//      self-serve; "Request a demo" or "Contact sales" looks gated.
+//   4. combine() turns found quotes + probe into a verdict. Only quoted evidence can block a run.
+// Results are cached per vendor; a verified run upgrades the vendor to source "run".
+import "../env";
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import { cleanSupabaseUrl } from "../store";
+import { runClaude, webTools, RESOLVE_MODEL, extractJson } from "../agent/claude";
+import { htmlToText, isThin, publicUrl, renderPage, renderProvider } from "../agent/render";
+import type { Playbook, SandboxCheck, SetupPart } from "./types";
+
+const TTL_MS = 14 * 24 * 3600_000;
+const today = () => new Date().toISOString().slice(0, 10);
+
+// ---------- Deciding ----------
+
+type Probe = NonNullable<SandboxCheck["probe"]>;
+
+/** Pure: found quotes and the sign-up page probe -> verdict. */
+export function combine(quotes: SandboxCheck["quotes"], probe: Probe | undefined): { verdict: SandboxCheck["verdict"]; why: string } {
+  const yes = quotes.filter((q) => q.found && q.says === "yes").length;
+  const no = quotes.filter((q) => q.found && q.says === "no").length;
+  const looks = probe?.looks;
+  if (no && !yes) return { verdict: "gated", why: "The vendor's own pages say a test account needs sales, a partner programme or an existing subscription." };
+  if (yes && no) return { verdict: "unknown", why: "The vendor's pages disagree: some offer a free account, others say access goes through sales or partners." };
+  if (yes && looks === "signup_form") return { verdict: "self_serve", why: "The docs offer a free account and the sign-up page is a self-serve form." };
+  if (yes && looks === "sales_gate") return { verdict: "unknown", why: "The docs mention a free account, but the sign-up page leads to sales or a demo request." };
+  if (yes) return { verdict: "likely_self_serve", why: "The docs offer a free account; the sign-up page could not be confirmed." };
+  if (looks === "signup_form") return { verdict: "likely_self_serve", why: "No quote was confirmed, but the sign-up page is a self-serve form." };
+  return { verdict: "unknown", why: "No confirmed evidence either way." };
+}
+
+const norm = (t: string) => t.toLowerCase().replace(/[‘’“”"'`]/g, "").replace(/[^a-z0-9]+/g, " ").trim();
+
+/** A quote counts if the page contains it, or any 8 consecutive words of it (quotes get trimmed or joined). */
+export function quoteOnPage(quote: string, pageText: string): boolean {
+  const q = norm(quote), p = norm(pageText);
+  if (!q || !p) return false;
+  if (p.includes(q)) return true;
+  const w = q.split(" ");
+  if (w.length < 8) return false;
+  for (let i = 0; i + 8 <= w.length; i++) if (p.includes(w.slice(i, i + 8).join(" "))) return true;
+  return false;
+}
+
+/** Pure: what a sign-up page's HTML (or rendered text) looks like. */
+export function classifyPage(content: string, isHtml: boolean): { signals: string[]; looks: Probe["looks"] } {
+  const t = content.toLowerCase();
+  const text = isHtml ? htmlToText(content).toLowerCase() : t;
+  const signals: string[] = [];
+  if (isHtml ? /type\s*=\s*["']?password/.test(t) : /\bpassword\b/.test(t)) signals.push("password field");
+  if (isHtml ? /type\s*=\s*["']?email|name\s*=\s*["']?(email|login|username)/.test(t) : /\b(work )?email\b/.test(t)) signals.push("email field");
+  if (/(sign (up|in)|continue|register) with google/.test(text)) signals.push("sign up with Google");
+  if (/\b(create (an |your )?(free )?account|sign up free|start (for )?free|get started free|free developer account|create a developer account)\b/.test(text)) signals.push("free sign-up wording");
+  if (/\b(contact sales|talk to sales|talk to an expert|request a demo|book a demo|schedule a demo|get a demo)\b/.test(text)) signals.push("sales or demo request");
+  if (/\b(partner program|partner programme|become a partner|apply to (join|become)|partner application)\b/.test(text)) signals.push("partner programme");
+  if (/\b(request access|join the waitlist|waitlist|invitation only|invite only)\b/.test(text)) signals.push("access by request");
+  const self = signals.some((s) => s === "password field" || s === "sign up with Google" || s === "free sign-up wording");
+  const gate = signals.some((s) => s === "sales or demo request" || s === "partner programme" || s === "access by request");
+  // Marketing pages often have a "Contact sales" link next to a real sign-up form; a form wins.
+  const looks = self ? "signup_form" : gate ? "sales_gate" : "unclear";
+  return { signals, looks };
+}
+
+// ---------- Fetching ----------
+
+async function fetchPage(raw: string): Promise<{ text: string; html?: string; finalUrl?: string; status?: number } | null> {
+  const u = publicUrl(raw);
+  if (!u) return null;
+  try {
+    const res = await fetch(u, { redirect: "follow", signal: AbortSignal.timeout(12_000), headers: { "user-agent": "Mozilla/5.0 (compatible; ToolkitProvisioningAgent/1.0)", accept: "text/html,*/*" } });
+    const html = await res.text();
+    if (!isThin(html) || renderProvider() === "off") return { text: htmlToText(html), html, finalUrl: res.url, status: res.status };
+    // A JavaScript app shell: read it rendered instead.
+    const r = await renderPage(u.toString(), { timeoutMs: 20_000 }).catch(() => null);
+    return { text: r?.text || htmlToText(html), html: r ? undefined : html, finalUrl: res.url, status: res.status };
+  } catch {
+    const r = await renderPage(u.toString(), { timeoutMs: 20_000 }).catch(() => null);
+    return r ? { text: r.text } : null;
+  }
+}
+
+export async function probeSignup(url: string): Promise<Probe> {
+  const page = await fetchPage(url);
+  if (!page) return { url, signals: [], looks: "unreachable" };
+  const { signals, looks } = page.html ? classifyPage(page.html, true) : classifyPage(page.text, false);
+  return { url, finalUrl: page.finalUrl, status: page.status, signals, looks };
+}
+
+const pageText = (u: string) => fetchPage(u).then((p) => p?.text || "");
+
+export async function checkQuotes(quotes: { quote: string; url: string; says: "yes" | "no" }[], read = pageText): Promise<SandboxCheck["quotes"]> {
+  const pages = new Map<string, Promise<string>>();
+  const text = (u: string) => { if (!pages.has(u)) pages.set(u, read(u).catch(() => "")); return pages.get(u)!; };
+  return Promise.all(quotes.slice(0, 6).map(async (q) => ({ ...q, found: quoteOnPage(q.quote, await text(q.url)) })));
+}
+
+// ---------- Research ----------
+
+const SYSTEM = `You map how a stranger gets set up to build and test an OAuth integration with one software vendor.
+There are three separate questions. Answer each with evidence from the vendor's own pages.
+
+1. developerAccount: where is the OAuth app created and managed? (Slack: api.slack.com/apps with a Slack login. Zoho: the API Console. HubSpot: a developer account. Linear: the workspace's settings.) Can anyone sign up for it themselves?
+2. sandbox: the working environment the app is installed in and tested against, with real data. (Slack: a workspace, e.g. a Developer Program sandbox. HubSpot: a developer test account. Zoho Invoice: an Invoice organization. Salesforce: a Developer Edition org.) Is it the SAME account as the developer side, or a SEPARATE one? Can anyone create it themselves, and does it expire (e.g. a 14-day trial)?
+3. oauthApp: can anyone create an OAuth app, or is OAuth only for approved partners or marketplace members? Can anyone get an API key instead? (BambooHR: API key from the dashboard, OAuth for marketplace partners.)
+
+"yes" (self-serve): a free account, free plan, free trial, developer sandbox or developer programme that anyone can join today.
+"no" (gated): contact sales, book a demo, partner programme application, approval or invitation, or existing paying customers only.
+
+Use web_search and web_fetch on official pages (developer docs, partner pages, pricing, sign-up). Return ONLY this JSON:
+{"relation":"same"|"separate",
+ "developerAccount":{"name":string,"signupUrl":string,"selfServe":"yes"|"no"|"unclear","reason":string,"humanPath":string,"quotes":[Quote]},
+ "sandbox":{"name":string,"signupUrl":string,"selfServe":"yes"|"no"|"unclear","expires":string,"reason":string,"humanPath":string,"quotes":[Quote]},
+ "oauthApp":{"available":"self_serve"|"partner_only"|"none"|"unclear","apiKeySelfServe":boolean,"reason":string,"humanPath":string,"quotes":[Quote]}}
+Quote is {"quote":"a sentence copied word for word from the page","url":"the exact page URL","says":"yes"|"no"} where "yes" supports self-serve and "no" supports gated.
+When relation is "same", the sandbox may repeat the developer account's name and URL with no quotes of its own.
+humanPath: what a person must do when it is gated or unclear (e.g. "apply to the partner programme at <url>"). Empty when self-serve.
+Give 1 to 3 quotes per question. Copy quotes exactly: each is checked against its page, and paraphrases are thrown away.`;
+
+type RawQuote = { quote: string; url: string; says: "yes" | "no" };
+type RawPart = { name?: string; signupUrl?: string; selfServe?: string; reason?: string; humanPath?: string; expires?: string; quotes?: RawQuote[] };
+export type Found = {
+  relation?: string;
+  developerAccount?: RawPart;
+  sandbox?: RawPart;
+  oauthApp?: { available?: string; apiKeySelfServe?: boolean; reason?: string; humanPath?: string; quotes?: RawQuote[] };
+};
+
+export async function researchSandbox(app: { name: string; website?: string }): Promise<Found> {
+  const text = await runClaude({
+    model: RESOLVE_MODEL, system: SYSTEM, maxTokens: 4000, tools: webTools(5, 6),
+    messages: [{ role: "user", content: `Vendor: ${app.name}${app.website ? ` (${app.website})` : ""}` }],
+  });
+  return extractJson<Found>(text);
+}
+
+/** The network side of the check; tests swap it for fixed pages. */
+export interface SandboxIo { research: typeof researchSandbox; pageText: (url: string) => Promise<string>; probe: typeof probeSignup }
+export const liveSandboxIo: SandboxIo = { research: researchSandbox, pageText, probe: probeSignup };
+
+const RANK: Record<SandboxCheck["verdict"], number> = { gated: 0, unknown: 1, likely_self_serve: 2, self_serve: 3 };
+/** Pure: the overall verdict is the weakest part's. */
+export const weakest = (parts: SetupPart[]): SandboxCheck["verdict"] => parts.reduce<SandboxCheck["verdict"]>((w, p) => (RANK[p.verdict] < RANK[w] ? p.verdict : w), "self_serve");
+
+const validQuotes = (q?: RawQuote[]) => (q || []).filter((x) => x && x.quote && x.url && (x.says === "yes" || x.says === "no"));
+
+async function judgePart(role: SetupPart["role"], raw: RawPart | undefined, io: SandboxIo, withProbe: boolean): Promise<SetupPart> {
+  const quotes = await checkQuotes(validQuotes(raw?.quotes), io.pageText);
+  const url = raw?.signupUrl && publicUrl(raw.signupUrl) ? raw.signupUrl : undefined;
+  const probe = withProbe && url ? await io.probe(url) : undefined;
+  const { verdict, why } = combine(quotes, probe);
+  const dropped = quotes.filter((q) => !q.found).length;
+  return {
+    role, name: String(raw?.name || role.replace("_", " ")), url, verdict,
+    reason: `${why}${raw?.reason ? ` ${raw.reason}` : ""}${dropped ? ` (${dropped} quote${dropped > 1 ? "s" : ""} not found on the cited page, ignored.)` : ""}`,
+    humanPath: verdict === "gated" || verdict === "unknown" ? raw?.humanPath || undefined : undefined,
+    expires: raw?.expires || undefined, quotes, probe,
+  };
+}
+
+/** Full check for a vendor without a hand-written playbook: developer side, sandbox and OAuth availability. */
+export async function checkSandbox(app: { name: string; slug: string; website?: string }, io: SandboxIo = liveSandboxIo): Promise<SandboxCheck> {
+  const found = await io.research(app);
+  const relation: SandboxCheck["relation"] = found.relation === "same" || found.relation === "separate" ? found.relation : "unknown";
+  const dev = await judgePart("developer_account", found.developerAccount, io, true);
+  let box: SetupPart;
+  if (relation === "same") {
+    // One account is both: it stands or falls with the developer side.
+    box = { ...dev, role: "sandbox", name: found.sandbox?.name || dev.name, expires: found.sandbox?.expires || undefined, reason: `Same account as the developer side. ${dev.reason}` };
+  } else {
+    box = await judgePart("sandbox", found.sandbox, io, true);
+  }
+  const o = found.oauthApp;
+  const oauthPart = await judgePart("oauth_app", { name: "OAuth app", reason: o?.reason, humanPath: o?.humanPath, quotes: o?.quotes }, io, false);
+  const available = o?.available === "self_serve" || o?.available === "partner_only" || o?.available === "none" ? o.available : "unknown";
+  const credential = { oauth: available, apiKey: Boolean(o?.apiKeySelfServe) } as NonNullable<SandboxCheck["credential"]>;
+  if (oauthPart.verdict === "gated" && credential.apiKey) {
+    oauthPart.reason += " An API key is self-serve, but this agent creates OAuth apps.";
+  }
+  const parts = [dev, box, oauthPart];
+  const verdict = weakest(parts);
+  const worst = parts.filter((p) => p.verdict === verdict);
+  const label = (p: SetupPart) => (p.role === "developer_account" ? "Developer side" : p.role === "sandbox" ? "Sandbox" : "OAuth app");
+  const reason = verdict === "self_serve" || verdict === "likely_self_serve"
+    ? `Developer side: ${dev.name}. Sandbox: ${box.name}${relation === "same" ? " (same account)" : relation === "separate" ? " (a separate account)" : ""}${box.expires ? `, expires: ${box.expires}` : ""}.`
+    : worst.map((p) => `${label(p)} (${p.name}): ${p.reason}`).join(" ");
+  return {
+    verdict, reason, relation, parts, credential,
+    humanPath: worst.map((p) => p.humanPath).filter(Boolean).join(" ") || undefined,
+    signupUrl: dev.url, quotes: parts.flatMap((p) => p.quotes), probe: dev.probe,
+    source: "research", checkedOn: today(),
+  };
+}
+
+/** Hand-written playbooks were checked by a person (Linear by a real run). */
+export function fromPlaybook(p: Playbook): SandboxCheck {
+  return { verdict: "self_serve", reason: `${p.sandbox.kind}: ${p.sandbox.note}`, relation: p.sandbox.relation, quotes: [], source: "playbook", checkedOn: today() };
+}
+
+// ---------- Cache ----------
+
+let db: SupabaseClient | null | undefined;
+function supabase(): SupabaseClient | null {
+  if (db !== undefined) return db;
+  const url = cleanSupabaseUrl(process.env.SUPABASE_URL);
+  const key = String(process.env.SUPABASE_SERVICE_ROLE_KEY || "").trim();
+  db = url && key ? createClient(url, key, { auth: { persistSession: false } }) : null;
+  return db;
+}
+const mem = new Map<string, { at: number; data: SandboxCheck }>();
+
+export async function cachedSandbox(slug: string): Promise<SandboxCheck | null> {
+  const s = supabase();
+  let hit: { at: number; data: SandboxCheck } | undefined = mem.get(slug);
+  if (!hit && s) {
+    const { data } = await s.from("provision_sandbox").select("data, checked_at").eq("slug", slug).maybeSingle();
+    if (data) hit = { at: Date.parse((data as { checked_at: string }).checked_at), data: (data as { data: SandboxCheck }).data };
+  }
+  if (!hit) return null;
+  // A verdict proven by a run doesn't expire; researched ones are re-checked after two weeks.
+  if (hit.data.source !== "run" && Date.now() - hit.at > TTL_MS) return null;
+  return hit.data;
+}
+
+export async function saveSandbox(slug: string, check: SandboxCheck): Promise<void> {
+  mem.set(slug, { at: Date.now(), data: check });
+  const s = supabase();
+  if (s) await s.from("provision_sandbox").upsert({ slug, data: check, checked_at: new Date().toISOString() });
+}
+
+export function _resetSandboxCache() { mem.clear(); db = undefined; }

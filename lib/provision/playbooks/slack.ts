@@ -27,7 +27,7 @@ export const slack: Playbook = {
   name: "Slack",
   strategy: "api",
   evidence: "tested",
-  sandbox: { kind: "Developer sandbox workspace", note: "A Slack developer program sandbox or a free workspace used only for tests. Add a channel and a few messages before toolkit tests." },
+  sandbox: { kind: "Developer sandbox workspace", note: "A Slack developer program sandbox or a free workspace used only for tests. Add a channel and a few messages before toolkit tests.", relation: "separate" },
   oauth: {
     authorizeUrl: "https://slack.com/oauth/v2/authorize",
     tokenUrl: "https://slack.com/api/oauth.v2.access",

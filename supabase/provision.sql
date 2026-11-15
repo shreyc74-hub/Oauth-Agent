@@ -60,3 +60,13 @@ grant execute on function public.provision_store_secret(text, text, text) to ser
 grant execute on function public.provision_read_secret(text) to service_role;
 
 notify pgrst, 'reload schema';
+
+-- Sandbox feasibility per vendor: can a stranger get a working test account without sales or a
+-- partner programme? Research verdicts expire after two weeks; verdicts proven by a run don't.
+create table if not exists public.provision_sandbox (
+  slug       text primary key,
+  data       jsonb not null,
+  checked_at timestamptz not null default now()
+);
+alter table public.provision_sandbox enable row level security;
+notify pgrst, 'reload schema';

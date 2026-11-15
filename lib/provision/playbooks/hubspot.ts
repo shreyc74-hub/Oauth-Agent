@@ -23,7 +23,7 @@ export const hubspot: Playbook = {
   name: "HubSpot",
   strategy: "browser",
   evidence: "docs",
-  sandbox: { kind: "Developer test account", note: "Free test portal with trial tiers, renewable from the developer account. Before the AUP is signed, installs only work in test accounts, which is exactly what toolkit testing needs." },
+  sandbox: { kind: "Developer test account", note: "Free test portal with trial tiers, renewable from the developer account. Before the AUP is signed, installs only work in test accounts, which is exactly what toolkit testing needs.", relation: "separate" },
   oauth: {
     authorizeUrl: "https://app.hubspot.com/oauth/authorize",
     tokenUrl: "https://api.hubapi.com/oauth/v1/token",
