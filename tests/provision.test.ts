@@ -259,3 +259,13 @@ test("a generated plan that types %password% but forgot its secrets list is repa
   delete signup.secrets;
   assert.ok(validatePlaybook(fillSecretLists(plan)).some((e) => /mentions a secret/.test(e)));
 });
+
+test("Browserbase out of minutes (402) stops the run with a clear reason instead of a live-browser handoff", async () => {
+  const run = await createRun({ app: "Linear", mode: "human", baseUrl: BASE });
+  const deps = { ...defaultDeps(), openBrowser: () => Promise.reject(new Error("Unknown error: 402")) };
+  const r = await advance(run.id, deps, 30_000);
+  assert.equal(r.status, "failed");
+  assert.equal(r.pending, undefined);
+  assert.ok(r.events.some((e) => /out of browser minutes \(402 Payment Required\)/.test(e.text)));
+  assert.ok(!r.events.some((e) => e.kind === "handoff"));
+});

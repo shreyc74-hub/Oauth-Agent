@@ -136,6 +136,11 @@ export interface ScopePlan {
   notes: string[];
 }
 
+/** Live progress while a run is being set up, streamed to the start page (like a network panel). */
+export interface ProgressEvent { id: string; label: string; state: "start" | "done" | "fail" | "info"; detail?: string }
+export type Progress = (e: ProgressEvent) => void;
+export const noProgress: Progress = () => undefined;
+
 /** A run as stored. Holds vault references, never secret values. */
 export interface Run {
   id: string;

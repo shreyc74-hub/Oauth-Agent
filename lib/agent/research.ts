@@ -91,7 +91,7 @@ async function mockResearch(vendor: { name: string; website: string }, emit: (e:
   const g = base as unknown as Record<string, unknown>;
   for (const key of SECTION_ORDER) {
     const data = key === "header"
-      ? { name: vendor.name, website: vendor.website, category: "Mock", oauth: { supported: true }, verdict: `MOCK GUIDE for ${vendor.name}. Content copied from the Linear guide to test streaming. No research was done.` }
+      ? { name: vendor.name, website: vendor.website || `${slugify(vendor.name)}.example`, category: "Mock", oauth: { supported: true }, verdict: `MOCK GUIDE for ${vendor.name}. Content copied from the Linear guide to test streaming. No research was done.` }
       : key === "evidence" ? { evidence: (base.evidence || []).map((e) => ({ ...e, status: "unverified" })), sources: base.sources } : g[key];
     parser.push(JSON.stringify({ section: key, data }) + "\n");
     await wait(200);

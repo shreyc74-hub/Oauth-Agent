@@ -7,10 +7,10 @@
 // Full automation: the agent signs up with its own inbox and only stops at walls it should not climb
 // (captchas, phone checks, device approvals, payment, legal terms).
 import { randomBytes } from "node:crypto";
-import type { Mode, Playbook, Run, RunEvent, SandboxCheck, Step } from "./types";
+import { noProgress, type Mode, type Playbook, type Progress, type Run, type RunEvent, type SandboxCheck, type Step } from "./types";
 import { checkSandbox, cachedSandbox, saveSandbox, fromPlaybook, type SandboxIo } from "./sandbox";
 import { planScopes } from "./scopes";
-import { probeDcr, describeDcr, type Fetcher } from "./dcr";
+import { probeDcr, describeDcr, fetchJson, type Fetcher } from "./dcr";
 import { SIGN_IN_ONLY, SIGN_IN_ONLY_WHY } from "./labels";
 import type { Driver } from "./browser";
 import { openBrowser, browserConfigured, createContext, releaseSession } from "./browser";
@@ -48,6 +48,18 @@ export function defaultDeps(): Deps {
 /** Missing keys or setup. Retrying or handing over won't help, so the run stops with the reason. */
 export class ConfigError extends Error { name = "ConfigError"; }
 
+/**
+ * Browserbase refusing to open a browser at all is an account problem, not something a person can
+ * fix in a live browser that doesn't exist. Stagehand reports these as "Unknown error: <status>".
+ */
+export function browserAccountError(e: unknown): ConfigError | null {
+  const m = String((e as Error)?.message || e);
+  if (/\b402\b|payment required|minutes limit/i.test(m)) return new ConfigError("Browserbase refused to open a browser: the account is out of browser minutes (402 Payment Required). Upgrade the Browserbase plan or wait for the monthly reset, then start a new run");
+  if (/\b(401|403)\b|unauthori[sz]ed|forbidden|invalid api key/i.test(m)) return new ConfigError("Browserbase rejected the API key or project ID (401/403). Check BROWSERBASE_API_KEY and BROWSERBASE_PROJECT_ID");
+  if (/\b429\b|too many|concurren/i.test(m)) return new ConfigError("Browserbase refused another browser: the plan's limit on browsers running at once is reached (429). Finish or cancel other runs, then start a new run");
+  return null;
+}
+
 /** The vendor's own pages say a test account needs sales, a partner programme or a subscription. */
 export class SandboxGatedError extends Error {
   name = "SandboxGatedError";
@@ -74,18 +86,19 @@ async function findGuide(app: string, guideSlug?: string): Promise<Guide | null>
 }
 
 /** Step one: is a self-serve test account possible? Cached per vendor. */
-export async function sandboxFor(app: string, deps: Deps, guideSlug?: string): Promise<SandboxCheck | undefined> {
+export async function sandboxFor(app: string, deps: Deps, guideSlug?: string, progress: Progress = noProgress): Promise<SandboxCheck | undefined> {
   const guide = await findGuide(app, guideSlug);
   const slug = guide?.slug || slugify(app);
   if (PLAYBOOKS[slug]) return fromPlaybook(PLAYBOOKS[slug]);
   if (!guide) return undefined; // planFor reports the missing guide
   const cached = await cachedSandbox(slug);
-  if (cached) return cached;
+  if (cached) { progress({ id: "sandbox:cache", label: "Sandbox check: using the saved result", state: "done", detail: `${cached.verdict.replace(/_/g, " ")} (${cached.source === "run" ? "proven by a verified run" : `researched ${cached.checkedOn}`})` }); return cached; }
   if (deps.mock && !deps.sandboxIo) return { verdict: "self_serve", reason: "Demo mode: the sandbox check is skipped.", quotes: [], source: "research", checkedOn: new Date().toISOString().slice(0, 10) };
   let check: SandboxCheck;
   try {
-    check = await checkSandbox({ name: guide.name, slug, website: guide.website }, deps.sandboxIo);
+    check = await checkSandbox({ name: guide.name, slug, website: guide.website }, deps.sandboxIo, progress);
   } catch (e) {
+    progress({ id: "sandbox:research", label: "Claude researches the developer side, sandbox and OAuth availability", state: "fail", detail: (e as Error).message.slice(0, 160) });
     // Research failing is not evidence of a gate: ask the person instead of guessing.
     return { verdict: "unknown", reason: `The sandbox check couldn't finish: ${(e as Error).message.slice(0, 160)}`, quotes: [], source: "research", checkedOn: new Date().toISOString().slice(0, 10) };
   }
@@ -93,13 +106,13 @@ export async function sandboxFor(app: string, deps: Deps, guideSlug?: string): P
   return check;
 }
 
-export async function planFor(app: string, deps: Deps, guideSlug?: string, setup?: SandboxCheck): Promise<Playbook> {
+export async function planFor(app: string, deps: Deps, guideSlug?: string, setup?: SandboxCheck, progress: Progress = noProgress): Promise<Playbook> {
   const guide = await findGuide(app, guideSlug);
   const slug = guide?.slug || slugify(app);
   if (PLAYBOOKS[slug]) return PLAYBOOKS[slug];
   if (!guide) throw new NoGuideError(app);
   if (guide.oauth && guide.oauth.supported === false) throw new Error(`${guide.name} does not offer OAuth for third-party apps: ${guide.oauth.note || "see its guide"}.`);
-  return deps.mock ? mockPlanFromGuide(guide) : planFromGuide(guide, setup);
+  return deps.mock ? mockPlanFromGuide(guide) : planFromGuide(guide, setup, progress);
 }
 
 /** What a real run needs before it starts. Empty when ready. */
@@ -110,20 +123,48 @@ export function missingSetup(mode: Mode, deps: Deps): string[] {
   return need.filter((k) => !process.env[k]);
 }
 
-export async function createRun(input: { app: string; mode: Mode; baseUrl: string; simulateChange?: boolean; guideSlug?: string; useCase?: string }, deps = defaultDeps()): Promise<Run> {
+export async function createRun(input: { app: string; mode: Mode; baseUrl: string; simulateChange?: boolean; guideSlug?: string; useCase?: string }, deps = defaultDeps(), progress: Progress = noProgress): Promise<Run> {
+  // Each stage reports start and result, so the start page can show what is happening and why it takes time.
+  const stage = async <T>(id: string, label: string, detail: string | undefined, fn: () => Promise<T>, result: (v: T) => string): Promise<T> => {
+    progress({ id, label, state: "start", detail });
+    try { const v = await fn(); progress({ id, label, state: "done", detail: result(v) }); return v; }
+    catch (e) { progress({ id, label, state: "fail", detail: (e as Error).message.slice(0, 200) }); throw e; }
+  };
   const missing = missingSetup(input.mode, deps);
+  progress({ id: "setup", label: "Checking this deployment's setup", state: missing.length ? "fail" : "done", detail: missing.length ? `missing ${missing.join(", ")}` : "browser, model and vault keys present" });
   if (missing.length) throw new ConfigError(`Not set up for ${input.mode === "auto" ? "full automation" : "human-in-the-loop"} runs yet. Missing: ${missing.join(", ")}.`);
+  const guide = await stage("guide", "Finding the readiness guide", input.app, () => findGuide(input.app, input.guideSlug),
+    (g) => (g ? `${g.name}: ${g.evidenceLevel === "generated" ? "agent-generated guide" : "researched library guide"}${PLAYBOOKS[g.slug] ? ", plus a hand-written playbook" : ""}` : "no guide yet: it gets researched first"));
+  // No guide and no hand-written playbook: nothing to check or plan from yet. The start page researches one.
+  if (!guide && !PLAYBOOKS[slugify(input.app)]) throw new NoGuideError(input.app);
   // 1. Can a test account exist at all? Checked before planning or opening a browser.
-  const sandbox = await sandboxFor(input.app, deps, input.guideSlug);
+  const sandbox = await stage("sandbox", "Step 1: is a self-serve test setup possible?", "developer side, sandbox and OAuth app, each on its own evidence",
+    () => sandboxFor(input.app, deps, input.guideSlug, progress),
+    (c) => (c ? `${c.verdict.replace(/_/g, " ")}${c.relation ? `; sandbox is ${c.relation === "same" ? "the same account" : c.relation === "separate" ? "a separate account" : "not confirmed"}` : ""}` : "skipped (no guide)"));
   if (sandbox?.verdict === "gated") throw new SandboxGatedError(input.app, sandbox);
-  let playbook = await planFor(input.app, deps, input.guideSlug, sandbox);
+  let playbook = await stage("plan", "Planning the run", PLAYBOOKS[guide?.slug || ""] ? "hand-written playbook" : deps.mock ? "demo plan from the guide" : "Claude writes the plan from the guide, then code checks it",
+    () => planFor(input.app, deps, input.guideSlug, sandbox, progress),
+    (p) => `${p.strategy} strategy, ${p.steps[input.mode].length} steps, evidence ${p.evidence}`);
   // 2. Scopes from the use case, plus one read-only call verification makes with the new token.
   const useCase = String(input.useCase || "").trim().slice(0, 600);
-  const scopePlan = useCase ? await planScopes({ useCase, guide: await findGuide(input.app, input.guideSlug), playbook, mock: deps.mock }) : undefined;
+  const scopePlan = useCase
+    ? await stage("scopes", "Mapping the use case to scopes", useCase, () => planScopes({ useCase, guide, playbook, mock: deps.mock }),
+      (s) => `${s.scopes.join(", ")}${s.testCall ? `; test call ${s.testCall.label}` : "; no test call"}`)
+    : (progress({ id: "scopes", label: "Scopes", state: "info", detail: `no use case given; using the plan's scopes (${playbook.oauth.scopes.join(", ")}). The run will be verified for sign-in only.` }), undefined);
   if (scopePlan) playbook = { ...playbook, oauth: { ...playbook.oauth, scopes: scopePlan.scopes } };
   // 3. Could the app be created with one API call (RFC 7591)? Read-only probe of public metadata.
-  const dcr = deps.mock && !deps.dcrFetch ? undefined
-    : await probeDcr(playbook, (await findGuide(input.app, input.guideSlug))?.website, deps.dcrFetch).catch(() => undefined);
+  let dcr: Awaited<ReturnType<typeof probeDcr>> | undefined;
+  if (!deps.mock || deps.dcrFetch) {
+    const base = deps.dcrFetch || fetchJson;
+    const get: Fetcher = async (u) => {
+      const j = await base(u).catch(() => null);
+      const reg = Boolean(j && typeof j === "object" && (j as { registration_endpoint?: string }).registration_endpoint);
+      progress({ id: `dcr:${u}`, label: `GET ${u}`, state: j ? "done" : "info", detail: j ? (reg ? "metadata found, lists a registration_endpoint" : "metadata found, no registration_endpoint") : "no document" });
+      return j;
+    };
+    dcr = await stage("dcr", "Looking for Dynamic Client Registration", "public OAuth and MCP metadata; read-only, nothing is registered",
+      () => probeDcr(playbook, guide?.website, get), (d) => describeDcr(d)).catch(() => undefined);
+  }
   if (sandbox?.verdict === "unknown") {
     // No confirmed evidence either way: the person decides before any browser time is spent.
     const check: Step = { kind: "human", id: "sandbox-check", title: "Decide: no confirmed self-serve sandbox", noBrowser: true,
@@ -161,8 +202,7 @@ export async function createRun(input: { app: string; mode: Mode; baseUrl: strin
   if (dcr) log(run, "info", `Dynamic Client Registration: ${describeDcr(dcr)}`);
   if (scopePlan) log(run, "info", `Scopes for "${useCase}": ${scopePlan.scopes.join(", ")}.${scopePlan.testCall ? ` Verification will also call ${scopePlan.testCall.label}.` : " No test call chosen; verification uses the identity call only."}${scopePlan.notes.length ? ` Notes: ${scopePlan.notes.join(" ")}` : ""}`);
   log(run, "info", `Plan: ${playbook.name}, ${playbook.strategy} strategy, evidence ${playbook.evidence}. Sandbox: ${playbook.sandbox.kind}. ${input.mode === "auto" ? "Full automation" : "Human in the loop"}, ${steps.length} steps.`);
-  await saveRun(run);
-  await syncSheet(run);
+  await stage("save", "Saving the run", undefined, async () => { await saveRun(run); await syncSheet(run); }, () => `run ${run.id}`);
   return run;
 }
 
@@ -229,11 +269,13 @@ async function browser(ctx: Ctx): Promise<Driver> {
   try {
     ctx.driver = await deps.openBrowser({ sessionId: old, contextId, mockFail });
   } catch (e) {
+    const account = browserAccountError(e);
+    if (account) throw account;
     if (!old || e instanceof ConfigError) throw e;
     // The hosted browser timed out (or was released) while the run waited. Start a new one in the
     // same context, so cookies and sign-ins carry over.
     log(run, "info", `The previous browser session had ended (${(e as Error).message.slice(0, 120)}). Opened a new one; saved sign-ins carry over.`);
-    ctx.driver = await deps.openBrowser({ contextId, mockFail });
+    ctx.driver = await deps.openBrowser({ contextId, mockFail }).catch((e2) => { throw browserAccountError(e2) || e2; });
   }
   const fresh = ctx.driver.sessionId !== old;
   run.browser = { sessionId: ctx.driver.sessionId, liveUrl: ctx.driver.liveUrl || (fresh ? undefined : run.browser?.liveUrl) };

@@ -14,7 +14,7 @@ import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { cleanSupabaseUrl } from "../store";
 import { runClaude, webTools, RESOLVE_MODEL, extractJson } from "../agent/claude";
 import { htmlToText, isThin, publicUrl, renderPage, renderProvider } from "../agent/render";
-import type { Playbook, SandboxCheck, SetupPart } from "./types";
+import { noProgress, type Playbook, type Progress, type SandboxCheck, type SetupPart } from "./types";
 
 const TTL_MS = 14 * 24 * 3600_000;
 const today = () => new Date().toISOString().slice(0, 10);
@@ -133,11 +133,11 @@ export type Found = {
   oauthApp?: { available?: string; apiKeySelfServe?: boolean; reason?: string; humanPath?: string; quotes?: RawQuote[] };
 };
 
-export async function researchSandbox(app: { name: string; website?: string }): Promise<Found> {
+export async function researchSandbox(app: { name: string; website?: string }, onTool: (name: string, input: Record<string, unknown>) => void = () => undefined): Promise<Found> {
   const text = await runClaude({
     model: RESOLVE_MODEL, system: SYSTEM, maxTokens: 4000, tools: webTools(5, 6),
     messages: [{ role: "user", content: `Vendor: ${app.name}${app.website ? ` (${app.website})` : ""}` }],
-  });
+  }, { onToolUse: onTool });
   return extractJson<Found>(text);
 }
 
@@ -151,10 +151,20 @@ export const weakest = (parts: SetupPart[]): SandboxCheck["verdict"] => parts.re
 
 const validQuotes = (q?: RawQuote[]) => (q || []).filter((x) => x && x.quote && x.url && (x.says === "yes" || x.says === "no"));
 
-async function judgePart(role: SetupPart["role"], raw: RawPart | undefined, io: SandboxIo, withProbe: boolean): Promise<SetupPart> {
-  const quotes = await checkQuotes(validQuotes(raw?.quotes), io.pageText);
+const PART_LABEL: Record<SetupPart["role"], string> = { developer_account: "Developer side", sandbox: "Sandbox", oauth_app: "OAuth app" };
+
+async function judgePart(role: SetupPart["role"], raw: RawPart | undefined, io: SandboxIo, withProbe: boolean, progress: Progress = noProgress): Promise<SetupPart> {
+  const read = async (u: string) => {
+    const t = await io.pageText(u).catch(() => "");
+    progress({ id: `page:${role}:${u}`, label: `GET ${u}`, state: t ? "done" : "fail", detail: t ? `page read (${t.length.toLocaleString()} characters)` : "couldn't read the page" });
+    return t;
+  };
+  const quotes = await checkQuotes(validQuotes(raw?.quotes), read);
+  for (const q of quotes) progress({ id: `quote:${role}:${q.quote.slice(0, 40)}`, label: `${PART_LABEL[role]}: quote ${q.found ? "found" : "NOT found"} on the page`, state: q.found ? "done" : "fail", detail: `"${q.quote.slice(0, 140)}" (${q.says === "yes" ? "says self-serve" : "says gated"})` });
   const url = raw?.signupUrl && publicUrl(raw.signupUrl) ? raw.signupUrl : undefined;
+  if (withProbe && url) progress({ id: `probe:${role}`, label: `Probe ${PART_LABEL[role].toLowerCase()} sign-up page`, state: "start", detail: url });
   const probe = withProbe && url ? await io.probe(url) : undefined;
+  if (probe) progress({ id: `probe:${role}`, label: `Probe ${PART_LABEL[role].toLowerCase()} sign-up page`, state: probe.looks === "unreachable" ? "fail" : "done", detail: `${url}: ${probe.looks.replace("_", " ")}${probe.signals.length ? ` (${probe.signals.join(", ")})` : ""}` });
   const { verdict, why } = combine(quotes, probe);
   const dropped = quotes.filter((q) => !q.found).length;
   return {
@@ -166,19 +176,26 @@ async function judgePart(role: SetupPart["role"], raw: RawPart | undefined, io: 
 }
 
 /** Full check for a vendor without a hand-written playbook: developer side, sandbox and OAuth availability. */
-export async function checkSandbox(app: { name: string; slug: string; website?: string }, io: SandboxIo = liveSandboxIo): Promise<SandboxCheck> {
-  const found = await io.research(app);
+export async function checkSandbox(app: { name: string; slug: string; website?: string }, io: SandboxIo = liveSandboxIo, progress: Progress = noProgress): Promise<SandboxCheck> {
+  progress({ id: "sandbox:research", label: "Claude researches the developer side, sandbox and OAuth availability", state: "start", detail: "web search and fetch on the vendor's own pages" });
+  let calls = 0;
+  const found = await io.research(app, (name, input) => {
+    calls++;
+    const what = String(input.query || input.url || "");
+    progress({ id: `sandbox:tool:${calls}`, label: name === "web_search" ? `web_search "${what}"` : name === "web_fetch" ? `web_fetch ${what}` : name, state: "info" });
+  });
+  progress({ id: "sandbox:research", label: "Claude researches the developer side, sandbox and OAuth availability", state: "done", detail: `${calls} web call${calls === 1 ? "" : "s"}; now checking its quotes against the pages` });
   const relation: SandboxCheck["relation"] = found.relation === "same" || found.relation === "separate" ? found.relation : "unknown";
-  const dev = await judgePart("developer_account", found.developerAccount, io, true);
+  const dev = await judgePart("developer_account", found.developerAccount, io, true, progress);
   let box: SetupPart;
   if (relation === "same") {
     // One account is both: it stands or falls with the developer side.
     box = { ...dev, role: "sandbox", name: found.sandbox?.name || dev.name, expires: found.sandbox?.expires || undefined, reason: `Same account as the developer side. ${dev.reason}` };
   } else {
-    box = await judgePart("sandbox", found.sandbox, io, true);
+    box = await judgePart("sandbox", found.sandbox, io, true, progress);
   }
   const o = found.oauthApp;
-  const oauthPart = await judgePart("oauth_app", { name: "OAuth app", reason: o?.reason, humanPath: o?.humanPath, quotes: o?.quotes }, io, false);
+  const oauthPart = await judgePart("oauth_app", { name: "OAuth app", reason: o?.reason, humanPath: o?.humanPath, quotes: o?.quotes }, io, false, progress);
   const available = o?.available === "self_serve" || o?.available === "partner_only" || o?.available === "none" ? o.available : "unknown";
   const credential = { oauth: available, apiKey: Boolean(o?.apiKeySelfServe) } as NonNullable<SandboxCheck["credential"]>;
   if (oauthPart.verdict === "gated" && credential.apiKey) {

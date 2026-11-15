@@ -2,7 +2,7 @@
 // planner turns that app's readiness guide (the first assignment's output) into a playbook with Claude.
 // The guide is the agent's map: no guide, no plan. Generated playbooks are marked "unverified".
 import type { Guide } from "../schema";
-import type { SandboxCheck } from "./types";
+import type { Progress, SandboxCheck } from "./types";
 import type { Mode, Playbook, Step } from "./types";
 import { linear } from "./playbooks/linear";
 import { slack } from "./playbooks/slack";
@@ -68,7 +68,7 @@ Rules:
 - Scopes: the smallest set from the guide's minimal sets.`;
 
 /** Builds a playbook for an app that has a guide but no hand-written playbook. */
-export async function planFromGuide(guide: Guide, setup?: SandboxCheck): Promise<Playbook> {
+export async function planFromGuide(guide: Guide, setup?: SandboxCheck, progress: Progress = () => undefined): Promise<Playbook> {
   const brief = {
     name: guide.name, website: guide.website, verdict: guide.verdict,
     steps: guide.steps, prerequisites: guide.prerequisites, appTypes: guide.appTypes?.items,
@@ -86,6 +86,7 @@ export async function planFromGuide(guide: Guide, setup?: SandboxCheck): Promise
   let p = parse(first);
   let errs = validatePlaybook(p);
   if (errs.length) {
+    progress({ id: "plan:fix", label: "The plan failed safety checks; Claude is asked to fix it", state: "start", detail: errs.slice(0, 3).join("; ") });
     // One correction round: the planner sees exactly which checks failed and returns a fixed plan.
     const second = await runClaude({
       model: RESOLVE_MODEL, system: PLAN_SYSTEM, maxTokens: 6000,
@@ -97,6 +98,7 @@ export async function planFromGuide(guide: Guide, setup?: SandboxCheck): Promise
     });
     p = parse(second);
     errs = validatePlaybook(p);
+    progress({ id: "plan:fix", label: "The plan failed safety checks; Claude is asked to fix it", state: errs.length ? "fail" : "done", detail: errs.length ? errs.slice(0, 3).join("; ") : "corrected plan passes the checks" });
   }
   if (errs.length) throw new Error(`The agent couldn't write a safe plan for ${guide.name} (checked twice): ${errs.slice(0, 4).join("; ")}`);
   return p;
