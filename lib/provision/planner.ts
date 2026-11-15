@@ -67,7 +67,8 @@ type Playbook = {slug,name,strategy:"browser"|"human",evidence:"unverified",
 
 Rules:
 - Use only facts from the guide. If the guide does not give the token endpoint or an identity endpoint, use the provider's documented ones you are confident about and add a note saying they are unverified.
-- Browser instructions are plain English for one screen at a time. Put values in %placeholders%: %app_name%, %dev_name%, %dev_url%, %redirect_uri%, %workspace_name%, %email%, %password%, %code%.
+- Browser instructions are plain English for one screen at a time. Put values in %placeholders%: %app_name%, %dev_name%, %dev_url%, %redirect_uri%, %workspace_name%, %email%, %password%, %code%, %first_name%, %last_name%, %company%.
+- Sign-up and onboarding: one browser step per screen, and name every field that screen asks for with its placeholder (e.g. "Type %first_name% into First name, %last_name% into Last name, %company% into Company, %email% into Email; in the 'What do you want to build?' dropdown choose the option closest to testing an integration; tick the terms box; click Get Started"). Never write "fill in the form" without naming the fields.
 - Every browser step lists each %placeholder% its instruction uses in "secrets" (e.g. "Sign up with %email% and %password%." has secrets ["email","password"]). Any step that types a password, token or secret must type it through a %placeholder%.
 - Never put a secret value in an instruction. Secrets are captured with "capture" steps (into "client_id" secret:false, "client_secret" secret:true).
 - Mark any step that creates, submits, accepts terms or installs as write:true.

@@ -68,6 +68,9 @@ A scripted step just failed. Your job: reach that step's goal in the hosted brow
 How to work:
 - Start with look. Act one small step at a time, then look again to check the result.
 - look also reports which fields are filled (never their values) and any error messages. Read them before acting: if a field is already filled, don't type into it again unless an error says it is wrong; if an error shows (for example "Please enter a valid email address"), fix that field first, because a submit button usually stays disabled until it is fixed. Typing replaces a field's text.
+- A greyed-out (disabled) submit button means something the form requires is still missing: a required field, a dropdown, a terms checkbox. look marks required fields and disabled buttons; find the missing one instead of clicking the button again.
+- Custom dropdowns take two actions: click the dropdown to open it, then click an option. look again to confirm the choice stuck.
+- For names and companies use %first_name%, %last_name% and %company%.
 - Use %placeholders% for any value listed under "Values you can type". You never see their values.
 - To read a value off the page (a client ID, a client secret, an ID), use capture. It goes straight to the vault and you will only be told it was stored. Never try to read a secret with look.
 - If the page shows a captcha, a "verify you are human" check, a phone or SMS request, a device or passkey prompt, or a payment form, call ask_human. Do not try to get around it.

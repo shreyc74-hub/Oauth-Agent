@@ -187,3 +187,30 @@ test("the recovery agent is told to read filled fields and error messages before
   assert.match(SYSTEM, /Please enter a valid email address/);
   assert.match(SYSTEM, /Typing replaces/);
 });
+
+test("a browser that dies under a step (Browserbase 400) is replaced and the step runs again, hands-off", async () => {
+  const base = defaultDeps();
+  let killed = false;
+  const deps = { ...base, openBrowser: async (o: { sessionId?: string; contextId?: string; mockFail?: string }) => {
+    const d = await base.openBrowser(o);
+    return { ...d, act: async (instruction: string, variables?: Record<string, string>) => {
+      if (!killed && /sign-up|signup|%email%/i.test(instruction)) { killed = true; throw new Error("Unknown error: 400"); }
+      return d.act(instruction, variables);
+    } };
+  } };
+  const run = await createRun({ app: "Linear", baseUrl: BASE, autoStart: true }, deps);
+  const done = await hands_off(run.id, deps);
+  assert.ok(killed);
+  assert.ok(done.events.some((e) => /The browser session ended during/.test(e.text)));
+  assert.equal(done.status, "verified");
+});
+
+test("sign-up forms get name and company values, and the recovery agent knows disabled buttons and dropdowns", async () => {
+  const { SYSTEM } = await import("../lib/provision/recover");
+  assert.match(SYSTEM, /greyed-out \(disabled\) submit button/);
+  assert.match(SYSTEM, /Custom dropdowns take two actions/);
+  const run = await createRun({ app: "Linear", baseUrl: BASE });
+  assert.equal(run.vars.first_name, "Toolkit");
+  assert.equal(run.vars.last_name, "Agent");
+  assert.equal(run.vars.company, "Toolkit Test");
+});

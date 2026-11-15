@@ -231,6 +231,9 @@ export async function createRun(input: { app: string; mode?: Mode; baseUrl: stri
       dev_name: "Toolkit Provisioning Agent",
       dev_url: input.baseUrl,
       workspace_name: `toolkit-sandbox-${short}`,
+      first_name: "Toolkit",
+      last_name: "Agent",
+      company: "Toolkit Test",
     },
     playbook,
     sandbox, assessment, scopePlan, dcr,
@@ -367,7 +370,7 @@ function isSignUp(s: Step): boolean {
 
 type Outcome = "done" | "pause" | "wait";
 
-interface Ctx { run: Run; deps: Deps; deadline: number; seen: Set<string>; driver?: Driver; recovered?: Set<string> }
+interface Ctx { run: Run; deps: Deps; deadline: number; seen: Set<string>; driver?: Driver; recovered?: Set<string>; reopened?: Set<string> }
 
 async function browser(ctx: Ctx): Promise<Driver> {
   if (ctx.driver) return ctx.driver;
@@ -809,7 +812,7 @@ async function tryRecovery(ctx: Ctx, s: Step, error: string): Promise<{ out: Out
   for (const name of Object.values(run.vault)) { const v = await getSecret(name).catch(() => null); if (v) ctx.seen.add(v); }
   const driver = await browser(ctx);
   const names = new Set([...(("instruction" in s && s.instruction) || "").matchAll(/%([a-z_]+)%/g)].map((m) => m[1]));
-  for (const n of ["app_name", "dev_name", "dev_url", "redirect_uri", "workspace_name"]) names.add(n);
+  for (const n of ["app_name", "dev_name", "dev_url", "redirect_uri", "workspace_name", "first_name", "last_name", "company"]) names.add(n);
   if (run.identity?.email) { names.add("email"); names.add("password"); }
   if (s.kind === "email") names.add("code");
   const approved = JSON.parse(run.vars[`recovery-approved:${s.id}`] || "[]") as string[];
@@ -900,6 +903,16 @@ export async function advance(id: string, deps = defaultDeps(), budgetMs = 240_0
       try { out = await runStep(ctx, s); }
       catch (e) {
         const msg = (e as Error).message.replace(/\.+$/, "");
+        // The hosted browser ended under the step (Browserbase answers 400/410): open a new one, which
+        // keeps the saved cookies, and run the step once more before any recovery or hand-over.
+        if (/Unknown error: (400|410)|session (has )?(ended|completed|closed)|410 Gone/i.test(msg) && !ctx.reopened?.has(s.id)) {
+          (ctx.reopened ??= new Set()).add(s.id);
+          await ctx.driver?.detach().catch(() => undefined);
+          ctx.driver = undefined;
+          if (run.browser) run.browser = { sessionId: "" };
+          log(run, "info", `The browser session ended during "${s.title}" (${msg.slice(0, 80)}). Opened a new one; saved sign-ins carry over. Running the step again.`, s.id);
+          continue;
+        }
         if ((e as Error).name === "ConfigError") {
           run.status = "failed"; run.steps[run.cursor].state = "blocked";
           log(run, "error", `Stopped: ${msg}.`, s.id, ctx.seen);

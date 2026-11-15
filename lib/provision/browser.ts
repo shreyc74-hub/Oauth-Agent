@@ -114,22 +114,37 @@ export async function openBrowser(opts: { sessionId?: string; contextId?: string
    * values) and whether a Cloudflare Turnstile check on the page is still unpassed.
    */
   const formState = async (): Promise<{ fields: string; turnstilePending: boolean; errors: string[] }> => {
+    // Sign-up forms often live in an iframe (marketing form tools), so every frame is checked.
+    const inFrame = () => {
+      const vis = (e: Element) => !!((e as HTMLElement).offsetWidth || (e as HTMLElement).offsetHeight);
+      const fields = [...document.querySelectorAll("input, textarea, select")]
+        .filter((e) => vis(e) && !["hidden", "submit", "button", "radio"].includes((e as HTMLInputElement).type))
+        .slice(0, 15)
+        .map((e) => {
+          const i = e as HTMLInputElement;
+          const label = i.getAttribute("aria-label") || i.placeholder || i.name || i.id || i.type;
+          const state = i.type === "checkbox" ? (i.checked ? "ticked" : "not ticked") : i.value ? "filled" : "empty";
+          return `${label}: ${state}${i.required || i.getAttribute("aria-required") === "true" ? " (required)" : ""}`;
+        });
+      const disabled = [...document.querySelectorAll("button, input[type=submit]")].filter((e) => vis(e) && (e as HTMLButtonElement).disabled)
+        .map((e) => `button "${((e as HTMLElement).innerText || (e as HTMLInputElement).value || "").trim().slice(0, 40)}" is disabled`);
+      const ts = document.querySelector("input[name='cf-turnstile-response']") as HTMLInputElement | null;
+      const errors = [...document.querySelectorAll("[role=alert], [aria-live=assertive], [class*=error i], [class*=invalid i], [id*=error i]")]
+        .filter((e) => vis(e) && (e as HTMLElement).innerText && (e as HTMLElement).innerText.trim().length < 200)
+        .map((e) => (e as HTMLElement).innerText.trim());
+      const invalid = [...document.querySelectorAll("[aria-invalid=true]")].filter(vis).map((e) => `${(e as HTMLInputElement).getAttribute("aria-label") || (e as HTMLInputElement).placeholder || (e as HTMLInputElement).name || "a field"} is marked invalid`);
+      return { fields, disabled, turnstilePending: Boolean(ts && !ts.value), errors: [...errors, ...invalid] };
+    };
     try {
-      return await page().evaluate(() => {
-        const vis = (e: Element) => !!((e as HTMLElement).offsetWidth || (e as HTMLElement).offsetHeight);
-        const fields = [...document.querySelectorAll("input, textarea")]
-          .filter((e) => vis(e) && !["hidden", "submit", "button", "checkbox", "radio"].includes((e as HTMLInputElement).type))
-          .slice(0, 12)
-          .map((e) => { const i = e as HTMLInputElement; const label = i.getAttribute("aria-label") || i.placeholder || i.name || i.type; return `${label}: ${i.value ? "filled" : "empty"}`; })
-          .join("; ");
-        const ts = document.querySelector("input[name='cf-turnstile-response']") as HTMLInputElement | null;
-        // Validation messages ("Please enter a valid email address"): what a stuck agent most needs to see.
-        const errors = [...document.querySelectorAll("[role=alert], [aria-live=assertive], [class*=error i], [class*=invalid i], [id*=error i]")]
-          .filter((e) => vis(e) && (e as HTMLElement).innerText && (e as HTMLElement).innerText.trim().length < 200)
-          .map((e) => (e as HTMLElement).innerText.trim()).filter((t, i, a) => t && a.indexOf(t) === i).slice(0, 5);
-        const invalid = [...document.querySelectorAll("[aria-invalid=true]")].filter(vis).map((e) => `${(e as HTMLInputElement).getAttribute("aria-label") || (e as HTMLInputElement).placeholder || (e as HTMLInputElement).name || "a field"} is marked invalid`);
-        return { fields, turnstilePending: Boolean(ts && !ts.value), errors: [...errors, ...invalid].slice(0, 6) };
-      });
+      const frames = (() => { try { return page().frames(); } catch { return []; } })();
+      const all = await Promise.all((frames.length ? frames : [page().mainFrame()]).map((f) => f.evaluate(inFrame).catch(() => null)));
+      const ok = all.filter(Boolean) as ReturnType<typeof inFrame>[];
+      const uniq = (a: string[]) => a.filter((t, i) => t && a.indexOf(t) === i);
+      return {
+        fields: uniq(ok.flatMap((o) => [...o.fields, ...o.disabled])).slice(0, 20).join("; "),
+        turnstilePending: ok.some((o) => o.turnstilePending),
+        errors: uniq(ok.flatMap((o) => o.errors)).slice(0, 6),
+      };
     } catch { return { fields: "", turnstilePending: false, errors: [] }; }
   };
   const guard = <A extends unknown[], R>(fn: (...a: A) => Promise<R>) => async (...a: A): Promise<R> => {
