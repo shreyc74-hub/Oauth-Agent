@@ -130,7 +130,12 @@ test("the task carries the rules learned live and keeps secrets out", () => {
     values: { first_name: "Toolkit", last_name: "Agent", company: "Toolkit Test", app_name: "Zoom Toolkit Test", workspace_name: "ws", redirect_uri: "https://x.test/api/oauth/callback", dev_url: "https://x.test" } });
   assert.match(t, /optional prompts with a Skip/);
   assert.match(t, /add your phone number/);
-  assert.match(t, /never try to solve or bypass a captcha/);
+  // Default (decision 2026-11-15): captchas on test accounts are left to the browser's solver.
+  assert.match(t, /wait up to 30 seconds for it to clear/);
+  assert.doesNotMatch(t, /never try to solve/);
+  process.env.PROVISION_CAPTCHA = "handover";
+  try { assert.match(agentTask({ app: "Zoom", credential: "oauth", email: "a@agentmail.to", accountExists: false, hints: [], docs: [], scopes: [], values: { first_name: "", last_name: "", company: "", app_name: "k", workspace_name: "", redirect_uri: "", dev_url: "" } }), /never try to solve or bypass a captcha/); }
+  finally { delete process.env.PROVISION_CAPTCHA; }
   assert.match(t, /secret account_password/);
   assert.match(t, /STOP and answer with status "waiting_for_email"/);
   assert.match(t, /user:read:user/);

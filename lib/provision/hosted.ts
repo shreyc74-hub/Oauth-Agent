@@ -135,6 +135,20 @@ export interface TaskInput {
   scopes: string[];
 }
 
+/**
+ * Captchas and bot checks on test accounts. Browser Use's cloud browsers solve captchas server-side on
+ * their own; the agent can't stop that. Decision (2026-11-15): allowed for test accounts, so the agent
+ * waits for the solver instead of stopping. PROVISION_CAPTCHA=handover makes every captcha a wall again
+ * (the platform may still solve some before the agent sees them).
+ */
+export const captchaAllowed = () => (process.env.PROVISION_CAPTCHA || "allow_test").trim().toLowerCase() !== "handover";
+
+function wallRule(): string {
+  return captchaAllowed()
+    ? `Captchas and bot checks: this is a test account and this browser solves them on its own; when one appears, wait up to 30 seconds for it to clear, then continue (submit again once if a form was rejected). Stop with status "wall" only when a step is MANDATORY and needs a phone number or payment details, or when a captcha or bot check still blocks you after waiting twice; say exactly which screen in "wall". Never invent a phone number, never enter payment details.`
+    : `Stop with status "wall" only when a step is MANDATORY and needs a phone number, payment details, a captcha or a bot check that does not pass on its own within a few seconds; say exactly which screen in "wall". Never invent a phone number, never enter payment details, never try to solve or bypass a captcha.`;
+}
+
 export const RESULT_SHAPE = `{"status":"done"|"waiting_for_email"|"wall"|"failed","expects":"code"|"link"|null,"wall":string|null,"client_id":string|null,"client_secret":string|null,"api_key":string|null,"app_url":string|null,"notes":[string]}`;
 
 /** Pure: the task for the first run of a job. Rules learned from the live tests are built in. */
@@ -154,7 +168,7 @@ export function agentTask(t: TaskInput): string {
     t.hints.length ? `Hints from ${t.app}'s docs (may be out of date; trust the screen over these):\n${t.hints.slice(0, 10).map((h) => `- ${h}`).join("\n")}` : "",
     t.docs.length ? `Official pages: ${t.docs.slice(0, 5).join(" , ")}` : "",
     `Email: if ${t.app} sends a code or a sign-in link by email, STOP and answer with status "waiting_for_email" and expects "code" or "link". Keep the browser open; the next message gives you the code or link.`,
-    `Rules: optional prompts with a Skip, Later or close button may be skipped (for example "add your phone number"). You may accept terms of service for this test account. Stop with status "wall" only when a step is MANDATORY and needs a phone number, payment details, a captcha or a bot check that does not pass on its own within a few seconds; say exactly which screen in "wall". Never invent a phone number, never enter payment details, never try to solve or bypass a captcha.`,
+    `Rules: optional prompts with a Skip, Later or close button may be skipped (for example "add your phone number"). You may accept terms of service for this test account. ${wallRule()}`,
     `Secrets: put the ${t.credential === "api_key" ? "API key" : "client secret"} ONLY in its field of the final answer and never repeat it anywhere else (not in notes, not in your messages).`,
     `Final answer: JSON only, exactly this shape: ${RESULT_SHAPE}`,
   ].filter(Boolean).join("\n\n");
@@ -177,7 +191,7 @@ export function consentTask(app: string, url: string, redirectUri: string, accou
       : `There is no ${app} account yet: on the sign-in page choose sign up, and create a free account with ${account.email}${account.passwordAlias ? ` and the password from the secret ${account.passwordAlias}` : " and a strong password you generate"} (name ${account.first_name} ${account.last_name}, company ${account.company}; skip optional prompts and onboarding). Never use Google or other single sign-on. Then come back to the authorization URL above if the sign-up does not return to it.`;
   return [
     `Open this ${app} authorization URL: ${url}`,
-    `${signIn} If an email code or link is needed, STOP with status "waiting_for_email". If a workspace or organization must be chosen, choose the one you created. Approve / allow / authorize access for the app. Stop with status "wall" only for a MANDATORY phone number, payment, captcha or bot check that does not pass on its own; never solve or bypass a captcha.`,
+    `${signIn} If an email code or link is needed, STOP with status "waiting_for_email". If a workspace or organization must be chosen, choose the one you created. Approve / allow / authorize access for the app. ${wallRule()}`,
     `Stop as soon as the browser reaches ${redirectUri} (that page may say "Authorization received"). Do not copy the code from the address bar into your answer.`,
     `Final answer: JSON only, exactly this shape: ${RESULT_SHAPE}`,
   ].join("\n\n");
