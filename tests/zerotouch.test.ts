@@ -169,3 +169,21 @@ test("the recovery agent can open the email's sign-in link when there is an inbo
   assert.ok(names.includes("read_inbox_code") && names.includes("open_inbox_link"));
   assert.ok(!toolsFor({ captureLabels: [], hasInbox: false }).map((t) => t.name).includes("open_inbox_link"));
 });
+
+test("HubSpot sign-up is one screen per step (email first), and the plan is still valid", async () => {
+  const { PLAYBOOKS, validatePlaybook } = await import("../lib/provision/planner");
+  const hs = PLAYBOOKS.hubspot;
+  assert.deepEqual(validatePlaybook(hs), []);
+  const auto = hs.steps.auto.map((s) => s.id);
+  assert.deepEqual(auto.slice(0, 5), ["identity", "signup", "verify-email", "details", "finish-signup"]);
+  const signup = hs.steps.auto.find((s) => s.id === "signup") as { instruction: string };
+  assert.ok(!/first name|last name/i.test(signup.instruction), "the email screen asks only for the email");
+  assert.equal((await hands_off((await createRun({ app: "HubSpot", baseUrl: BASE, autoStart: true })).id)).status, "verified");
+});
+
+test("the recovery agent is told to read filled fields and error messages before typing again", async () => {
+  const { SYSTEM } = await import("../lib/provision/recover");
+  assert.match(SYSTEM, /fields are filled/);
+  assert.match(SYSTEM, /Please enter a valid email address/);
+  assert.match(SYSTEM, /Typing replaces/);
+});

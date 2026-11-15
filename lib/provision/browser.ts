@@ -17,7 +17,7 @@ export interface Driver {
   goto(url: string): Promise<void>;
   act(instruction: string, variables?: Record<string, string>): Promise<{ ok: boolean; message: string }>;
   /** What the page shows: URL, title and the visible controls (for the recovery agent). */
-  look(): Promise<{ url: string; title: string; elements: string[] }>;
+  look(): Promise<{ url: string; title: string; elements: string[]; fields?: string; errors?: string[] }>;
   /** Anything on screen the agent must not or cannot get past by itself. */
   blocker(): Promise<Blocker | null>;
   /**
@@ -113,7 +113,7 @@ export async function openBrowser(opts: { sessionId?: string; contextId?: string
    * What code can see but the model's page snapshot can't: whether form fields are filled (never their
    * values) and whether a Cloudflare Turnstile check on the page is still unpassed.
    */
-  const formState = async (): Promise<{ fields: string; turnstilePending: boolean }> => {
+  const formState = async (): Promise<{ fields: string; turnstilePending: boolean; errors: string[] }> => {
     try {
       return await page().evaluate(() => {
         const vis = (e: Element) => !!((e as HTMLElement).offsetWidth || (e as HTMLElement).offsetHeight);
@@ -123,9 +123,14 @@ export async function openBrowser(opts: { sessionId?: string; contextId?: string
           .map((e) => { const i = e as HTMLInputElement; const label = i.getAttribute("aria-label") || i.placeholder || i.name || i.type; return `${label}: ${i.value ? "filled" : "empty"}`; })
           .join("; ");
         const ts = document.querySelector("input[name='cf-turnstile-response']") as HTMLInputElement | null;
-        return { fields, turnstilePending: Boolean(ts && !ts.value) };
+        // Validation messages ("Please enter a valid email address"): what a stuck agent most needs to see.
+        const errors = [...document.querySelectorAll("[role=alert], [aria-live=assertive], [class*=error i], [class*=invalid i], [id*=error i]")]
+          .filter((e) => vis(e) && (e as HTMLElement).innerText && (e as HTMLElement).innerText.trim().length < 200)
+          .map((e) => (e as HTMLElement).innerText.trim()).filter((t, i, a) => t && a.indexOf(t) === i).slice(0, 5);
+        const invalid = [...document.querySelectorAll("[aria-invalid=true]")].filter(vis).map((e) => `${(e as HTMLInputElement).getAttribute("aria-label") || (e as HTMLInputElement).placeholder || (e as HTMLInputElement).name || "a field"} is marked invalid`);
+        return { fields, turnstilePending: Boolean(ts && !ts.value), errors: [...errors, ...invalid].slice(0, 6) };
       });
-    } catch { return { fields: "", turnstilePending: false }; }
+    } catch { return { fields: "", turnstilePending: false, errors: [] }; }
   };
   const guard = <A extends unknown[], R>(fn: (...a: A) => Promise<R>) => async (...a: A): Promise<R> => {
     try { return await fn(...a); }
@@ -143,12 +148,19 @@ export async function openBrowser(opts: { sessionId?: string; contextId?: string
     liveUrl: (await liveViewUrl(sessionId)) || sh.browserbaseDebugURL,
     goto: guard(async (url: string) => { await page().goto(url); }),
     act: guard(async (instruction: string, variables?: Record<string, string>) => {
+      // Typing a %value% into a field must replace what is there, not add to it (a second attempt once
+      // produced "a@b.toa@b.to"). Find the field and empty it with code first.
+      if (/\b(type|enter|fill|input|put)\b/i.test(instruction) && /%[a-z_]+%/i.test(instruction)) {
+        const [field] = await sh.observe(`Find the text field that this instruction types into: "${instruction}". Return the input element itself.`).catch(() => []);
+        if (field?.selector) await page().locator(field.selector).fill("").catch(() => undefined);
+      }
       const r = await sh.act(instruction, { variables });
       return { ok: r.success, message: r.message };
     }),
     look: guard(async () => {
       const found = await sh.observe("List the visible headings, buttons, links, toggles and form fields on this page.");
-      return { url: page().url(), title: await page().title().catch(() => ""), elements: found.slice(0, 40).map((a) => a.description) };
+      const fs = await formState();
+      return { url: page().url(), title: await page().title().catch(() => ""), elements: found.slice(0, 40).map((a) => a.description), fields: fs.fields || undefined, errors: fs.errors.length ? fs.errors : undefined };
     }),
     blocker: guard(async (): Promise<Blocker | null> => {
       // Code first: an invisible Turnstile on a form that hasn't passed blocks submitting, with nothing
@@ -166,7 +178,7 @@ export async function openBrowser(opts: { sessionId?: string; contextId?: string
     goalCheck: guard(async (goal: string) => {
       const fs = await formState();
       const r = await sh.extract(
-        `A browser agent was given this task: "${goal}".${fs.fields ? ` Form fields as code sees them (the page text may not show typed values): ${fs.fields}.` : ""} Look at the page now. Is the task fully finished (every field filled and the form submitted, or the page it leads to showing)? Answer done=true only if nothing is left to do for this task. If something is left, say what in a few words in "missing".`,
+        `A browser agent was given this task: "${goal}".${fs.fields ? ` Form fields as code sees them (the page text may not show typed values): ${fs.fields}.` : ""}${fs.errors.length ? ` Error messages on the page: ${fs.errors.join(" | ")}.` : ""} Look at the page now. Sign-up and set-up flows often spread one task over several screens: if this screen's part is done and the flow has moved on to its next screen (the next form, a "check your email" page, a code entry page, or the app itself), answer done=true; a later screen will be handled by a later step. Answer done=false if this screen still needs input, shows an error, or nothing was submitted, and say what is missing in a few words.`,
         goalSchema,
       );
       return { done: r.done, missing: r.missing };

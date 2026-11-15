@@ -41,12 +41,17 @@ export const hubspot: Playbook = {
     ],
     auto: [
       { kind: "identity", id: "identity", title: "Create the agent's inbox and password" },
-      { kind: "browser", id: "signup", title: "Sign up for a developer account", url: "https://app.hubspot.com/signup-hubspot/developers",
-        instruction: "Fill the sign-up form with email %email%, first name 'Toolkit', last name 'Agent', and continue.", secrets: ["email"], write: true },
-      { kind: "email", id: "verify-email", title: "Confirm the email address", from: "hubspot", extract: "link" },
-      { kind: "browser", id: "set-password", title: "Set the password and finish sign-up",
-        instruction: "Set the password to %password% and complete the remaining sign-up questions with neutral answers (company 'Toolkit Test', role 'Developer') until the developer account home is showing.",
-        secrets: ["password"], write: true },
+      // One screen per step: HubSpot's sign-up asks for the email first, then confirms it, then the
+      // details (seen on the first live run, Nov 15: email-only first screen with Google/Microsoft/Apple).
+      { kind: "browser", id: "signup", title: "Enter the email to sign up", url: "https://app.hubspot.com/signup-hubspot/developers",
+        instruction: "Use the email option (not Google, Microsoft, Apple or ChatGPT): type %email% into the email field and click 'Continue with email'.", secrets: ["email"], write: true },
+      { kind: "email", id: "verify-email", title: "Confirm the email address", from: "hubspot", extract: "code",
+        then: "Type %code% into the verification code field and continue." },
+      { kind: "browser", id: "details", title: "Enter your name and password",
+        instruction: "Fill in first name 'Toolkit', last name 'Agent', and the password %password%, then continue.", secrets: ["password"], write: true },
+      { kind: "browser", id: "finish-signup", title: "Finish the sign-up questions",
+        instruction: "Answer the remaining sign-up questions with neutral answers (company 'Toolkit Test', role 'Developer', smallest company size) and continue until the developer account home is showing.",
+        write: true },
       ...build,
     ],
   },
