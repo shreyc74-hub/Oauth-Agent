@@ -13,10 +13,11 @@ export async function POST(req: Request) {
   if (denied) return denied;
   const body = (await req.json().catch(() => ({}))) as { app?: string; mode?: string; simulateChange?: boolean; guideSlug?: string; useCase?: string };
   const app = String(body.app || "").trim().slice(0, 80);
-  const mode = body.mode === "auto" ? "auto" : "human";
+  // No mode: research and plan only; the person chooses the mode on the run page. A mode (terminal runner, tests) starts at once.
+  const mode: "human" | "auto" | undefined = body.mode === "auto" || body.mode === "human" ? body.mode : undefined;
   if (!app) return Response.json({ error: "Name an app." }, { status: 400 });
   if (limited(req, "provision", 20)) return Response.json({ error: "Too many runs from this network. Try later." }, { status: 429 });
-  const input = { app, mode: mode as "human" | "auto", baseUrl: baseUrl(req), simulateChange: Boolean(body.simulateChange), guideSlug: body.guideSlug ? String(body.guideSlug).slice(0, 120) : undefined, useCase: body.useCase ? String(body.useCase).slice(0, 600) : undefined };
+  const input = { app, mode, baseUrl: baseUrl(req), simulateChange: Boolean(body.simulateChange), guideSlug: body.guideSlug ? String(body.guideSlug).slice(0, 120) : undefined, useCase: body.useCase ? String(body.useCase).slice(0, 600) : undefined };
 
   // The start page asks for a stream so it can show each backend step as it happens.
   if ((req.headers.get("accept") || "").includes("application/x-ndjson")) {

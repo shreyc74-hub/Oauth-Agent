@@ -118,7 +118,10 @@ Use web_search and web_fetch on official pages (developer docs, partner pages, p
 {"relation":"same"|"separate",
  "developerAccount":{"name":string,"signupUrl":string,"selfServe":"yes"|"no"|"unclear","reason":string,"humanPath":string,"quotes":[Quote]},
  "sandbox":{"name":string,"signupUrl":string,"selfServe":"yes"|"no"|"unclear","expires":string,"reason":string,"humanPath":string,"quotes":[Quote]},
- "oauthApp":{"available":"self_serve"|"partner_only"|"none"|"unclear","apiKeySelfServe":boolean,"reason":string,"humanPath":string,"quotes":[Quote]}}
+ "oauthApp":{"available":"self_serve"|"partner_only"|"none"|"unclear","apiKeySelfServe":boolean,"reason":string,"humanPath":string,"quotes":[Quote]},
+ "credentials":[{"type":"oauth2"|"oauth1"|"client_credentials"|"api_key"|"jwt"|"service_account"|"basic"|"bearer","where":"where in the product it is created, e.g. Settings > API > Generate key","selfServe":"yes"|"no"|"unclear","quote":Quote}]}
+credentials: every way the vendor's API can be authenticated, one entry per type, each with one quote from the vendor's docs.
+Also add "appCreation":{"kind":"management_api"|"cli"|"manifest"|"none","detail":"the documented API endpoint, CLI command or manifest flow that creates an OAuth app without the web console","quote":Quote}. Use "none" unless the vendor's own docs describe one.
 Quote is {"quote":"a sentence copied word for word from the page","url":"the exact page URL","says":"yes"|"no"} where "yes" supports self-serve and "no" supports gated.
 When relation is "same", the sandbox may repeat the developer account's name and URL with no quotes of its own.
 humanPath: what a person must do when it is gated or unclear (e.g. "apply to the partner programme at <url>"). Empty when self-serve.
@@ -131,7 +134,11 @@ export type Found = {
   developerAccount?: RawPart;
   sandbox?: RawPart;
   oauthApp?: { available?: string; apiKeySelfServe?: boolean; reason?: string; humanPath?: string; quotes?: RawQuote[] };
+  credentials?: { type?: string; where?: string; selfServe?: string; quote?: RawQuote }[];
+  appCreation?: { kind?: string; detail?: string; quote?: RawQuote };
 };
+
+const CRED_TYPES = new Set(["oauth2", "oauth1", "client_credentials", "api_key", "jwt", "service_account", "basic", "bearer"]);
 
 export async function researchSandbox(app: { name: string; website?: string }, onTool: (name: string, input: Record<string, unknown>) => void = () => undefined): Promise<Found> {
   const text = await runClaude({
@@ -201,15 +208,35 @@ export async function checkSandbox(app: { name: string; slug: string; website?: 
   if (oauthPart.verdict === "gated" && credential.apiKey) {
     oauthPart.reason += " An API key is self-serve, but this agent creates OAuth apps.";
   }
+  // Credential types the vendor offers, each with its quote checked against the page.
+  const offered: NonNullable<SandboxCheck["offered"]> = [];
+  for (const c of (found.credentials || []).slice(0, 8)) {
+    if (!c?.type || !CRED_TYPES.has(c.type)) continue;
+    const [q] = c.quote ? await checkQuotes(validQuotes([c.quote]), io.pageText) : [];
+    offered.push({ type: c.type as NonNullable<SandboxCheck["offered"]>[number]["type"], where: c.where ? String(c.where).slice(0, 160) : undefined,
+      selfServe: c.selfServe === "yes" || c.selfServe === "no" ? c.selfServe : "unclear", quote: q ? { quote: q.quote, url: q.url, found: q.found } : undefined });
+    if (q) progress({ id: `cred:${c.type}`, label: `Credential ${c.type}: quote ${q.found ? "found" : "NOT found"} on the page`, state: q.found ? "done" : "fail", detail: `"${q.quote.slice(0, 120)}"` });
+  }
+  // A documented non-console way to create the OAuth app counts only with a quote found on the page.
+  let creation: SandboxCheck["creation"];
+  const ac = found.appCreation;
+  if (ac?.kind && ["management_api", "cli", "manifest"].includes(ac.kind) && ac.detail) {
+    const [q] = ac.quote ? await checkQuotes(validQuotes([ac.quote]), io.pageText) : [];
+    if (q?.found) creation = { kind: ac.kind as NonNullable<SandboxCheck["creation"]>["kind"], detail: String(ac.detail).slice(0, 200), quote: { quote: q.quote, url: q.url, found: true } };
+    progress({ id: "creation", label: `App creation without the console (${ac.kind.replace("_", " ")}): quote ${q?.found ? "found" : "NOT found"}`, state: q?.found ? "done" : "fail", detail: String(ac.detail).slice(0, 140) });
+  }
   const parts = [dev, box, oauthPart];
-  const verdict = weakest(parts);
+  // OAuth being partner-only only blocks the run when there is no self-serve API key either:
+  // with a key, the agent provisions the key instead.
+  const keyInstead = credential.apiKey || offered.some((o) => (o.type === "api_key" || o.type === "bearer") && o.selfServe !== "no");
+  const verdict = weakest(keyInstead ? [dev, box] : parts);
   const worst = parts.filter((p) => p.verdict === verdict);
   const label = (p: SetupPart) => (p.role === "developer_account" ? "Developer side" : p.role === "sandbox" ? "Sandbox" : "OAuth app");
   const reason = verdict === "self_serve" || verdict === "likely_self_serve"
     ? `Developer side: ${dev.name}. Sandbox: ${box.name}${relation === "same" ? " (same account)" : relation === "separate" ? " (a separate account)" : ""}${box.expires ? `, expires: ${box.expires}` : ""}.`
     : worst.map((p) => `${label(p)} (${p.name}): ${p.reason}`).join(" ");
   return {
-    verdict, reason, relation, parts, credential,
+    verdict, reason, relation, parts, credential, offered, creation,
     humanPath: worst.map((p) => p.humanPath).filter(Boolean).join(" ") || undefined,
     signupUrl: dev.url, quotes: parts.flatMap((p) => p.quotes), probe: dev.probe,
     source: "research", checkedOn: today(),

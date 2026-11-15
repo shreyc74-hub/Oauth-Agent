@@ -18,7 +18,6 @@ export const codeHeader = (): Record<string, string> => {
 export default function ProvisionStart({ mock }: { mock: boolean }) {
   const router = useRouter();
   const [app, setApp] = useState("");
-  const [mode, setMode] = useState<"human" | "auto">("human");
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<{ text: string; research?: string; needsCode?: boolean; gated?: SandboxCheck } | null>(null);
   const [useCase, setUseCase] = useState("");
@@ -56,8 +55,8 @@ export default function ProvisionStart({ mock }: { mock: boolean }) {
 
   /** Starts a run. The server streams each step it takes; the last line is the result. */
   async function create(name: string, guideSlug?: string): Promise<{ status: number; j: Record<string, any> }> {
-    act({ id: `post:${guideSlug || ""}`, label: "POST /api/provision", state: "start", detail: `${name}, ${mode === "auto" ? "full automation" : "human in the loop"}${useCase.trim() ? `, use case "${useCase.trim().slice(0, 60)}"` : ""}` });
-    const res = await fetch("/api/provision", { method: "POST", headers: { "content-type": "application/json", accept: "application/x-ndjson", ...codeHeader() }, body: JSON.stringify({ app: name, mode, simulateChange: mock && simulate, guideSlug, useCase: useCase.trim() || undefined }) });
+    act({ id: `post:${guideSlug || ""}`, label: "POST /api/provision", state: "start", detail: `${name}${useCase.trim() ? `, use case "${useCase.trim().slice(0, 60)}"` : ""}` });
+    const res = await fetch("/api/provision", { method: "POST", headers: { "content-type": "application/json", accept: "application/x-ndjson", ...codeHeader() }, body: JSON.stringify({ app: name, simulateChange: mock && simulate, guideSlug, useCase: useCase.trim() || undefined }) });
     const base = Date.now() - t0.current;
     let out: { status: number; j: Record<string, any> } | null = null;
     if (!(res.headers.get("content-type") || "").includes("ndjson") || !res.body) {
@@ -94,7 +93,7 @@ export default function ProvisionStart({ mock }: { mock: boolean }) {
         ({ status, j } = await create(name, slug));
       }
       if (status >= 300) { setErr({ text: j.error, research: j.research, needsCode: j.needsCode, gated: j.gated }); return; }
-      act({ id: "open", label: "Opening the run", state: "done", detail: `/provision/${j.id}` });
+      act({ id: "open", label: "Opening the plan: choose how to run it", state: "done", detail: `/provision/${j.id}` });
       router.push(`/provision/${j.id}`);
     } finally { setBusy(false); setResearch(null); }
   }
@@ -153,23 +152,13 @@ export default function ProvisionStart({ mock }: { mock: boolean }) {
     <>
       <form className="ask" onSubmit={(e) => { e.preventDefault(); start(); }}>
         <input aria-label="App name" placeholder="App name, e.g. Linear" value={app} onChange={(e) => setApp(e.target.value)} />
-        <button className="btn primary" disabled={busy || !app.trim()}>{busy ? <span className="spin" /> : null} Provision</button>
+        <button className="btn primary" disabled={busy || !app.trim()}>{busy ? <span className="spin" /> : null} Research and plan</button>
       </form>
       <label className="usecase">
         <span>What will the app do? <span className="muted">(optional, sets the scopes and the test call)</span></span>
         <textarea rows={2} placeholder="e.g. read invoices and create customers" value={useCase} onChange={(e) => setUseCase(e.target.value)} maxLength={600} />
       </label>
-      <div className="modes" role="radiogroup" aria-label="Mode">
-        <button type="button" role="radio" aria-checked={mode === "human"} className={`mode ${mode === "human" ? "on" : ""}`} onClick={() => setMode("human")}>
-          <b>Human in the loop</b><span>You sign in. The agent does the rest and asks before every create, submit or consent.</span>
-        </button>
-        <button type="button" role="radio" aria-checked={mode === "auto"} className={`mode ${mode === "auto" ? "on" : ""}`} onClick={() => setMode("auto")}>
-          <b>Full automation</b><span>The agent signs up with its own inbox and only stops at captchas, phone checks and legal steps.</span>
-        </button>
-      </div>
-      <div className="tries">Try: {["Linear", "Slack", "HubSpot"].map((n) => <button key={n} type="button" className="chip" onClick={() => { setApp(n); start(n); }}>{n}</button>)}
-        {mock ? <span className="badge st-unverified">Demo mode: simulated browser and providers</span> : null}
-      </div>
+      <p className="small muted" style={{ maxWidth: 760, margin: "10px 0 0" }}>The agent researches first: whether a self-serve sandbox exists, which accounts are needed, which credentials the vendor offers and how to create them. You choose human in the loop or full automation at the end, with its recommendation.</p>
       {mock ? (
         <label className="simulate">
           <input type="checkbox" checked={simulate} onChange={(e) => setSimulate(e.target.checked)} />
@@ -223,7 +212,7 @@ export default function ProvisionStart({ mock }: { mock: boolean }) {
           {runs.map((r) => (
             <a key={r.id} href={`/provision/${r.id}`} className="runrow">
               <b>{r.app}</b>
-              <span className="muted">{r.mode === "auto" ? "Full automation" : "Human in the loop"} · {r.strategy}</span>
+              <span className="muted">{r.status === "ready" ? "Researched, choose how to run it" : r.mode === "auto" ? "Full automation" : "Human in the loop"} · {r.strategy}</span>
               <span className={`badge s-${r.status}`}>{r.signInOnly ? "verified, sign-in only" : r.status.replace("_", " ")}</span>
               <span className="small">{new Date(r.createdAt).toLocaleString()}</span>
             </a>

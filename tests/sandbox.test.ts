@@ -71,21 +71,23 @@ test("Slack-like: separate sandbox, each part judged on its own quotes and sign-
   assert.match(r.reason, /a separate account/);
 });
 
-test("BambooHR-like: account is self-serve but OAuth is partner-only, so the run is gated with the API-key note", async () => {
+test("BambooHR-like: OAuth is partner-only but an API key is self-serve, so the vendor is not gated", async () => {
   const r = await checkSandbox({ name: "HRApp", slug: "hrapp" }, io({
     relation: "same",
     developerAccount: { name: "HRApp company account", signupUrl: "https://hr.example/trial", quotes: [{ quote: "Start your free 7-day trial today", url: "https://hr.example/trial", says: "yes" }] },
     sandbox: { name: "Trial company", expires: "7-day trial" },
     oauthApp: { available: "partner_only", apiKeySelfServe: true, humanPath: "Apply to the marketplace partner programme.", quotes: [{ quote: "OAuth is available to approved marketplace partners only", url: "https://hr.example/api", says: "no" }] },
+    credentials: [{ type: "api_key", where: "Account > API Keys", selfServe: "yes", quote: { quote: "Generate an API key from your account", url: "https://hr.example/api", says: "yes" } }],
   }, {
     "https://hr.example/trial": "Start your free 7-day trial today.",
     "https://hr.example/api": "Generate an API key from your account. OAuth is available to approved marketplace partners only.",
   }, { "https://hr.example/trial": "signup_form" }));
-  assert.equal(r.verdict, "gated");
+  assert.notEqual(r.verdict, "gated");
+  assert.equal(r.parts!.find((p) => p.role === "oauth_app")!.verdict, "gated");
   assert.equal(r.parts!.find((p) => p.role === "sandbox")!.expires, "7-day trial");
+  assert.equal(r.offered?.[0].type, "api_key");
+  assert.equal(r.offered?.[0].quote?.found, true);
   assert.equal(r.credential?.apiKey, true);
-  assert.match(r.reason, /OAuth app.*API key is self-serve/);
-  assert.match(r.humanPath || "", /partner programme/);
 });
 
 test("invented quotes are thrown away, so the person decides instead of the model", async () => {

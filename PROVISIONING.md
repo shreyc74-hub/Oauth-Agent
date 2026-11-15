@@ -2,16 +2,19 @@
 
 Composio's toolkit factory can research an app and generate a production-ready toolkit on its own. Two steps still need a person: getting a sandbox to test the toolkit in, and creating the OAuth app whose credentials the toolkit runs on. This agent is that missing stage.
 
-You type an app name. The agent:
+You type an app name. The agent does all the research first, with no browser and nothing for you to decide:
 
-1. Checks that a self-serve test setup exists at all: the developer side, the sandbox and the OAuth app, each on its own evidence. If the vendor's own pages say it needs sales or a partner programme, it stops here with the reason.
-2. Plans from the app's readiness guide (the output of the first assignment). If there is no guide yet, it researches one first.
-3. Gets an identity: your sign-in (human in the loop) or its own inbox and password (full automation).
-4. Gets a sandbox: a test account or workspace on the provider, which may be a separate account from the one the app is created in.
-5. Creates the OAuth app with the scopes the use case needs.
-6. Puts every secret into a vault. The model never sees a secret.
-7. Proves the credentials work: a real authorization on the sandbox, a token exchange, one identity call, one call from the use case, and a refresh.
-8. Flags what going live needs. Production review is listed as human work, not attempted.
+1. **Guide.** It finds the app's readiness guide (the first assignment's output), or researches one.
+2. **Sandbox.** Can a stranger get a working test setup without sales or a partner programme? If not, it stops here with the reason, the quotes and what a person would have to do.
+3. **Accounts.** Is the sandbox the same account as the developer side (Linear, BambooHR) or a separate one (Slack, HubSpot, Zoho)?
+4. **Credentials.** Which credential types the vendor offers (OAuth 2, OAuth 1, client credentials, API key, JWT, service account, basic), each backed by a quote from the vendor's own pages.
+5. **What to provision.** An OAuth app when OAuth is self-serve, otherwise an API key.
+6. **How to create it.** For OAuth: Dynamic Client Registration if the vendor's metadata offers it, then a documented management API, CLI or manifest, and the browser as the last resort. For an API key: the account's dashboard.
+7. **A plan and a recommendation:** human in the loop or full automation, and why.
+
+Then you choose the mode and start. The run creates the accounts and the credential, puts every secret in a vault the model never sees, and proves the credential works: for OAuth a real authorization, token exchange, identity call, use-case call and refresh; for an API key one read-only call. Finally it flags what going live needs. Production review is listed as human work, not attempted.
+
+None of this depends on Composio already having a toolkit for the app. The agent is for the vendors the toolkit factory has not built yet, so everything it knows about a vendor comes from that vendor's own pages and metadata. The survey of Composio's existing 1,745 toolkits in `research/` was used only to decide which creation routes to build first.
 
 A tracker row per run goes to a Google Sheet: status, sandbox, masked client ID, vault names, who the token works for, and what still needs a person. Never a secret.
 
@@ -21,7 +24,7 @@ A tracker row per run goes to a Google Sheet: status, sandbox, masked client ID,
 
 - **Demo mode** (no accounts): `PROVISION_MOCK=1 npm run dev`, open `/provision`. The browser, inbox and provider APIs are simulated; the plans, state machine, pauses, approvals, vault writes, reveal logging and sheet rows are the real code.
 - **Real runs:** set the keys in [Setup](#setup), then use `/provision` or the terminal: `npm run provision -- linear` (add `--auto` for full automation).
-- **Tests:** `npm test` (132 tests, all offline, including the sandbox check and use-case scopes).
+- **Tests:** `npm test` (144 tests, all offline, including the sandbox check and use-case scopes).
 
 ## How an app gets its OAuth app: three strategies
 
@@ -33,7 +36,11 @@ Browser automation is the fallback, not the strategy.
 | **Browser** | No API, but a stable console | Linear: no API for OAuth apps, so the agent fills the console form. Tested by hand on Oct 28 (see `attempts/linear.md`). |
 | **Human** | The step needs a person by policy or law | Captchas, phone checks, payment, signing an acceptable-use policy, production review. |
 
-**Looking for an API route first: Dynamic Client Registration.** Some vendors let a client register itself with one API call (RFC 7591). They say so in public metadata: a `registration_endpoint` in `/.well-known/oauth-authorization-server` or `/.well-known/openid-configuration`. MCP servers publish `/.well-known/oauth-protected-resource`, which points at their authorization server, and the MCP authorization spec builds on this kind of registration, so many SaaS MCP servers accept it. Every run probes these documents on the vendor's OAuth hosts, its site, `api.`, `auth.` and `mcp.`, in code and without the model, and shows the result on the run page: offered by the main OAuth server, offered only by the MCP server (whose tokens may only work for MCP), or not offered. A registration endpoint is trusted only over https on the vendor's own domain. The probe only reads; using the endpoint to create an app is the next step and would be a write with an approval. Other non-browser routes worth adding per vendor: management APIs (Microsoft Graph applications, Okta, Auth0, Zendesk OAuth clients), vendor CLIs and Terraform providers, and manifest flows where a person clicks once (GitHub App manifests).
+**Choosing the mode last.** Picking human in the loop or full automation before the agent knows the vendor would decide how a person gets involved without knowing what the job is. So a run is created research-first and stops at "Ready to start" with the findings. The agent recommends a mode: full automation when the plan is tested or from the vendor's docs and the agent's inbox is configured, a person when the plan is generated and unverified or a sandbox wasn't confirmed. The person picks and starts.
+
+**API keys.** When OAuth is partner-only but an API key is self-serve (BambooHR), the vendor is not treated as gated: the plan creates a key in the account's dashboard, a capture step reads it straight into the vault, and verification makes one read-only call with it.
+
+**Looking for an API route first: Dynamic Client Registration.** Some vendors let a client register itself with one API call (RFC 7591). They say so in public metadata: a `registration_endpoint` in `/.well-known/oauth-authorization-server` or `/.well-known/openid-configuration`. MCP servers publish `/.well-known/oauth-protected-resource`, which points at their authorization server, and the MCP authorization spec builds on this kind of registration, so many SaaS MCP servers accept it. Every run probes these documents on the vendor's OAuth hosts, its site, `api.`, `auth.` and `mcp.`, in code and without the model, and shows the result on the run page: offered by the main OAuth server, offered only by the MCP server (whose tokens may only work for MCP), or not offered. A registration endpoint is trusted only over https on the vendor's own domain. The probe only reads. When the vendor's main OAuth server offers it, the plan uses it: one POST to the registration endpoint creates the app (an approval card in human mode), the client secret and registration access token go straight to the vault, and verification authorizes against that server's endpoints. If the endpoint wants an initial access token, the run says so and the browser route is the fallback. Other non-browser routes worth adding per vendor: management APIs (Microsoft Graph applications, Okta, Auth0, Zendesk OAuth clients), vendor CLIs and Terraform providers, and manifest flows where a person clicks once (GitHub App manifests).
 
 HubSpot sits in between: on the 2025.2+ developer platform apps are projects deployed with the CLI (`hs project upload`). A worker running the CLI with a personal access key is the API path; the browser path in this build is the fallback, and it hands over if HubSpot insists on the CLI. HubSpot is also the one demo provider with a real sandbox: developer test accounts.
 

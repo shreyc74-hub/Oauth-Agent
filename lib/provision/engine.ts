@@ -7,9 +7,10 @@
 // Full automation: the agent signs up with its own inbox and only stops at walls it should not climb
 // (captchas, phone checks, device approvals, payment, legal terms).
 import { randomBytes } from "node:crypto";
-import { noProgress, type Mode, type Playbook, type Progress, type Run, type RunEvent, type SandboxCheck, type Step } from "./types";
+import { noProgress, type Assessment, type Mode, type Playbook, type Progress, type Run, type RunEvent, type SandboxCheck, type Step } from "./types";
 import { checkSandbox, cachedSandbox, saveSandbox, fromPlaybook, type SandboxIo } from "./sandbox";
 import { planScopes } from "./scopes";
+import { offeredCredentials, chooseCredential, chooseRoute, recommendMode, stepSummary } from "./assess";
 import { probeDcr, describeDcr, fetchJson, type Fetcher } from "./dcr";
 import { SIGN_IN_ONLY, SIGN_IN_ONLY_WHY } from "./labels";
 import type { Driver } from "./browser";
@@ -18,7 +19,7 @@ import { agentMail, findCode, findLink, waitForMail, type Inbox } from "./inbox"
 import { putSecret, getSecret, hasSecret, vaultName, redact, recordReveal } from "./vault";
 import { saveRun, getRun } from "./runs";
 import { authorizeUrl, codeFromUrl, exchangeCode, newState, refreshTokens, whoami, type Http } from "./verify";
-import { PLAYBOOKS, planFromGuide, mockPlanFromGuide, validatePlaybook } from "./planner";
+import { PLAYBOOKS, planFromGuide, mockPlanFromGuide, validatePlaybook, type PlanTarget } from "./planner";
 import { slackManifest } from "./playbooks/slack";
 import { upsertRow, sheetConfigured } from "./sheets";
 import { mockBrowser, mockInbox, mockHttp, mockEnabled } from "./mock";
@@ -106,13 +107,13 @@ export async function sandboxFor(app: string, deps: Deps, guideSlug?: string, pr
   return check;
 }
 
-export async function planFor(app: string, deps: Deps, guideSlug?: string, setup?: SandboxCheck, progress: Progress = noProgress): Promise<Playbook> {
+export async function planFor(app: string, deps: Deps, guideSlug?: string, setup?: SandboxCheck, progress: Progress = noProgress, target?: PlanTarget): Promise<Playbook> {
   const guide = await findGuide(app, guideSlug);
   const slug = guide?.slug || slugify(app);
   if (PLAYBOOKS[slug]) return PLAYBOOKS[slug];
   if (!guide) throw new NoGuideError(app);
   if (guide.oauth && guide.oauth.supported === false) throw new Error(`${guide.name} does not offer OAuth for third-party apps: ${guide.oauth.note || "see its guide"}.`);
-  return deps.mock ? mockPlanFromGuide(guide) : planFromGuide(guide, setup, progress);
+  return deps.mock ? mockPlanFromGuide(guide, target) : planFromGuide(guide, setup, progress, target);
 }
 
 /** What a real run needs before it starts. Empty when ready. */
@@ -123,38 +124,41 @@ export function missingSetup(mode: Mode, deps: Deps): string[] {
   return need.filter((k) => !process.env[k]);
 }
 
-export async function createRun(input: { app: string; mode: Mode; baseUrl: string; simulateChange?: boolean; guideSlug?: string; useCase?: string }, deps = defaultDeps(), progress: Progress = noProgress): Promise<Run> {
+export async function createRun(input: { app: string; mode?: Mode; baseUrl: string; simulateChange?: boolean; guideSlug?: string; useCase?: string }, deps = defaultDeps(), progress: Progress = noProgress): Promise<Run> {
   // Each stage reports start and result, so the start page can show what is happening and why it takes time.
   const stage = async <T>(id: string, label: string, detail: string | undefined, fn: () => Promise<T>, result: (v: T) => string): Promise<T> => {
     progress({ id, label, state: "start", detail });
     try { const v = await fn(); progress({ id, label, state: "done", detail: result(v) }); return v; }
     catch (e) { progress({ id, label, state: "fail", detail: (e as Error).message.slice(0, 200) }); throw e; }
   };
-  const missing = missingSetup(input.mode, deps);
-  progress({ id: "setup", label: "Checking this deployment's setup", state: missing.length ? "fail" : "done", detail: missing.length ? `missing ${missing.join(", ")}` : "browser, model and vault keys present" });
-  if (missing.length) throw new ConfigError(`Not set up for ${input.mode === "auto" ? "full automation" : "human-in-the-loop"} runs yet. Missing: ${missing.join(", ")}.`);
+  // Research needs only the model and the vault; each mode's own needs are checked when it starts.
+  const missing: Record<Mode, string[]> = { human: missingSetup("human", deps), auto: missingSetup("auto", deps) };
+  if (input.mode && missing[input.mode].length) {
+    progress({ id: "setup", label: "Checking this deployment's setup", state: "fail", detail: `missing ${missing[input.mode].join(", ")}` });
+    throw new ConfigError(`Not set up for ${input.mode === "auto" ? "full automation" : "human-in-the-loop"} runs yet. Missing: ${missing[input.mode].join(", ")}.`);
+  }
+  progress({ id: "setup", label: "Checking this deployment's setup", state: "done", detail: missing.auto.length ? `human in the loop ready; full automation missing ${missing.auto.join(", ")}` : "both modes ready" });
+
   const guide = await stage("guide", "Finding the readiness guide", input.app, () => findGuide(input.app, input.guideSlug),
     (g) => (g ? `${g.name}: ${g.evidenceLevel === "generated" ? "agent-generated guide" : "researched library guide"}${PLAYBOOKS[g.slug] ? ", plus a hand-written playbook" : ""}` : "no guide yet: it gets researched first"));
   // No guide and no hand-written playbook: nothing to check or plan from yet. The start page researches one.
   if (!guide && !PLAYBOOKS[slugify(input.app)]) throw new NoGuideError(input.app);
-  // 1. Can a test account exist at all? Checked before planning or opening a browser.
-  const sandbox = await stage("sandbox", "Step 1: is a self-serve test setup possible?", "developer side, sandbox and OAuth app, each on its own evidence",
+  const known = PLAYBOOKS[guide?.slug || slugify(input.app)];
+
+  // 1. Is a self-serve test setup possible, and are the sandbox and developer accounts the same?
+  const sandbox = await stage("sandbox", "Is a self-serve sandbox possible?", "developer side, sandbox and OAuth app, each on its own evidence",
     () => sandboxFor(input.app, deps, input.guideSlug, progress),
-    (c) => (c ? `${c.verdict.replace(/_/g, " ")}${c.relation ? `; sandbox is ${c.relation === "same" ? "the same account" : c.relation === "separate" ? "a separate account" : "not confirmed"}` : ""}` : "skipped (no guide)"));
+    (c) => (c ? `${c.verdict.replace(/_/g, " ")}${c.relation ? `; sandbox is ${c.relation === "same" ? "the same account as the developer side" : c.relation === "separate" ? "a separate account" : "not confirmed as same or separate"}` : ""}` : "skipped (no guide)"));
   if (sandbox?.verdict === "gated") throw new SandboxGatedError(input.app, sandbox);
-  let playbook = await stage("plan", "Planning the run", PLAYBOOKS[guide?.slug || ""] ? "hand-written playbook" : deps.mock ? "demo plan from the guide" : "Claude writes the plan from the guide, then code checks it",
-    () => planFor(input.app, deps, input.guideSlug, sandbox, progress),
-    (p) => `${p.strategy} strategy, ${p.steps[input.mode].length} steps, evidence ${p.evidence}`);
-  // 2. Scopes from the use case, plus one read-only call verification makes with the new token.
-  const useCase = String(input.useCase || "").trim().slice(0, 600);
-  const scopePlan = useCase
-    ? await stage("scopes", "Mapping the use case to scopes", useCase, () => planScopes({ useCase, guide, playbook, mock: deps.mock }),
-      (s) => `${s.scopes.join(", ")}${s.testCall ? `; test call ${s.testCall.label}` : "; no test call"}`)
-    : (progress({ id: "scopes", label: "Scopes", state: "info", detail: `no use case given; using the plan's scopes (${playbook.oauth.scopes.join(", ")}). The run will be verified for sign-in only.` }), undefined);
-  if (scopePlan) playbook = { ...playbook, oauth: { ...playbook.oauth, scopes: scopePlan.scopes } };
-  // 3. Could the app be created with one API call (RFC 7591)? Read-only probe of public metadata.
+
+  // 2. Which credentials does the vendor offer, and which one gets provisioned?
+  const { offered, chosen, why } = await stage("credentials", "Which credentials does the vendor offer?", "from the vendor's own pages (quotes checked), the guide and any hand-written playbook",
+    async () => { const offered = offeredCredentials({ sandbox, guide, playbook: known }); return { offered, ...chooseCredential(offered, sandbox) }; },
+    (r) => `${[...new Set(r.offered.map((o) => o.type))].join(", ") || "none confirmed"}; provisioning ${r.chosen === "oauth" ? "an OAuth app" : "an API key"}`);
+
+  // 3. For OAuth: could the app be created with one API call (RFC 7591)? Read-only probe of public metadata.
   let dcr: Awaited<ReturnType<typeof probeDcr>> | undefined;
-  if (!deps.mock || deps.dcrFetch) {
+  if (chosen === "oauth" && (!deps.mock || deps.dcrFetch)) {
     const base = deps.dcrFetch || fetchJson;
     const get: Fetcher = async (u) => {
       const j = await base(u).catch(() => null);
@@ -163,23 +167,54 @@ export async function createRun(input: { app: string; mode: Mode; baseUrl: strin
       return j;
     };
     dcr = await stage("dcr", "Looking for Dynamic Client Registration", "public OAuth and MCP metadata; read-only, nothing is registered",
-      () => probeDcr(playbook, guide?.website, get), (d) => describeDcr(d)).catch(() => undefined);
+      () => probeDcr(known, guide?.website, get), (d) => describeDcr(d)).catch(() => undefined);
   }
+  const route = chooseRoute({ chosen, playbook: known, dcr, sandbox });
+  progress({ id: "route", label: `How the ${chosen === "oauth" ? "OAuth app" : "API key"} gets created`, state: "done", detail: `${route.method}${route.fallback ? ` (${route.fallback})` : ""}` });
+
+  // 4. The plan, for that credential and route.
+  const target: PlanTarget = { credential: chosen, dcr: route.method === "Dynamic Client Registration", keyWhere: sandbox?.offered?.find((o) => o.type === "api_key")?.where };
+  let playbook = await stage("plan", "Planning the steps", known ? "hand-written playbook" : deps.mock ? "demo plan from the guide" : "Claude writes the plan from the guide, then code checks it",
+    () => planFor(input.app, deps, input.guideSlug, sandbox, progress, target),
+    (p) => `${p.strategy} strategy; ${p.steps.human.length} steps with a person, ${p.steps.auto.length} fully automated; evidence ${p.evidence}`);
+  if (target.dcr && dcr?.authorizationEndpoint && dcr.tokenEndpoint) {
+    // Clients registered there authorize against that server's own endpoints.
+    playbook = { ...playbook, strategy: "dcr", oauth: { ...playbook.oauth, authorizeUrl: dcr.authorizationEndpoint, tokenUrl: dcr.tokenEndpoint } };
+  }
+
+  // 5. Scopes from the use case (OAuth only), plus one read-only call verification makes with the new token.
+  const useCase = String(input.useCase || "").trim().slice(0, 600);
+  const scopePlan = useCase && chosen === "oauth"
+    ? await stage("scopes", "Mapping the use case to scopes", useCase, () => planScopes({ useCase, guide, playbook, mock: deps.mock }),
+      (s) => `${s.scopes.join(", ")}${s.testCall ? `; test call ${s.testCall.label}` : "; no test call"}`)
+    : (chosen === "oauth" && progress({ id: "scopes", label: "Scopes", state: "info", detail: `no use case given; using the plan's scopes (${playbook.oauth.scopes.join(", ")}). The run will be verified for sign-in only.` }), undefined);
+  if (scopePlan) playbook = { ...playbook, oauth: { ...playbook.oauth, scopes: scopePlan.scopes } };
+
   if (sandbox?.verdict === "unknown") {
     // No confirmed evidence either way: the person decides before any browser time is spent.
     const check: Step = { kind: "human", id: "sandbox-check", title: "Decide: no confirmed self-serve sandbox", noBrowser: true,
       reason: `Couldn't confirm that ${playbook.name} offers a self-serve test account. ${sandbox.reason}${sandbox.humanPath ? ` If it is gated: ${sandbox.humanPath}` : ""} Press Continue to try anyway, or Cancel.` };
-    playbook = { ...playbook, steps: { ...playbook.steps, [input.mode]: [check, ...playbook.steps[input.mode]] } };
+    playbook = { ...playbook, steps: { human: [check, ...playbook.steps.human], auto: [check, ...playbook.steps.auto] } };
   }
   const problems = validatePlaybook(playbook);
   if (problems.length) throw new Error(`Plan for ${playbook.name} failed checks: ${problems.join("; ")}`);
+
+  // 6. The assessment, and the mode the agent recommends. The person chooses the mode last.
+  const rec = recommendMode({ missing, playbook, sandbox, route });
+  const assessment: Assessment = {
+    feasible: true,
+    accounts: { relation: sandbox?.relation || playbook.sandbox.relation || "unknown", sandbox: sandbox?.parts?.find((p) => p.role === "sandbox")?.name || playbook.sandbox.kind, developer: sandbox?.parts?.find((p) => p.role === "developer_account")?.name || `${playbook.name} developer account` },
+    credentials: { offered, chosen, why }, route, ...rec, steps: stepSummary(playbook),
+  };
+  progress({ id: "assess", label: "Recommendation", state: "done", detail: `${rec.recommendedMode === "auto" ? "full automation" : "human in the loop"}: ${rec.recommendWhy}` });
+
   const id = `${playbook.slug}-${new Date().toISOString().slice(0, 10).replace(/-/g, "")}-${randomBytes(3).toString("hex")}`;
   const short = id.slice(-6);
-  const steps = playbook.steps[input.mode];
+  const mode = input.mode || rec.recommendedMode;
   const now = new Date().toISOString();
   const run: Run = {
-    id, app: playbook.name, slug: playbook.slug, mode: input.mode, status: "queued", strategy: playbook.strategy, cursor: 0,
-    steps: steps.map((s) => ({ id: s.id, title: s.title, kind: s.kind, state: "todo" })),
+    id, app: playbook.name, slug: playbook.slug, mode, status: input.mode ? "queued" : "ready", strategy: playbook.strategy, cursor: 0,
+    steps: playbook.steps[mode].map((s) => ({ id: s.id, title: s.title, kind: s.kind, state: "todo" })),
     vars: {
       base_url: input.baseUrl,
       redirect_uri: `${input.baseUrl}/api/oauth/callback`,
@@ -189,20 +224,46 @@ export async function createRun(input: { app: string; mode: Mode; baseUrl: strin
       workspace_name: `toolkit-sandbox-${short}`,
     },
     playbook,
-    sandbox, scopePlan, dcr,
+    sandbox, assessment, scopePlan, dcr,
     vault: {}, public: {}, events: [], createdAt: now, updatedAt: now,
   };
   if (useCase) run.vars.use_case = useCase;
-  if (deps.mock && input.simulateChange) {
-    // Demo only: make the first form-filling browser step fail, as if the provider redesigned its console.
-    const target = steps.find((s) => s.kind === "browser" && s.instruction && /fill|create|open the developer/i.test(s.title) && !s.write);
-    if (target && "instruction" in target && target.instruction) { run.vars.mock_fail = target.instruction.slice(0, 30); log(run, "info", `Demo: simulating a console change on "${target.title}".`); }
-  }
+  if (deps.mock && input.simulateChange) run.vars.simulate_change = "1";
   if (sandbox) log(run, "info", `Sandbox check: ${sandbox.verdict.replace(/_/g, " ")} (${sandbox.source}). ${sandbox.reason}`);
+  log(run, "info", `Credentials offered: ${[...new Set(offered.map((o) => o.type))].join(", ") || "none confirmed"}. ${why}`);
+  log(run, "info", `Route: ${route.method}. ${route.detail}${route.fallback ? ` ${route.fallback}.` : ""}`);
   if (dcr) log(run, "info", `Dynamic Client Registration: ${describeDcr(dcr)}`);
   if (scopePlan) log(run, "info", `Scopes for "${useCase}": ${scopePlan.scopes.join(", ")}.${scopePlan.testCall ? ` Verification will also call ${scopePlan.testCall.label}.` : " No test call chosen; verification uses the identity call only."}${scopePlan.notes.length ? ` Notes: ${scopePlan.notes.join(" ")}` : ""}`);
-  log(run, "info", `Plan: ${playbook.name}, ${playbook.strategy} strategy, evidence ${playbook.evidence}. Sandbox: ${playbook.sandbox.kind}. ${input.mode === "auto" ? "Full automation" : "Human in the loop"}, ${steps.length} steps.`);
-  await stage("save", "Saving the run", undefined, async () => { await saveRun(run); await syncSheet(run); }, () => `run ${run.id}`);
+  log(run, "info", `Plan: ${playbook.name}, ${playbook.strategy} strategy, evidence ${playbook.evidence}. Sandbox: ${playbook.sandbox.kind}. Recommended: ${rec.recommendedMode === "auto" ? "full automation" : "human in the loop"} (${rec.recommendWhy})`);
+  if (input.mode) beginMode(run, input.mode);
+  await stage("save", input.mode ? "Saving the run" : "Saving the plan", undefined, async () => { await saveRun(run); await syncSheet(run); }, () => (input.mode ? `run ${run.id}` : `ready: ${run.id}. Choose how to run it.`));
+  return run;
+}
+
+/** Sets the steps for a mode and queues the run. */
+function beginMode(run: Run, mode: Mode) {
+  run.mode = mode;
+  run.steps = run.playbook.steps[mode].map((s) => ({ id: s.id, title: s.title, kind: s.kind, state: "todo" }));
+  run.cursor = 0;
+  run.status = "queued";
+  if (run.vars.simulate_change) {
+    // Demo only: make the first form-filling browser step fail, as if the provider redesigned its console.
+    const target = run.playbook.steps[mode].find((s) => s.kind === "browser" && s.instruction && /fill|create|open the developer/i.test(s.title) && !s.write);
+    if (target && "instruction" in target && target.instruction) { run.vars.mock_fail = target.instruction.slice(0, 30); log(run, "info", `Demo: simulating a console change on "${target.title}".`); }
+  }
+  log(run, "info", `Started: ${mode === "auto" ? "full automation" : "human in the loop"}, ${run.steps.length} steps.${run.assessment && mode !== run.assessment.recommendedMode ? " (Not the recommended mode.)" : ""}`);
+}
+
+/** The person's choice after reading the assessment: run it with a person, or fully automated. */
+export async function startRun(id: string, mode: Mode, deps = defaultDeps()): Promise<Run> {
+  const run = await getRun(id);
+  if (!run) throw new Error("Run not found.");
+  if (run.status !== "ready") throw new Error(`This run has already started (${run.status}).`);
+  const missing = missingSetup(mode, deps);
+  if (missing.length) throw new ConfigError(`Not set up for ${mode === "auto" ? "full automation" : "human-in-the-loop"} runs yet. Missing: ${missing.join(", ")}.`);
+  beginMode(run, mode);
+  await saveRun(run);
+  await syncSheet(run);
   return run;
 }
 
@@ -425,8 +486,33 @@ async function runStep(ctx: Ctx, s: Step): Promise<Outcome> {
   }
 }
 
+/** API keys: one read-only call with the key from the vault. No browser, no consent screen. */
+async function verifyKey(ctx: Ctx, s: Step): Promise<Outcome> {
+  const { run, deps } = ctx;
+  const k = run.playbook.apiKey!;
+  const key = await getSecret(vaultName(run.slug, run.id, "api_key"));
+  if (!key) throw new Error("no API key in the vault, so there is nothing to verify");
+  ctx.seen.add(key);
+  run.verify = run.verify || { state: "", verifier: "" };
+  try {
+    const res = await deps.http(k.testUrl, { method: "GET", headers: { [k.header]: k.prefix ? `${k.prefix} ${key}` : key, accept: "application/json" } });
+    const j = (await res.json().catch(() => ({}))) as Record<string, unknown>;
+    if (!res.ok || j.ok === false || j.error) throw new Error(`${res.status} ${String(j.error || j.message || "").slice(0, 100)}`);
+    const picked = k.pick ? k.pick.split(".").reduce<unknown>((v, x) => (v && typeof v === "object" ? (v as Record<string, unknown>)[x] : undefined), j) : undefined;
+    run.verify.who = picked !== undefined && picked !== null && picked !== "" ? String(picked) : `key accepted (HTTP ${res.status})`;
+    run.verify.refresh = "not-offered";
+    run.verify.at = new Date().toISOString();
+    log(run, "step", `Verified: the API key works (GET ${k.testUrl} answered for "${run.verify.who}").`, s.id, ctx.seen);
+  } catch (e) {
+    run.vars.verify_error = `API key test call failed: ${(e as Error).message}`;
+    log(run, "error", run.vars.verify_error, s.id, ctx.seen);
+  }
+  return "done";
+}
+
 async function verifyStep(ctx: Ctx, s: Step): Promise<Outcome> {
   const { run, deps } = ctx;
+  if (run.playbook.credential === "api_key") return verifyKey(ctx, s);
   const o = run.playbook.oauth;
   const clientId = run.public.clientId;
   const secret = await getSecret(vaultName(run.slug, run.id, "client_secret"));
@@ -495,6 +581,32 @@ async function verifyStep(ctx: Ctx, s: Step): Promise<Outcome> {
 }
 
 const HANDLERS: Record<string, (ctx: Ctx) => Promise<void>> = {
+  /**
+   * Dynamic Client Registration (RFC 7591): one POST creates the OAuth app. The client secret and the
+   * registration access token go straight to the vault. Some vendors require an initial access token;
+   * then this fails with that reason and the browser route is the fallback.
+   */
+  async dcrRegister(ctx) {
+    const { run, deps } = ctx;
+    const endpoint = run.dcr?.registrationEndpoint;
+    if (!endpoint) throw new Error("no registration endpoint on this run");
+    const body = {
+      client_name: run.vars.app_name, redirect_uris: [run.vars.redirect_uri],
+      grant_types: ["authorization_code", "refresh_token"], response_types: ["code"],
+      token_endpoint_auth_method: run.playbook.oauth.clientAuth === "basic" ? "client_secret_basic" : "client_secret_post",
+      scope: run.playbook.oauth.scopes.join(" "), client_uri: run.vars.dev_url,
+    };
+    const res = await deps.http(endpoint, { method: "POST", headers: { "content-type": "application/json", accept: "application/json" }, body: JSON.stringify(body) });
+    const j = (await res.json().catch(() => ({}))) as Record<string, unknown>;
+    if (res.status === 401 || res.status === 403) throw new Error(`the registration endpoint wants an initial access token (${res.status}${j.error ? ` ${j.error}` : ""}); use the browser route for ${run.app}`);
+    if (!res.ok || !j.client_id) throw new Error(`registration failed: ${res.status} ${String(j.error_description || j.error || "").slice(0, 120)}`);
+    if (!j.client_secret) throw new Error("the vendor registered a public client with no secret; this agent provisions confidential clients, so use the browser route");
+    await store(ctx, "client_id", String(j.client_id), false);
+    await store(ctx, "client_secret", String(j.client_secret), true);
+    if (j.registration_access_token) await store(ctx, "registration_access_token", String(j.registration_access_token), true);
+    run.public.appId = String(j.client_id);
+    log(run, "step", `OAuth app registered with one API call (${endpoint}). Client ID ${j.client_id}. No console clicks.`, "dcr-register", ctx.seen);
+  },
   /** Slack: rotate the config token, then create the app from a manifest. Credentials come back in the response. */
   async slackManifestCreate(ctx) {
     const { run, deps } = ctx;
@@ -607,7 +719,7 @@ async function tryRecovery(ctx: Ctx, s: Step, error: string): Promise<{ out: Out
 export async function advance(id: string, deps = defaultDeps(), budgetMs = 240_000): Promise<Run> {
   const run = await getRun(id);
   if (!run) throw new Error("Run not found.");
-  if (TERMINAL.has(run.status) || run.status === "waiting_human" || run.status === "waiting_approval") return run;
+  if (TERMINAL.has(run.status) || run.status === "waiting_human" || run.status === "waiting_approval" || run.status === "ready") return run;
   if (run.lockUntil && run.lockUntil > Date.now()) return run;
 
   const ctx: Ctx = { run, deps, deadline: Date.now() + budgetMs, seen: new Set() };

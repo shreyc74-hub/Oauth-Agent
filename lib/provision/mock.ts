@@ -70,6 +70,9 @@ export const mockHttp: Http = async (url, init) => {
   const json = (o: unknown) => new Response(JSON.stringify(o), { status: 200, headers: { "content-type": "application/json" } });
   if (url.includes("tooling.tokens.rotate")) return json({ ok: true, token: `xoxe.xoxp-mock-${randomBytes(4).toString("hex")}`, refresh_token: `xoxe-1-mock-${randomBytes(4).toString("hex")}` });
   if (url.includes("apps.manifest.create")) return json({ ok: true, app_id: "A0MOCK", credentials: { client_id: "1234.5678", client_secret: `mock_secret_${randomBytes(8).toString("hex")}`, signing_secret: "mock_sign", verification_token: "mock_ver" }, oauth_authorize_url: "https://slack.com/oauth/v2/authorize?client_id=1234.5678" });
+  if (/register|registration/.test(url) && init?.method === "POST" && body.includes("redirect_uris")) {
+    return new Response(JSON.stringify({ client_id: `dcr_${randomBytes(4).toString("hex")}`, client_secret: `mock_secret_${randomBytes(8).toString("hex")}`, registration_access_token: `mock_rat_${randomBytes(6).toString("hex")}` }), { status: 201, headers: { "content-type": "application/json" } });
+  }
   if (/token|oauth\.v2\.access/.test(url) && body.includes("grant_type")) {
     return json({ ok: true, access_token: `mock_access_${randomBytes(6).toString("hex")}`, refresh_token: `mock_refresh_${randomBytes(6).toString("hex")}`, expires_in: 3600 });
   }

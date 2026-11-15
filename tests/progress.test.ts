@@ -41,3 +41,12 @@ test("without the stream header the route still answers plain JSON", async () =>
   assert.match(res.headers.get("content-type") || "", /json/);
   assert.ok(((await res.json()) as { id?: string }).id);
 });
+
+test("without a mode the route researches and plans only: the run is ready, with an assessment and a recommendation", async () => {
+  const ev = await lines(await createRoute(post({ app: "Linear" }, "application/x-ndjson")));
+  const ids = ev.filter((e) => e.type === "progress").map((e) => `${e.id}:${e.state}`);
+  for (const want of ["sandbox:done", "credentials:done", "route:done", "plan:done", "assess:done"]) assert.ok(ids.includes(want), want);
+  const body = ev[ev.length - 1].body as { status?: string; assessment?: { recommendedMode?: string } };
+  assert.equal(body.status, "ready");
+  assert.ok(body.assessment?.recommendedMode);
+});

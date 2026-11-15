@@ -12,7 +12,7 @@ import { codeHeader } from "./ProvisionStart";
 type View = Run & { busy: boolean; mock: boolean };
 
 const STATUS: Record<string, string> = {
-  queued: "Queued", running: "Working", waiting_human: "Your turn", waiting_approval: "Needs your approval",
+  ready: "Ready to start", queued: "Queued", running: "Working", waiting_human: "Your turn", waiting_approval: "Needs your approval",
   verified: "Verified", needs_review: "Created, not verified", failed: "Failed", cancelled: "Cancelled",
 };
 
@@ -43,6 +43,56 @@ export function SetupParts({ check }: { check: SandboxCheck }) {
   );
 }
 
+const CRED: Record<string, string> = { oauth2: "OAuth 2", oauth1: "OAuth 1", client_credentials: "Client credentials (server to server)", api_key: "API key", jwt: "JWT", service_account: "Service account", basic: "Basic auth", bearer: "Bearer token" };
+
+/** What the agent worked out before anything is created, and (while ready) the choice of mode. */
+function AssessmentCard({ run, onStart }: { run: Run; onStart: (m: "human" | "auto") => void }) {
+  const a = run.assessment!;
+  const ready = run.status === "ready";
+  const [pick, setPick] = useState<"human" | "auto">(a.recommendedMode);
+  const [busy, setBusy] = useState(false);
+  const types = [...new Map(a.credentials.offered.map((o) => [o.type, o])).values()];
+  return (
+    <div className="creds assess" style={{ marginBottom: 18 }}>
+      <h2>{ready ? "What the agent found" : "Research"}</h2>
+      <dl>
+        <dt>Sandbox</dt>
+        <dd>{run.sandbox ? <span className={`badge sb-${run.sandbox.verdict}`}>{SANDBOX[run.sandbox.verdict]}</span> : null} {a.accounts.sandbox}</dd>
+        <dt>Developer side</dt>
+        <dd>{a.accounts.developer} <span className="muted">({a.accounts.relation === "same" ? "the same account as the sandbox" : a.accounts.relation === "separate" ? "a separate account from the sandbox" : "same or separate not confirmed"})</span></dd>
+        <dt>Credentials offered</dt>
+        <dd>{types.length ? types.map((o) => <span key={o.type} className="chip-sm" title={o.source}>{CRED[o.type] || o.type}</span>) : <span className="muted">none confirmed</span>}</dd>
+        <dt>Will provision</dt>
+        <dd><b>{a.credentials.chosen === "oauth" ? "An OAuth app" : "An API key"}</b>. <span className="muted">{a.credentials.why}</span></dd>
+        <dt>How it gets created</dt>
+        <dd><b>{a.route.method}</b>. <span className="muted">{a.route.detail}{a.route.fallback ? ` ${a.route.fallback}.` : ""}</span></dd>
+      </dl>
+      {ready ? (
+        <div className="modepick">
+          <h3>Choose how to run it</h3>
+          <div className="modes" role="radiogroup" aria-label="Mode">
+            {(["human", "auto"] as const).map((m) => {
+              const st = a.steps.find((x) => x.mode === m);
+              return (
+                <button key={m} type="button" role="radio" aria-checked={pick === m} disabled={!a.modes[m].available}
+                  className={`mode ${pick === m ? "on" : ""}`} onClick={() => setPick(m)}>
+                  <b>{m === "human" ? "Human in the loop" : "Full automation"}{a.recommendedMode === m ? <span className="rec"> Recommended</span> : null}</b>
+                  <span>{a.modes[m].why}</span>
+                  <span>{st?.count} steps{st?.human.length ? `; a person: ${st.human.join("; ")}` : "; no person needed unless the agent hits a wall"}.</span>
+                </button>
+              );
+            })}
+          </div>
+          <p className="small">{a.recommendWhy}</p>
+          <button className="btn primary" disabled={busy || !a.modes[pick].available} onClick={async () => { setBusy(true); try { await onStart(pick); } finally { setBusy(false); } }}>
+            {busy ? <span className="spin" /> : null} Start: {pick === "human" ? "human in the loop" : "full automation"}
+          </button>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 export default function ProvisionRun({ id }: { id: string }) {
   const [run, setRun] = useState<View | null>(null);
   const [err, setErr] = useState("");
@@ -66,6 +116,13 @@ export default function ProvisionRun({ id }: { id: string }) {
       .then(async (r) => { const j = await r.json(); if (r.ok) setRun(j); else setErr(j.error || "Could not continue."); })
       .finally(() => { advancing.current = false; });
   }, [run, id]);
+
+  async function start(mode: "human" | "auto") {
+    setErr("");
+    const r = await fetch(`/api/provision/${id}/start`, { method: "POST", headers: { "content-type": "application/json", ...codeHeader() }, body: JSON.stringify({ mode }) });
+    const j = await r.json();
+    if (r.ok) setRun(j); else setErr(j.error);
+  }
 
   async function answer(action: "continue" | "approve" | "skip" | "cancel", v?: string) {
     setErr("");
@@ -101,7 +158,7 @@ export default function ProvisionRun({ id }: { id: string }) {
   return (
     <main className="ppage">
       <aside className="rside">
-        <div className="eyebrow">{run.mode === "auto" ? "Full automation" : "Human in the loop"} · {run.strategy} strategy</div>
+        <div className="eyebrow">{run.status === "ready" ? `Recommended: ${run.mode === "auto" ? "full automation" : "human in the loop"}` : run.mode === "auto" ? "Full automation" : "Human in the loop"} · {run.strategy} strategy</div>
         <h1 className="ptitle">{run.app}</h1>
         <span className={`badge s-${run.status}`}>{run.status === "running" || run.busy ? <span className="spin" /> : null} {signInOnly(run) ? SIGN_IN_ONLY : STATUS[run.status]}</span>
         <ol className="rsteps" aria-label="Steps">
@@ -120,6 +177,7 @@ export default function ProvisionRun({ id }: { id: string }) {
         <div className="mhead"><h1 className="ptitle">{run.app}</h1><span className={`badge s-${run.status}`}>{signInOnly(run) ? SIGN_IN_ONLY : STATUS[run.status]}</span> <span className="small">step {Math.min(run.cursor + 1, run.steps.length)} of {run.steps.length}</span></div>
         {run.mock ? <div className="notice">Demo mode: the browser, inbox and provider APIs are simulated. Every step, pause and vault write runs for real.</div> : null}
         {err ? <div className="card err" role="alert"><p>{err}</p></div> : null}
+        {run.assessment ? <AssessmentCard run={run} onStart={start} /> : null}
 
         {p ? (
           <div className={`review ${p.kind === "approval" ? "approve" : "handoff"}`}>

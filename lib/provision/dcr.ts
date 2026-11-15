@@ -44,9 +44,9 @@ export const fetchJson: Fetcher = async (raw) => {
 const baseDomain = (h: string) => h.split(".").slice(-2).join(".");
 
 /** Pure: which origins to look at, from the plan's OAuth URLs and the vendor's website. */
-export function candidateOrigins(p: Pick<Playbook, "oauth">, website?: string): string[] {
+export function candidateOrigins(p: Pick<Playbook, "oauth"> | undefined, website?: string): string[] {
   const hosts = new Set<string>();
-  for (const u of [p.oauth.authorizeUrl, p.oauth.tokenUrl, p.oauth.whoami.url]) {
+  for (const u of p ? [p.oauth.authorizeUrl, p.oauth.tokenUrl, p.oauth.whoami.url] : []) {
     try { hosts.add(new URL(u).hostname); } catch { /* not a URL */ }
   }
   const site = (website || "").replace(/^https?:\/\//, "").split("/")[0];
@@ -70,7 +70,7 @@ export function registrationFrom(meta: Meta, docUrl: string): string | undefined
   } catch { return undefined; }
 }
 
-export async function probeDcr(p: Pick<Playbook, "oauth">, website?: string, get: Fetcher = fetchJson): Promise<DcrResult> {
+export async function probeDcr(p: Pick<Playbook, "oauth"> | undefined, website?: string, get: Fetcher = fetchJson): Promise<DcrResult> {
   const origins = candidateOrigins(p, website);
   const docs: { url: string; kind: "api" | "mcp" }[] = [];
   for (const o of origins) {
