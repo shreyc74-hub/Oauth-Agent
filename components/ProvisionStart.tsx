@@ -21,6 +21,8 @@ export default function ProvisionStart({ mock }: { mock: boolean }) {
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<{ text: string; research?: string; needsCode?: boolean; gated?: SandboxCheck } | null>(null);
   const [useCase, setUseCase] = useState("");
+  // Zero-touch: start full automation as soon as the research is done (when this deployment can).
+  const [autoStart, setAutoStart] = useState(true);
   const [code, setCode] = useState("");
   const [runs, setRuns] = useState<Row[]>([]);
   const [simulate, setSimulate] = useState(true);
@@ -56,7 +58,7 @@ export default function ProvisionStart({ mock }: { mock: boolean }) {
   /** Starts a run. The server streams each step it takes; the last line is the result. */
   async function create(name: string, guideSlug?: string): Promise<{ status: number; j: Record<string, any> }> {
     act({ id: `post:${guideSlug || ""}`, label: "POST /api/provision", state: "start", detail: `${name}${useCase.trim() ? `, use case "${useCase.trim().slice(0, 60)}"` : ""}` });
-    const res = await fetch("/api/provision", { method: "POST", headers: { "content-type": "application/json", accept: "application/x-ndjson", ...codeHeader() }, body: JSON.stringify({ app: name, simulateChange: mock && simulate, guideSlug, useCase: useCase.trim() || undefined }) });
+    const res = await fetch("/api/provision", { method: "POST", headers: { "content-type": "application/json", accept: "application/x-ndjson", ...codeHeader() }, body: JSON.stringify({ app: name, simulateChange: mock && simulate, guideSlug, useCase: useCase.trim() || undefined, autoStart }) });
     const base = Date.now() - t0.current;
     let out: { status: number; j: Record<string, any> } | null = null;
     if (!(res.headers.get("content-type") || "").includes("ndjson") || !res.body) {
@@ -157,6 +159,10 @@ export default function ProvisionStart({ mock }: { mock: boolean }) {
       <label className="usecase">
         <span>What will the app do? <span className="muted">(optional, sets the scopes and the test call)</span></span>
         <textarea rows={2} placeholder="e.g. read invoices and create customers" value={useCase} onChange={(e) => setUseCase(e.target.value)} maxLength={600} />
+      </label>
+      <label className="simulate">
+        <input type="checkbox" checked={autoStart} onChange={(e) => setAutoStart(e.target.checked)} />
+        Run it end to end without me: start full automation as soon as the research is done. Untick to read the findings and choose the mode first.
       </label>
       <p className="small muted" style={{ maxWidth: 760, margin: "10px 0 0" }}>The agent researches first: whether a self-serve sandbox exists, which accounts are needed, which credentials the vendor offers and how to create them. You choose human in the loop or full automation at the end, with its recommendation.</p>
       {mock ? (

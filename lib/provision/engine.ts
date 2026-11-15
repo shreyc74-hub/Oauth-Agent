@@ -124,7 +124,7 @@ export function missingSetup(mode: Mode, deps: Deps): string[] {
   return need.filter((k) => !process.env[k]);
 }
 
-export async function createRun(input: { app: string; mode?: Mode; baseUrl: string; simulateChange?: boolean; guideSlug?: string; useCase?: string }, deps = defaultDeps(), progress: Progress = noProgress): Promise<Run> {
+export async function createRun(input: { app: string; mode?: Mode; baseUrl: string; simulateChange?: boolean; guideSlug?: string; useCase?: string; autoStart?: boolean }, deps = defaultDeps(), progress: Progress = noProgress): Promise<Run> {
   // Each stage reports start and result, so the start page can show what is happening and why it takes time.
   const stage = async <T>(id: string, label: string, detail: string | undefined, fn: () => Promise<T>, result: (v: T) => string): Promise<T> => {
     progress({ id, label, state: "start", detail });
@@ -144,7 +144,7 @@ export async function createRun(input: { app: string; mode?: Mode; baseUrl: stri
   const known = PLAYBOOKS[guide?.slug || slugify(input.app)];
 
   // 1. Is a self-serve test setup possible, and are the sandbox and developer accounts the same?
-  const sandbox = await stage("sandbox", "Is a self-serve sandbox possible?", "developer side, sandbox and OAuth app, each on its own evidence",
+  let sandbox = await stage("sandbox", "Is a self-serve sandbox possible?", "developer side, sandbox and OAuth app, each on its own evidence",
     () => sandboxFor(input.app, deps, input.guideSlug, progress),
     (c) => (c ? `${c.summary ? `${c.summary} ` : ""}${c.verdict.replace(/_/g, " ")}${c.relation ? `; sandbox is ${c.relation === "same" ? "the same account as the developer side" : c.relation === "separate" ? "a separate account" : "not confirmed as same or separate"}` : ""}` : "skipped (no guide)"));
   if (sandbox?.verdict === "gated") throw new SandboxGatedError(input.app, sandbox);
@@ -191,6 +191,7 @@ export async function createRun(input: { app: string; mode?: Mode; baseUrl: stri
     : (chosen === "oauth" && progress({ id: "scopes", label: "Scopes", state: "info", detail: `no use case given; using the plan's scopes (${playbook.oauth.scopes.join(", ")}). The run will be verified for sign-in only.` }), undefined);
   if (scopePlan) playbook = { ...playbook, oauth: { ...playbook.oauth, scopes: scopePlan.scopes } };
 
+  sandbox = oauthFromOtherEvidence(sandbox, { guide, dcr, playbook });
   if (sandbox?.verdict === "unknown") {
     // No confirmed evidence either way: the person decides before any browser time is spent.
     const check: Step = { kind: "human", id: "sandbox-check", title: "Decide: no confirmed self-serve sandbox", noBrowser: true,
@@ -237,7 +238,12 @@ export async function createRun(input: { app: string; mode?: Mode; baseUrl: stri
   if (scopePlan) log(run, "info", `Scopes for "${useCase}": ${scopePlan.scopes.join(", ")}.${scopePlan.testCall ? ` Verification will also call ${scopePlan.testCall.label}.` : " No test call chosen; verification uses the identity call only."}${scopePlan.notes.length ? ` Notes: ${scopePlan.notes.join(" ")}` : ""}`);
   log(run, "info", `Plan: ${playbook.name}, ${playbook.strategy} strategy, evidence ${playbook.evidence}. Sandbox: ${playbook.sandbox.kind}. Recommended: ${rec.recommendedMode === "auto" ? "full automation" : "human in the loop"} (${rec.recommendWhy})`);
   if (input.mode) beginMode(run, input.mode);
-  await stage("save", input.mode ? "Saving the run" : "Saving the plan", undefined, async () => { await saveRun(run); await syncSheet(run); }, () => (input.mode ? `run ${run.id}` : `ready: ${run.id}. Choose how to run it.`));
+  else if (input.autoStart && rec.modes.auto.available) {
+    // Zero-touch: research done, full automation starts by itself.
+    beginMode(run, "auto");
+    log(run, "info", "Started full automation automatically when the research finished.");
+  }
+  await stage("save", run.status === "queued" ? "Saving the run" : "Saving the plan", undefined, async () => { await saveRun(run); await syncSheet(run); }, () => (run.status === "queued" ? `run ${run.id}${input.autoStart && !input.mode ? ", started in full automation" : ""}` : `ready: ${run.id}. Choose how to run it.`));
   return run;
 }
 
@@ -307,6 +313,33 @@ async function variablesFor(run: Run, text: string, extra: Record<string, string
     else if (run.vars[n] !== undefined) out[n] = run.vars[n];
   }
   return out;
+}
+
+/** A human step that is only about agreeing to developer terms (not payment, phone, identity or business checks). */
+export function isTermsOnly(s: Step): boolean {
+  if (s.kind !== "human") return false;
+  const t = `${s.title} ${s.reason}`;
+  return /terms|agreement|acceptable use|\bAUP\b|policy|accept/i.test(t) && !/payment|card|billing|phone|sms|identity|id document|business verif|tax|kyc|sign in|log in|captcha/i.test(t);
+}
+
+/**
+ * The OAuth part often has no quote either way (docs explain the flow but never say who may register
+ * apps). If the developer side and sandbox are self-serve, nothing says "partners only", and the guide
+ * lists self-serve creation steps or the vendor offers DCR, that is "likely self-serve", not unknown.
+ */
+export function oauthFromOtherEvidence(sb: SandboxCheck | undefined, ev: { guide?: Guide | null; dcr?: { available: boolean; kind?: string }; playbook?: Playbook }): SandboxCheck | undefined {
+  if (!sb || sb.verdict !== "unknown" || !sb.parts?.length) return sb;
+  const oauth = sb.parts.find((p) => p.role === "oauth_app");
+  const others = sb.parts.filter((p) => p.role !== "oauth_app");
+  if (!oauth || oauth.verdict !== "unknown") return sb;
+  if (others.some((p) => p.verdict !== "self_serve" && p.verdict !== "likely_self_serve")) return sb;
+  if (oauth.quotes.some((q) => q.found && q.says === "no")) return sb;
+  const guideSteps = (ev.guide?.steps || []).some((st) => st.owner === "agent" || st.owner === "you") && ev.guide?.oauth?.supported !== false;
+  const dcr = Boolean(ev.dcr?.available);
+  if (!guideSteps && !dcr) return sb;
+  const why = dcr ? "the vendor's OAuth metadata accepts self-registration" : "the guide lists self-serve steps for creating the app";
+  const parts = sb.parts.map((p) => (p.role === "oauth_app" ? { ...p, verdict: "likely_self_serve" as const, reason: `${p.reason} No quote said who may create apps, but ${why} and nothing says partners only.` } : p));
+  return { ...sb, parts, verdict: "likely_self_serve", reason: `${sb.reason} OAuth: likely self-serve because ${why}.` };
 }
 
 /** Steps that create the vendor account (as opposed to using it). */
@@ -415,6 +448,24 @@ async function runStep(ctx: Ctx, s: Step): Promise<Outcome> {
       return "done";
     }
     case "human": {
+      if (run.mode === "auto" && s.id === "sandbox-check") {
+        // Full automation doesn't ask: a truly gated vendor stops at its own wall, which is handed over.
+        log(run, "info", "Sandbox not confirmed; full automation tries anyway and hands over if it meets a wall.", s.id);
+        return "done";
+      }
+      if (run.mode === "auto" && process.env.PROVISION_ACCEPT_TERMS === "1" && isTermsOnly(s)) {
+        // Authorized by the owner (PROVISION_ACCEPT_TERMS=1): accept developer terms for test accounts.
+        const d = await browser(ctx);
+        if (s.url) await d.goto(s.url);
+        const accept = "Accept the developer terms or agreement shown on this page: tick the agreement checkbox if there is one, then press the button that accepts and continues.";
+        await d.act(accept);
+        const b = await checkBlocker(ctx, s);
+        if (b) return b;
+        const g = d.goalCheck ? await d.goalCheck(`Accept the developer terms: ${accept}`).catch(() => ({ done: true, missing: "" })) : { done: true, missing: "" };
+        if (!g.done) throw new Error(`accepting the terms isn't finished yet: ${g.missing.slice(0, 160)}`);
+        log(run, "approval", `Accepted ${run.app}'s developer terms on ${d.url()} for a test account (authorized by PROVISION_ACCEPT_TERMS).`, s.id);
+        return "done";
+      }
       if (s.noBrowser) { /* a decision, not browser work: don't spend browser minutes */ }
       else if (s.url) { const d = await browser(ctx); if (!d.url().startsWith("http")) await d.goto(s.url); }
       else await browser(ctx);
