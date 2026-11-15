@@ -131,3 +131,16 @@ test("DCR vendor: the OAuth app is registered with one API call, then verified",
   assert.ok(done.vault.registration_access_token);
   assert.equal(done.status, "verified");
 });
+
+test("a model answer broken by a quote copied from a page is repaired, not thrown away", async () => {
+  const { jsonFromModel } = await import("../lib/agent/claude");
+  // The Spotify failure: a vendor sentence with double quotes, pasted unescaped into a JSON string.
+  const broken = '{"relation":"same","developerAccount":{"name":"Spotify for Developers","quotes":[{"quote":"Click "Create app" to get started","url":"https://developer.spotify.com/dashboard","says":"yes"}]}}';
+  await assert.rejects(Promise.resolve().then(() => JSON.parse(broken)));
+  let repairs = 0;
+  const fixed = await jsonFromModel<{ developerAccount: { quotes: { quote: string }[] } }>(broken, async (text) => { repairs++; return text.replace('"Create app"', "'Create app'"); });
+  assert.equal(repairs, 1);
+  assert.equal(fixed.developerAccount.quotes[0].quote, "Click 'Create app' to get started");
+  // Valid JSON never pays for a repair call.
+  await jsonFromModel('{"ok":true}', async () => { throw new Error("should not be called"); });
+});

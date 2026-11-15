@@ -7,7 +7,7 @@ import type { Mode, Playbook, Step } from "./types";
 import { linear } from "./playbooks/linear";
 import { slack } from "./playbooks/slack";
 import { hubspot } from "./playbooks/hubspot";
-import { runClaude, RESOLVE_MODEL } from "../agent/claude";
+import { runClaude, RESOLVE_MODEL, jsonFromModel } from "../agent/claude";
 
 export const PLAYBOOKS: Record<string, Playbook> = { linear, slack, hubspot };
 
@@ -95,15 +95,15 @@ export async function planFromGuide(guide: Guide, setup?: SandboxCheck, progress
     ? `\nProvision: an API KEY, not an OAuth app (OAuth is not self-serve for this vendor).${target.keyWhere ? ` Where keys are created: ${target.keyWhere}.` : ""}`
     : target.dcr ? "\nProvision: an OAuth app through Dynamic Client Registration (strategy \"dcr\")." : "\nProvision: an OAuth app.";
   const ask = `Guide for ${guide.name} (slug ${guide.slug}):\n${JSON.stringify(brief)}${map ? `\nSetup map (checked against the vendor's pages):\n${JSON.stringify(map)}` : ""}${goal}`;
-  const parse = (text: string): Playbook => {
-    const p = JSON.parse(text.slice(text.indexOf("{"), text.lastIndexOf("}") + 1)) as Playbook;
+  const parse = async (text: string): Promise<Playbook> => {
+    const p = await jsonFromModel<Playbook>(text);
     p.slug = guide.slug; p.name = guide.name; p.evidence = "unverified";
     if (target.credential === "api_key") { p.credential = "api_key"; p.oauth = p.oauth || NO_OAUTH; }
     if (target.dcr && target.credential === "oauth") p.strategy = "dcr";
     return fillSecretLists(p);
   };
   const first = await runClaude({ model: RESOLVE_MODEL, system: PLAN_SYSTEM, maxTokens: 6000, messages: [{ role: "user", content: ask }] });
-  let p = parse(first);
+  let p = await parse(first);
   let errs = validatePlaybook(p);
   if (errs.length) {
     progress({ id: "plan:fix", label: "The plan failed safety checks; Claude is asked to fix it", state: "start", detail: errs.slice(0, 3).join("; ") });
@@ -116,7 +116,7 @@ export async function planFromGuide(guide: Guide, setup?: SandboxCheck, progress
         { role: "user", content: `That plan failed these checks:\n- ${errs.join("\n- ")}\nReturn the whole corrected plan as JSON only.` },
       ],
     });
-    p = parse(second);
+    p = await parse(second);
     errs = validatePlaybook(p);
     progress({ id: "plan:fix", label: "The plan failed safety checks; Claude is asked to fix it", state: errs.length ? "fail" : "done", detail: errs.length ? errs.slice(0, 3).join("; ") : "corrected plan passes the checks" });
   }

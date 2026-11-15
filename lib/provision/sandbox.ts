@@ -12,7 +12,7 @@
 import "../env";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { cleanSupabaseUrl } from "../store";
-import { runClaude, webTools, RESOLVE_MODEL, extractJson } from "../agent/claude";
+import { runClaude, webTools, RESOLVE_MODEL, jsonFromModel } from "../agent/claude";
 import { htmlToText, isThin, publicUrl, renderPage, renderProvider } from "../agent/render";
 import { noProgress, type Playbook, type Progress, type SandboxCheck, type SetupPart } from "./types";
 
@@ -125,7 +125,8 @@ Also add "appCreation":{"kind":"management_api"|"cli"|"manifest"|"none","detail"
 Quote is {"quote":"a sentence copied word for word from the page","url":"the exact page URL","says":"yes"|"no"} where "yes" supports self-serve and "no" supports gated.
 When relation is "same", the sandbox may repeat the developer account's name and URL with no quotes of its own.
 humanPath: what a person must do when it is gated or unclear (e.g. "apply to the partner programme at <url>"). Empty when self-serve.
-Give 1 to 3 quotes per question. Copy quotes exactly: each is checked against its page, and paraphrases are thrown away.`;
+Give 1 to 3 quotes per question. Copy quotes exactly: each is checked against its page, and paraphrases are thrown away.
+The answer must be valid JSON: inside a string, write any double quote from the page as a single quote (').`;
 
 type RawQuote = { quote: string; url: string; says: "yes" | "no" };
 type RawPart = { name?: string; signupUrl?: string; selfServe?: string; reason?: string; humanPath?: string; expires?: string; quotes?: RawQuote[] };
@@ -145,7 +146,7 @@ export async function researchSandbox(app: { name: string; website?: string }, o
     model: RESOLVE_MODEL, system: SYSTEM, maxTokens: 4000, tools: webTools(5, 6),
     messages: [{ role: "user", content: `Vendor: ${app.name}${app.website ? ` (${app.website})` : ""}` }],
   }, { onToolUse: onTool });
-  return extractJson<Found>(text);
+  return jsonFromModel<Found>(text);
 }
 
 /** The network side of the check; tests swap it for fixed pages. */

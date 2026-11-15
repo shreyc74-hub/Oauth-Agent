@@ -140,3 +140,24 @@ export function extractJson<T>(text: string): T {
   if (start < 0 || end <= start) throw new Error("The model did not return JSON.");
   return JSON.parse(src.slice(start, end + 1)) as T;
 }
+
+/** Asks the model once to turn its own broken JSON into valid JSON (no tools, small and fast). */
+export async function repairJson(text: string, error: string): Promise<string> {
+  return runClaude({
+    model: RESOLVE_MODEL, maxTokens: 6000,
+    system: "You fix broken JSON. Return only the corrected JSON with exactly the same content. Escape or replace any double quote inside a string value (use a single quote). No prose, no code fences.",
+    messages: [{ role: "user", content: `This JSON failed to parse (${error}). Fix it:\n${text.slice(0, 40000)}` }],
+  });
+}
+
+/**
+ * Parses a model's JSON answer. A stray quote copied from a web page should not throw away minutes of
+ * research, so a parse failure gets one repair round before it counts as an error.
+ */
+export async function jsonFromModel<T>(text: string, repair: (text: string, error: string) => Promise<string> = repairJson): Promise<T> {
+  try { return extractJson<T>(text); }
+  catch (e) {
+    const fixed = await repair(text, (e as Error).message);
+    return extractJson<T>(fixed);
+  }
+}

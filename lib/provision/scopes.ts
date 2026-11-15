@@ -5,7 +5,7 @@
 //
 // Guardrails in code: the test call must be GET and must go to the vendor's own domain (the same
 // base domain as the OAuth endpoints), so the token can't be sent anywhere else.
-import { runClaude, RESOLVE_MODEL, extractJson } from "../agent/claude";
+import { runClaude, RESOLVE_MODEL, jsonFromModel } from "../agent/claude";
 import type { Guide } from "../schema";
 import type { Playbook, ScopePlan } from "./types";
 
@@ -42,7 +42,7 @@ export async function planScopes(input: { useCase: string; guide?: Guide | null;
     guideScopes: guide?.scopes ? { rows: guide.scopes.rows, minimalSets: guide.scopes.minimalSets } : undefined,
   };
   const text = await runClaude({ model: RESOLVE_MODEL, system: SYSTEM, maxTokens: 2000, messages: [{ role: "user", content: JSON.stringify(brief) }] });
-  const j = extractJson<{ scopes?: string[]; mapping?: ScopePlan["mapping"]; testCall?: unknown; notes?: string[] }>(text);
+  const j = await jsonFromModel<{ scopes?: string[]; mapping?: ScopePlan["mapping"]; testCall?: unknown; notes?: string[] }>(text);
   const scopes = [...new Set((j.scopes || []).map(String).map((s) => s.trim()).filter((s) => s && !/\s/.test(s)))];
   if (!scopes.length) throw new Error(`Couldn't map the use case to ${p.name} scopes.`);
   const testCall = safeTestCall(p, j.testCall);
