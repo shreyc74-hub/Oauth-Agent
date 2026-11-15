@@ -14,6 +14,18 @@ export const webTools = (searches: number, fetches: number) => [
   ...(fetches > 0 ? [{ type: "web_fetch_20260318", name: "web_fetch", max_uses: fetches, max_content_tokens: 30000 }] : []),
 ];
 
+/** The dynamic-filtering web tools only run on Opus, Sonnet and Fable models; Haiku takes the basic
+ * versions. Swaps them per call, so callers never need to know which model runs. */
+export function toolsForModel(tools: unknown[], model: string): unknown[] {
+  if (!/haiku/i.test(model)) return tools;
+  return tools.map((t) => {
+    const x = t as { type?: string };
+    if (x.type?.startsWith("web_search_")) return { ...x, type: "web_search_20250305" };
+    if (x.type?.startsWith("web_fetch_")) return { ...x, type: "web_fetch_20250910" };
+    return t;
+  });
+}
+
 type Block = { type: string; [k: string]: unknown };
 type Msg = { role: "user" | "assistant"; content: string | Block[] };
 
@@ -44,7 +56,8 @@ export async function runClaude(
   let finalText = "";
 
   const clientTools = opts.clientTools || [];
-  const tools = [...(opts.tools || []), ...clientTools.map(({ name, description, input_schema }) => ({ name, description, input_schema }))];
+  const model = opts.model || MODEL;
+  const tools = [...toolsForModel(opts.tools || [], model), ...clientTools.map(({ name, description, input_schema }) => ({ name, description, input_schema }))];
   let textBlocksSeen = 0;
 
   for (let round = 0; round < MAX_ROUNDS; round++) {
@@ -52,7 +65,7 @@ export async function runClaude(
       method: "POST",
       signal: hooks.signal,
       headers: { "content-type": "application/json", "x-api-key": key, "anthropic-version": "2023-06-01" },
-      body: JSON.stringify({ model: opts.model || MODEL, max_tokens: opts.maxTokens ?? 16000, stream: true, system: opts.system, tools: tools.length ? tools : undefined, messages }),
+      body: JSON.stringify({ model, max_tokens: opts.maxTokens ?? 16000, stream: true, system: opts.system, tools: tools.length ? tools : undefined, messages }),
     });
     if (!res.ok || !res.body) throw new Error(`Claude API error ${res.status}: ${(await res.text()).slice(0, 300)}`);
 
