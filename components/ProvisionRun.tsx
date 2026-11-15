@@ -177,6 +177,16 @@ export default function ProvisionRun({ id }: { id: string }) {
         <div className="mhead"><h1 className="ptitle">{run.app}</h1><span className={`badge s-${run.status}`}>{signInOnly(run) ? SIGN_IN_ONLY : STATUS[run.status]}</span> <span className="small">step {Math.min(run.cursor + 1, run.steps.length)} of {run.steps.length}</span></div>
         {run.mock ? <div className="notice">Demo mode: the browser, inbox and provider APIs are simulated. Every step, pause and vault write runs for real.</div> : null}
         {err ? <div className="card err" role="alert"><p>{err}</p></div> : null}
+        {run.status === "failed" || run.status === "needs_review" ? (() => {
+          // Say why up front; the full history stays in the activity log below.
+          const last = [...run.events].reverse().find((e) => e.kind === "error");
+          return last ? (
+            <div className="card err" role="alert">
+              <p><b>{run.status === "failed" ? "The run stopped." : "Created, but not verified."}</b> {last.text.replace(/^Stopped: /, "")}</p>
+              {/Browserbase|browser minutes/i.test(last.text) ? <p className="small">Nothing was created at {run.app}. Start a new run once the browser account is sorted; the research is cached, so it takes seconds.</p> : null}
+            </div>
+          ) : null;
+        })() : null}
         {run.assessment ? <AssessmentCard run={run} onStart={start} /> : null}
 
         {p ? (
