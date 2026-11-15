@@ -78,7 +78,9 @@ export async function openBrowser(opts: { sessionId?: string; contextId?: string
     browserbaseSessionCreateParams: opts.sessionId ? undefined : {
       projectId: process.env.BROWSERBASE_PROJECT_ID,
       keepAlive: true,
-      timeout: 3600,
+      // Each live minute counts against the Browserbase plan, and a run waiting for a person keeps
+      // its browser open. Expired sessions are replaced on the next step (cookies live in the context).
+      timeout: Number(process.env.PROVISION_BROWSER_TIMEOUT_S || 900),
       browserSettings: {
         solveCaptchas: false,
         recordSession: true,

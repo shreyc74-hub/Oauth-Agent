@@ -232,3 +232,18 @@ test("routes: open by default; access code and admin token apply only when set",
   assert.ok((await getRun(run.id))!.events.some((e) => /client_secret revealed/.test(e.text)));
   void reveal;
 });
+
+test("a browser session that expired while the run waited is replaced, and the run carries on", async () => {
+  const run = await createRun({ app: "Linear", mode: "human", baseUrl: BASE });
+  const base = defaultDeps();
+  let r = await advance(run.id, base, 30_000);
+  const first = r.browser?.sessionId;
+  assert.ok(first);
+  // Reconnecting to the old session fails, as it does after Browserbase's timeout.
+  const expired = { ...base, openBrowser: (o: { sessionId?: string; contextId?: string; mockFail?: string }) => (o.sessionId === first ? Promise.reject(new Error("session not running")) : base.openBrowser(o)) };
+  if (r.status === "waiting_human" || r.status === "waiting_approval") r = await respond(run.id, r.status === "waiting_approval" ? "approve" : "continue");
+  r = await advance(run.id, expired, 30_000);
+  assert.notEqual(r.browser?.sessionId, first);
+  assert.ok(r.events.some((e) => /previous browser session had ended/.test(e.text)));
+  assert.notEqual(r.status, "failed");
+});

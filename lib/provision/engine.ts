@@ -167,8 +167,19 @@ async function browser(ctx: Ctx): Promise<Driver> {
     if (!contextId) { contextId = await createContext(); await putSecret(name, contextId, `${run.app} browser context`); }
   }
   if (!deps.mock && !browserConfigured()) throw new ConfigError("The browser isn't configured: set BROWSERBASE_API_KEY and BROWSERBASE_PROJECT_ID.");
-  ctx.driver = await deps.openBrowser({ sessionId: run.browser?.sessionId, contextId, mockFail: deps.mock ? run.vars.mock_fail : undefined });
-  run.browser = { sessionId: ctx.driver.sessionId, liveUrl: ctx.driver.liveUrl || run.browser?.liveUrl };
+  const mockFail = deps.mock ? run.vars.mock_fail : undefined;
+  const old = run.browser?.sessionId;
+  try {
+    ctx.driver = await deps.openBrowser({ sessionId: old, contextId, mockFail });
+  } catch (e) {
+    if (!old || e instanceof ConfigError) throw e;
+    // The hosted browser timed out (or was released) while the run waited. Start a new one in the
+    // same context, so cookies and sign-ins carry over.
+    log(run, "info", `The previous browser session had ended (${(e as Error).message.slice(0, 120)}). Opened a new one; saved sign-ins carry over.`);
+    ctx.driver = await deps.openBrowser({ contextId, mockFail });
+  }
+  const fresh = ctx.driver.sessionId !== old;
+  run.browser = { sessionId: ctx.driver.sessionId, liveUrl: ctx.driver.liveUrl || (fresh ? undefined : run.browser?.liveUrl) };
   return ctx.driver;
 }
 
