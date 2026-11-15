@@ -222,7 +222,7 @@ export const claudeBrain: Brain = async (system, messages, tools) => {
   const res = await fetch(`${process.env.ANTHROPIC_BASE_URL || "https://api.anthropic.com"}/v1/messages`, {
     method: "POST",
     headers: { "content-type": "application/json", "x-api-key": key, "anthropic-version": "2023-06-01" },
-    body: JSON.stringify({ model: process.env.RECOVERY_MODEL || process.env.GUIDE_MODEL || "claude-sonnet-5-5", max_tokens: 1500, system, tools, messages }),
+    body: JSON.stringify({ model: process.env.RECOVERY_MODEL || process.env.GUIDE_MODEL || "claude-haiku-5-5", max_tokens: 1500, system, tools, messages }),
   });
   if (!res.ok) throw new Error(`Claude API ${res.status}: ${(await res.text()).slice(0, 200)}`);
   return ((await res.json()) as { content: Block[] }).content;

@@ -5,7 +5,7 @@ import "../env";
 // Read at call time so tests and deployments can change them without a rebuild.
 const apiUrl = () => `${process.env.ANTHROPIC_BASE_URL || "https://api.anthropic.com"}/v1/messages`;
 
-export const MODEL = process.env.GUIDE_MODEL || "claude-sonnet-5-5";
+export const MODEL = process.env.GUIDE_MODEL || "claude-haiku-5-5";
 export const RESOLVE_MODEL = process.env.RESOLVE_MODEL || MODEL;
 
 // web_fetch cannot render JavaScript pages; research.ts adds a render_page client tool for those.

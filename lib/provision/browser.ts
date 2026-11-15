@@ -78,7 +78,7 @@ const blockerSchema = z.object({
 /** Opens a new hosted browser, or reconnects to the run's existing one. */
 export async function openBrowser(opts: { sessionId?: string; contextId?: string }): Promise<Driver> {
   const { Stagehand } = await import("@browserbasehq/stagehand");
-  const model = process.env.STAGEHAND_MODEL || `anthropic/${process.env.GUIDE_MODEL || "claude-sonnet-5-5"}`;
+  const model = process.env.STAGEHAND_MODEL || `anthropic/${process.env.GUIDE_MODEL || "claude-haiku-5-5"}`;
   const make = (sessionId?: string) => new Stagehand({
     env: "BROWSERBASE",
     apiKey: process.env.BROWSERBASE_API_KEY,
