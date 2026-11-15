@@ -298,3 +298,12 @@ test("one shared mailbox: the first run signs up, later runs for the same vendor
     assert.ok(second.events.some((e) => /Signed in with the shared account instead of signing up/.test(e.text)));
   } finally { delete process.env.PROVISION_INBOX_ID; }
 });
+
+test("sign-in codes: Linear's 10-character code after a colon is found; ordinary words are not", async () => {
+  const { findCode } = await import("../lib/provision/inbox");
+  const linear = { subject: "Login for Linear", html: "", text: "Click the link to log in: https://linear.app/auth/x. If you can't click on the link, you can also copy the verification code into your browser: Q7KD2MX9PA" };
+  assert.equal(findCode(linear), "Q7KD2MX9PA");
+  assert.equal(findCode({ subject: "Your code", html: "", text: "Your verification code is 482913." }), "482913");
+  assert.equal(findCode({ subject: "Code", html: "", text: "Your code: ABC-123" }), "ABC-123");
+  assert.equal(findCode({ subject: "Welcome", html: "", text: "Here is the code of conduct: please read it." }), null);
+});

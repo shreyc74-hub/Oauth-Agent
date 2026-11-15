@@ -584,7 +584,14 @@ async function runStep(ctx: Ctx, s: Step): Promise<Outcome> {
         log(run, "step", `${s.title}: opened the link from "${mail.subject.slice(0, 80)}".`, s.id);
       } else {
         const code = findCode(mail);
-        if (!code) throw new Error("the email had no code");
+        if (!code) {
+          // Many sign-in emails carry both a code and a magic link: the link works as well.
+          const link = findLink(mail, s.from);
+          if (!link) throw new Error(`the email "${mail.subject.slice(0, 60)}" had no code or sign-in link the agent could read`);
+          await d.goto(link);
+          log(run, "step", `${s.title}: no code the agent could read, so it opened the sign-in link from "${mail.subject.slice(0, 80)}" instead.`, s.id);
+          return "done";
+        }
         ctx.seen.add(code);
         if (s.then) {
           const r = await d.act(s.then, await variablesFor(run, s.then, { code }));

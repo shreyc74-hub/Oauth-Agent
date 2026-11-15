@@ -45,6 +45,11 @@ export const agentMail: Inbox = {
 /** Finds a one-time code. Prefers codes near words like "code"/"verification"; handles "ABC-123". */
 export function findCode(mail: Pick<Mail, "subject" | "text" | "html">): string | null {
   const plain = `${mail.subject}\n${mail.text || mail.html.replace(/<[^>]+>/g, " ")}`;
+  // "…copy the verification code into your browser: Ab12Cd34Ef" (Linear): whatever follows the colon,
+  // 4 to 16 letters, digits or hyphens, case kept. Must contain a digit or be mixed/upper case letters,
+  // so an ordinary word after a colon isn't taken for a code.
+  const afterColon = plain.match(/(?:code|passcode|one[- ]time)[^:\n]{0,90}:\s*([A-Za-z0-9][A-Za-z0-9-]{2,14}[A-Za-z0-9])\b/i);
+  if (afterColon && (/\d/.test(afterColon[1]) || /[A-Z]/.test(afterColon[1].slice(1)) || /^[A-Z]+$/.test(afterColon[1]))) return afterColon[1];
   const near = plain.match(/(?:code|verification|confirm|one[- ]time|OTP)[^\n]{0,60}?\b([A-Z0-9]{3}-[A-Z0-9]{3}|\d{4,8})\b/i);
   if (near) return near[1];
   const any = plain.match(/\b([A-Z0-9]{3}-[A-Z0-9]{3}|\d{6})\b/);
