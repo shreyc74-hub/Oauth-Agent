@@ -166,3 +166,13 @@ test("Composio calls: the right tool slugs and arguments, and the run id comes b
   assert.equal((await agent.get("r1.x")).status, "completed");
   assert.equal(await agent.liveUrl("r1.x"), "https://live.browser-use.com?wss=x");
 });
+
+test("Composio MCP replies: SSE or JSON, shortened previews, and account problems stop the run", async () => {
+  const { readMcpResult } = await import("../lib/provision/hosted");
+  const wrap = (results: unknown) => `event: message\ndata: ${JSON.stringify({ jsonrpc: "2.0", id: 1, result: { content: [{ type: "text", text: JSON.stringify({ successful: true, data: { results } }) }] } })}\n\n`;
+  assert.deepEqual(readMcpResult("X", 200, wrap([{ response: { successful: true, data: { id: "r1" } } }])), { id: "r1" });
+  assert.deepEqual(readMcpResult("X", 200, wrap([{ response: { successful: true, data_preview: { items: [1] } } }])), { items: [1] });
+  assert.throws(() => readMcpResult("X", 200, wrap([{ error: "The user's Composio wallet is out of credits, so Instant calls are paused." }])), (e: Error) => e.name === "ConfigError");
+  assert.throws(() => readMcpResult("X", 200, wrap([{ response: { successful: false, error: "bad run id" } }])), /bad run id/);
+  assert.throws(() => readMcpResult("X", 200, "not json"), /unreadable reply/);
+});

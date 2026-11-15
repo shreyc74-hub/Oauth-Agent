@@ -25,10 +25,16 @@ export const hostedConfigured = (): boolean => Boolean(process.env.COMPOSIO_API_
 
 class ConfigError extends Error { name = "ConfigError"; }
 
-/** One Composio tool call. Composio holds the Browser Use connection, so no Browser Use key lives here. */
+/**
+ * One Composio tool call. Composio holds the Browser Use connection, so no Browser Use key lives here.
+ * A consumer key (ck_…) goes through Composio's MCP endpoint, the same route as Composio's own MCP
+ * clients, which also reaches Composio's free shared ("instant") Browser Use account. A project API key
+ * goes through the REST API.
+ */
 export async function composioExecute(slug: string, args: Record<string, unknown>): Promise<Record<string, unknown>> {
   const key = process.env.COMPOSIO_API_KEY;
   if (!key) throw new ConfigError("COMPOSIO_API_KEY is not set, so the Browser Use route can't run");
+  if (key.startsWith("ck_") || process.env.COMPOSIO_TRANSPORT === "mcp") return composioMcp(slug, args, key);
   const base = (process.env.COMPOSIO_BASE_URL || "https://backend.composio.dev").replace(/\/$/, "");
   const body: Record<string, unknown> = { arguments: args, user_id: process.env.COMPOSIO_USER_ID || "default" };
   if (process.env.COMPOSIO_CONNECTED_ACCOUNT_ID) body.connected_account_id = process.env.COMPOSIO_CONNECTED_ACCOUNT_ID;
@@ -46,6 +52,36 @@ export async function composioExecute(slug: string, args: Record<string, unknown
   if (/out of credits|no active connection|not connected|connected account/i.test(err)) throw new ConfigError(`Composio can't run ${slug}: ${err}`);
   if (!res.ok || j.successful === false) throw new Error(`Composio ${slug} failed (${res.status}): ${err || text.slice(0, 200)}`);
   return (j.data || {}) as Record<string, unknown>;
+}
+
+/** Composio's MCP endpoint: tools/call on its multi-execute tool, answered as JSON or a server-sent event. */
+async function composioMcp(slug: string, args: Record<string, unknown>, key: string): Promise<Record<string, unknown>> {
+  const url = process.env.COMPOSIO_MCP_URL || "https://connect.composio.dev/mcp";
+  const res = await fetch(url, {
+    method: "POST",
+    headers: { "x-consumer-api-key": key, "content-type": "application/json", accept: "application/json, text/event-stream" },
+    body: JSON.stringify({ jsonrpc: "2.0", id: Date.now(), method: "tools/call", params: { name: "COMPOSIO_MULTI_EXECUTE_TOOL", arguments: { tools: [{ tool_slug: slug, arguments: args }], sync_response_to_workbench: false, thought: "provisioning agent" } } }),
+    signal: AbortSignal.timeout(90_000),
+  });
+  if (res.status === 401 || res.status === 403) throw new ConfigError(`Composio rejected the API key (${res.status}). Check COMPOSIO_API_KEY`);
+  return readMcpResult(slug, res.status, await res.text());
+}
+
+/** Pure: the tool's own result out of an MCP reply (plain JSON or SSE "data:" lines). */
+export function readMcpResult(slug: string, status: number, body: string): Record<string, unknown> {
+  const data = body.split("\n").filter((l) => l.startsWith("data:")).map((l) => l.slice(5).trim());
+  let rpc: { result?: { content?: { text?: string }[]; isError?: boolean }; error?: { message?: string } } = {};
+  try { rpc = JSON.parse(data.length ? data[data.length - 1] : body); } catch { throw new Error(`Composio ${slug}: unreadable reply (${status}): ${body.slice(0, 160)}`); }
+  if (rpc.error) throw new Error(`Composio ${slug} failed: ${String(rpc.error.message || "").slice(0, 200)}`);
+  const text = rpc.result?.content?.[0]?.text || "";
+  let outer: { successful?: boolean; error?: string | null; data?: { results?: { response?: { successful?: boolean; data?: Record<string, unknown>; data_preview?: Record<string, unknown>; error?: string | null }; error?: string | null }[] } } = {};
+  try { outer = JSON.parse(text); } catch { throw new Error(`Composio ${slug} failed: ${text.slice(0, 200)}`); }
+  const r = outer.data?.results?.[0];
+  const err = String(r?.error || r?.response?.error || (outer.successful === false ? outer.error : "") || "").slice(0, 300);
+  if (/out of credits|no active connection|not connected|connect their own account|unavailable on instant/i.test(err)) throw new ConfigError(`Composio can't run ${slug}: ${err}`);
+  if (err || !r?.response?.successful) throw new Error(`Composio ${slug} failed: ${err || "no result"}`);
+  // Large replies come back shortened as data_preview; callers ask for small pages so this rarely matters.
+  return r.response.data || r.response.data_preview || {};
 }
 
 const STATUSES: HostedStatus[] = ["queued", "running", "completed", "failed", "cancelled"];
@@ -69,7 +105,8 @@ export function browserUseViaComposio(exec = composioExecute): HostedAgent {
     },
     async liveUrl(runId) {
       try {
-        const d = await exec("BROWSER_USE_LIST_RUN_EVENTS", { run_id: runId, include_output: false, limit: 30 });
+        // The browser is attached within the first few events; a small page keeps the reply whole.
+        const d = await exec("BROWSER_USE_LIST_RUN_EVENTS", { run_id: runId, include_output: false, limit: 8 });
         for (const e of (d.items || []) as { type?: string; data?: { live_view_url?: string } }[]) {
           const u = e.data?.live_view_url;
           if (u && /^https:\/\//.test(u)) return u;
