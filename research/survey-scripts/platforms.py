@@ -1,0 +1,63 @@
+# Toolkit -> OAuth platform (where its OAuth app is created) and the vendor domain to probe.
+# Group rules first, then per-slug domains. Methods: see METHODS below.
+import re
+GROUPS = [  # (slug regex, platform, domain)
+  (r"^google|^gmail$|^youtube$|^notebook_lm$", "Google Cloud (OAuth client)", "google.com"),
+  (r"^(microsoft_|outlook$|excel$|one_drive$|onenote$|share_point$|sharepoint_graph$|dynamics365$|azure_)", "Microsoft Entra ID (app registration)", "microsoftonline.com"),
+  (r"^zoho", "Zoho API Console", "zoho.com"),
+  (r"^(facebook|instagram|metaads|whatsapp|threads)$", "Meta for Developers", "facebook.com"),
+  (r"^salesforce", "Salesforce (Connected / External Client App)", "salesforce.com"),
+  (r"^(slack|slackbot)$", "Slack apps", "slack.com"),
+  (r"^linkedin", "LinkedIn Developers", "linkedin.com"),
+  (r"^pinterest", "Pinterest Developers", "pinterest.com"),
+  (r"^reddit", "Reddit apps", "reddit.com"),
+  (r"^tiktok", "TikTok for Developers", "tiktok.com"),
+  (r"^(twitter|x_mcp)$", "X Developer Portal", "x.com"),
+  (r"^(jira|confluence)$", "Atlassian Developer Console", "atlassian.com"),
+  (r"^highlevel_", "HighLevel Marketplace", "gohighlevel.com"),
+  (r"^zoom", "Zoom App Marketplace", "zoom.us"),
+  (r"^(paypal|zettle)$", "PayPal Developer", "paypal.com"),
+  (r"^box", "Box Developer Console", "box.com"),
+  (r"^discord", "Discord Developer Portal", "discord.com"),
+  (r"^dropbox$", "Dropbox App Console", "dropbox.com"),
+  (r"^workday", "Workday", "workday.com"),
+  (r"^mongodb", "MongoDB Atlas", "mongodb.com"),
+  (r"^railway", "Railway", "railway.com"),
+]
+DOMAIN = {  # vendor domains for the rest (main site; the probe also tries api., auth., mcp.)
+ "adroll":"adroll.com","aha":"aha.io","ahrefs":"ahrefs.com","aircall":"aircall.io","airtable":"airtable.com","alpaca":"alpaca.markets","amazon":"amazon.com",
+ "anaplan":"anaplan.com","apaleo":"apaleo.com","asana":"asana.com","attio":"attio.com","aweber":"aweber.com","bamboohr":"bamboohr.com","basecamp":"37signals.com",
+ "beeminder":"beeminder.com","bexio":"bexio.com","bitbucket":"bitbucket.org","bitly":"bitly.com","bitwarden":"bitwarden.com","blackbaud":"blackbaud.com",
+ "blackboard":"anthology.com","boldsign":"boldsign.com","borneo":"borneo.io","brevo":"brevo.com","brex":"brex.com","buffer":"buffer.com","cal":"cal.com",
+ "calendly":"calendly.com","canva":"canva.com","canvas":"instructure.com","capsule_crm":"capsulecrm.com","carta":"carta.com","cleverreach":"cleverreach.com",
+ "clickfunnels":"myclickfunnels.com","clickup":"clickup.com","clio_manage":"clio.com","clockify":"clockify.me","cloud_66":"cloud66.com","clover":"clover.com",
+ "commerce_layer":"commercelayer.io","constant_contact":"constantcontact.com","contacts_plus":"contactsplus.com","contentful":"contentful.com","coupa":"coupa.com",
+ "cradl_ai":"cradl.ai","crowdin":"crowdin.com","d2lbrightspace":"d2l.com","dart":"itsdart.com","databricks":"databricks.com","datadog":"datadoghq.com",
+ "daytona":"daytona.io","dbt_cloud":"getdbt.com","deel":"deel.com","deputy":"deputy.com","dev_cycle":"devcycle.com","dialpad":"dialpad.com","digital_ocean":"digitalocean.com",
+ "disqus":"disqus.com","docusign":"docusign.com","dribbble":"dribbble.com","dropbox_sign":"hellosign.com","dub":"dub.co","dynatrace":"dynatrace.com","ebay":"ebay.com",
+ "egnyte":"egnyte.com","epic_games":"epicgames.com","eventbrite":"eventbrite.com","exist":"exist.io","fathom":"fathom.video","figma":"figma.com","follow_up_boss":"followupboss.com",
+ "frame_io_v4":"frame.io","freeagent":"freeagent.com","freee":"freee.co.jp","freshbooks":"freshbooks.com","freshsales":"freshworks.com","front":"frontapp.com","gagelist":"gagelist.com",
+ "getresponse":"getresponse.com","github":"github.com","gitlab":"gitlab.com","go_to_training":"goto.com","gong":"gong.io","gorgias":"gorgias.com","greenhouse":"greenhouse.io",
+ "gumroad":"gumroad.com","gusto":"gusto.com","halopsa":"halopsa.com","harvest":"getharvest.com","help_scout":"helpscout.net","hubspot":"hubspot.com","hugging_face":"huggingface.co",
+ "imply_polaris":"imply.io","infisical":"infisical.com","intercom":"intercom.com","ironclad":"ironcladapp.com","jibble":"jibble.io","jobber":"getjobber.com","judge_me":"judge.me",
+ "kick":"kick.com","kintone_rest":"kintone.com","kit":"kit.com","klaviyo":"klaviyo.com","kommo":"kommo.com","launch_darkly":"launchdarkly.com","lever":"lever.co",
+ "lightspeed":"lightspeedhq.com","linear":"linear.app","linkhut":"ln.ht","linode":"linode.com","livechat":"livechat.com","lodgify":"lodgify.com","mail_up":"mailup.com",
+ "mailchimp":"mailchimp.com","matterport":"matterport.com","miro":"miro.com","monday":"monday.com","money_forward":"moneyforward.com","moneybird":"moneybird.com",
+ "mural":"mural.co","navan":"navan.com","neo4j":"neo4j.com","neon":"neon.tech","netsuite":"netsuite.com","notion":"notion.com","omnisend":"omnisend.com","pagerduty":"pagerduty.com",
+ "parma":"parma.ai","personio":"personio.de","pinecone":"pinecone.io","pipedrive":"pipedrive.com","planetscale":"planetscale.com","podio":"podio.com","polar":"polar.sh",
+ "prisma":"prisma.io","productboard":"productboard.com","pushbullet":"pushbullet.com","quickbooks":"intuit.com","quire":"quire.io","ramp":"ramp.com","razorpay":"razorpay.com",
+ "rd_station_marketing":"rdstation.com","rebrandly":"rebrandly.com","recruitee":"recruitee.com","reloadly":"reloadly.com","resend":"resend.com","rillet":"rillet.com",
+ "rippling":"rippling.com","roam":"ro.am","sage_intacct":"sage.com","scheduleonce":"oncehub.com","send_pulse":"sendpulse.com","sendloop":"sendloop.com","sentry":"sentry.io",
+ "servicem8":"servicem8.com","servicenow":"service-now.com","servicetitan":"servicetitan.com","shippo":"goshippo.com","shopify":"shopify.com","sign_now":"signnow.com",
+ "smartsheet":"smartsheet.com","smokeball":"smokeball.com","snapchat":"snapchat.com","snowflake":"snowflake.com","snyk":"snyk.io","soundcloud":"soundcloud.com",
+ "splitwise":"splitwise.com","spotify":"spotify.com","square":"squareup.com","stack_exchange":"stackexchange.com","storyblok":"storyblok.com","stripe":"stripe.com",
+ "supabase":"supabase.com","survey_monkey":"surveymonkey.com","tally":"tally.so","teamleader":"teamleader.eu","ticketmaster":"ticketmaster.com","ticktick":"ticktick.com",
+ "timely":"timelyapp.com","tipalti":"tipalti.com","todoist":"todoist.com","toneden":"toneden.io","trello":"trello.com","twilio":"twilio.com","twitch":"twitch.tv",
+ "typeform":"typeform.com","vercel":"vercel.com","vibe":"vibe.us","vimeo":"vimeo.com","wakatime":"wakatime.com","webex":"webex.com","webflow":"webflow.com","whop":"whop.com",
+ "wild_apricot":"wildapricot.org","wix":"wix.com","wordpress_com":"wordpress.com","workable":"workable.com","wrike":"wrike.com","xero":"xero.com","yandex":"yandex.com",
+ "ynab":"ynab.com","zelt":"zelt.app","zendesk":"zendesk.com","zeplin":"zeplin.io","zoominfo":"zoominfo.com",
+}
+def platform_of(slug, name):
+    for rx, plat, dom in GROUPS:
+        if re.search(rx, slug): return plat, dom
+    return name, DOMAIN.get(slug, "")

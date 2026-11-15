@@ -1,0 +1,1746 @@
+toolkit,name,auth,platform,method,detail,evidence
+0codekit,0codekit,API_KEY,,No OAuth app needed,,Composio docs
+44api,44api,API_KEY,,No OAuth app needed,,Composio docs
+7shifts,7shifts,API_KEY,,No OAuth app needed,,Composio docs
+_1password,_1password,API_KEY,,No OAuth app needed,,Composio docs
+_21risk,_21risk,API_KEY,,No OAuth app needed,,Composio docs
+_2chat,_2chat,API_KEY,,No OAuth app needed,,Composio docs
+ably,ably,API_KEY,,No OAuth app needed,,Composio docs
+abstract,abstract,API_KEY,,No OAuth app needed,,Composio docs
+abuselpdb,abuselpdb,API_KEY,,No OAuth app needed,,Composio docs
+abyssale,abyssale,API_KEY,,No OAuth app needed,,Composio docs
+accredible_certificates,accredible_certificates,API_KEY,,No OAuth app needed,,Composio docs
+accu_weather,accu_weather,API_KEY,,No OAuth app needed,,Composio docs
+acculynx,acculynx,API_KEY,,No OAuth app needed,,Composio docs
+active_campaign,active_campaign,API_KEY,,No OAuth app needed,,Composio docs
+active_merge,active_merge,API_KEY,,No OAuth app needed,,Composio docs
+active_trail,active_trail,API_KEY,,No OAuth app needed,,Composio docs
+adafruit_io,adafruit_io,API_KEY,,No OAuth app needed,,Composio docs
+addressfinder,addressfinder,API_KEY,,No OAuth app needed,,Composio docs
+addresszen,addresszen,API_KEY,,No OAuth app needed,,Composio docs
+adobe_marketing_agent_mcp,adobe_marketing_agent_mcp,DCR_OAUTH,,"DCR, already used by Composio",,Composio docs
+adrapid,adrapid,API_KEY,,No OAuth app needed,,Composio docs
+adroll,AdRoll,OAUTH2,AdRoll,Browser automation,no registration endpoint found (0 metadata documents),measured: no DCR; no known API
+adtraction,adtraction,API_KEY,,No OAuth app needed,,Composio docs
+adyntel,adyntel,API_KEY,,No OAuth app needed,,Composio docs
+aeroleads,aeroleads,API_KEY,,No OAuth app needed,,Composio docs
+affinda,affinda,API_KEY,,No OAuth app needed,,Composio docs
+affinity,affinity,API_KEY,,No OAuth app needed,,Composio docs
+agencyzoom,agencyzoom,"API_KEY,BASIC_WITH_JWT",,No OAuth app needed,,Composio docs
+agent_mail,agent_mail,API_KEY,,No OAuth app needed,,Composio docs
+agentql,agentql,API_KEY,,No OAuth app needed,,Composio docs
+agenty,agenty,API_KEY,,No OAuth app needed,,Composio docs
+agile_crm,agile_crm,API_KEY,,No OAuth app needed,,Composio docs
+agiled,agiled,API_KEY,,No OAuth app needed,,Composio docs
+agility_cms,agility_cms,API_KEY,,No OAuth app needed,,Composio docs
+aha,Aha!,OAUTH2,Aha!,DCR on the main OAuth server,https://api.aha.io/oauth/register | MCP DCR at https://mcp.aha.io/oauth/register,measured: registration_endpoint in public metadata
+ahrefs,Ahrefs,"API_KEY,OAUTH2",Ahrefs,Browser (DCR only on the MCP server),https://api.ahrefs.com/mcp/register | API key also supported,measured: MCP server registration_endpoint
+ahrefs_mcp,ahrefs_mcp,DCR_OAUTH,,"DCR, already used by Composio",,Composio docs
+ai_ark,ai_ark,API_KEY,,No OAuth app needed,,Composio docs
+ai_ml_api,ai_ml_api,API_KEY,,No OAuth app needed,,Composio docs
+aimtell,aimtell,API_KEY,,No OAuth app needed,,Composio docs
+aircall,Aircall,"OAUTH2,BASIC",Aircall,Browser automation,no registration endpoint found (2 metadata documents),measured: no DCR; no known API
+airops_mcp,airops_mcp,DCR_OAUTH,,"DCR, already used by Composio",,Composio docs
+airparser,airparser,API_KEY,,No OAuth app needed,,Composio docs
+airtable,Airtable,"OAUTH2,API_KEY",Airtable,DCR on the main OAuth server,https://airtable.com/oauth2/v1/register | MCP DCR at https://airtable.com/oauth2/v1/register; API key also supported,measured: registration_endpoint in public metadata
+airtop,airtop,API_KEY,,No OAuth app needed,,Composio docs
+airwallex,airwallex,API_KEY,,No OAuth app needed,,Composio docs
+aivoov,aivoov,API_KEY,,No OAuth app needed,,Composio docs
+aiwyn_tax_mcp,aiwyn_tax_mcp,NO_AUTH,,No OAuth app needed,,Composio docs
+akta,akta,API_KEY,,No OAuth app needed,,Composio docs
+alchemy,alchemy,API_KEY,,No OAuth app needed,,Composio docs
+algodocs,algodocs,"API_KEY,BASIC",,No OAuth app needed,,Composio docs
+algolia,algolia,API_KEY,,No OAuth app needed,,Composio docs
+all_images_ai,all_images_ai,API_KEY,,No OAuth app needed,,Composio docs
+alltrails_mcp,alltrails_mcp,NO_AUTH,,No OAuth app needed,,Composio docs
+alpaca,Alpaca,"API_KEY,OAUTH2",Alpaca,Browser automation,no registration endpoint found (0 metadata documents) | API key also supported,measured: no DCR; no known API
+alpha_vantage,alpha_vantage,API_KEY,,No OAuth app needed,,Composio docs
+alt_text_lab,alt_text_lab,API_KEY,,No OAuth app needed,,Composio docs
+altoviz,altoviz,API_KEY,,No OAuth app needed,,Composio docs
+alttext_ai,alttext_ai,API_KEY,,No OAuth app needed,,Composio docs
+amara,amara,API_KEY,,No OAuth app needed,,Composio docs
+amazing_marvin,amazing_marvin,API_KEY,,No OAuth app needed,,Composio docs
+amazon,Amazon,OAUTH2,Amazon,Human / partner-gated,SP-API / LWA approval,knowledge (unverified)
+ambee,ambee,API_KEY,,No OAuth app needed,,Composio docs
+ambient_weather,ambient_weather,API_KEY,,No OAuth app needed,,Composio docs
+ambiguous_mcp,ambiguous_mcp,API_KEY,,No OAuth app needed,,Composio docs
+amcards,amcards,API_KEY,,No OAuth app needed,,Composio docs
+amplitude,amplitude,API_KEY,,No OAuth app needed,,Composio docs
+amplitude_mcp,amplitude_mcp,DCR_OAUTH,,"DCR, already used by Composio",,Composio docs
+anakin_io,anakin_io,API_KEY,,No OAuth app needed,,Composio docs
+anaplan,Anaplan,OAUTH2,Anaplan,Human / partner-gated,customer workspace,knowledge (unverified)
+anchor_browser,anchor_browser,API_KEY,,No OAuth app needed,,Composio docs
+android_texter,android_texter,API_KEY,,No OAuth app needed,,Composio docs
+anonyflow,anonyflow,API_KEY,,No OAuth app needed,,Composio docs
+anrok,anrok,API_KEY,,No OAuth app needed,,Composio docs
+anthropic_administrator,anthropic_administrator,API_KEY,,No OAuth app needed,,Composio docs
+any_db,any_db,API_KEY,,No OAuth app needed,,Composio docs
+anyapi,anyapi,API_KEY,,No OAuth app needed,,Composio docs
+apaleo,Apaleo,OAUTH2,Apaleo,Browser (DCR only on the MCP server),https://mcp.apaleo.com/register,measured: MCP server registration_endpoint
+apexverify,apexverify,API_KEY,,No OAuth app needed,,Composio docs
+api2pdf,api2pdf,API_KEY,,No OAuth app needed,,Composio docs
+api_bible,api_bible,API_KEY,,No OAuth app needed,,Composio docs
+api_labz,api_labz,API_KEY,,No OAuth app needed,,Composio docs
+api_ninjas,api_ninjas,API_KEY,,No OAuth app needed,,Composio docs
+api_sports,api_sports,API_KEY,,No OAuth app needed,,Composio docs
+apiflash,apiflash,API_KEY,,No OAuth app needed,,Composio docs
+apiframe,apiframe,API_KEY,,No OAuth app needed,,Composio docs
+apify,apify,API_KEY,,No OAuth app needed,,Composio docs
+apify_mcp,apify_mcp,DCR_OAUTH,,"DCR, already used by Composio",,Composio docs
+apilio,apilio,"API_KEY,BASIC",,No OAuth app needed,,Composio docs
+apipie_ai,apipie_ai,API_KEY,,No OAuth app needed,,Composio docs
+apiverve,apiverve,API_KEY,,No OAuth app needed,,Composio docs
+apollo,apollo,API_KEY,,No OAuth app needed,,Composio docs
+appcircle,appcircle,API_KEY,,No OAuth app needed,,Composio docs
+appdrag,appdrag,API_KEY,,No OAuth app needed,,Composio docs
+appointo,appointo,API_KEY,,No OAuth app needed,,Composio docs
+apptivegrid,apptivegrid,API_KEY,,No OAuth app needed,,Composio docs
+appveyor,appveyor,API_KEY,,No OAuth app needed,,Composio docs
+archive_org,archive_org,API_KEY,,No OAuth app needed,,Composio docs
+arena,arena,API_KEY,,No OAuth app needed,,Composio docs
+arize_ax,arize_ax,API_KEY,,No OAuth app needed,,Composio docs
+artificial_analysis,artificial_analysis,API_KEY,,No OAuth app needed,,Composio docs
+aryn,aryn,API_KEY,,No OAuth app needed,,Composio docs
+asana,Asana,OAUTH2,Asana,Browser (DCR only on the MCP server),https://mcp.asana.com/register,measured: MCP server registration_endpoint
+ascora,ascora,API_KEY,,No OAuth app needed,,Composio docs
+ashby,ashby,API_KEY,,No OAuth app needed,,Composio docs
+asin_data_api,asin_data_api,API_KEY,,No OAuth app needed,,Composio docs
+assemblyai,assemblyai,API_KEY,,No OAuth app needed,,Composio docs
+astica_ai,astica_ai,API_KEY,,No OAuth app needed,,Composio docs
+async_interview,async_interview,API_KEY,,No OAuth app needed,,Composio docs
+atlassian_mcp,atlassian_mcp,DCR_OAUTH,,"DCR, already used by Composio",,Composio docs
+attio,Attio,OAUTH2,Attio,Browser (DCR only on the MCP server),https://app.attio.com/oauth/register,measured: MCP server registration_endpoint
+audioscrape_mcp,audioscrape_mcp,DCR_OAUTH,,"DCR, already used by Composio",,Composio docs
+authyo,authyo,API_KEY,,No OAuth app needed,,Composio docs
+autobound,autobound,API_KEY,,No OAuth app needed,,Composio docs
+autom,autom,API_KEY,,No OAuth app needed,,Composio docs
+aviato,aviato,API_KEY,,No OAuth app needed,,Composio docs
+avoma,avoma,API_KEY,,No OAuth app needed,,Composio docs
+aweber,AWeber,OAUTH2,AWeber,Browser (DCR only on the MCP server),https://mcp.aweber.com/oauth/register,measured: MCP server registration_endpoint
+aws_marketplace_mcp,aws_marketplace_mcp,NO_AUTH,,No OAuth app needed,,Composio docs
+ayrshare,ayrshare,API_KEY,,No OAuth app needed,,Composio docs
+azure_monitor_activity_log,Azure Monitor Activity Log,OAUTH2,Microsoft Entra ID (app registration),Management API,"Microsoft Graph: POST /applications, then addPassword for a client secret",knowledge (vendor docs)
+backendless,backendless,API_KEY,,No OAuth app needed,,Composio docs
+bamboohr,BambooHR,"OAUTH2,API_KEY",BambooHR,Browser automation,no registration endpoint found (4 metadata documents) | API key also supported,measured: no DCR; no known API
+bannerbear,bannerbear,API_KEY,,No OAuth app needed,,Composio docs
+bannerbite,bannerbite,API_KEY,,No OAuth app needed,,Composio docs
+baremetrics,baremetrics,API_KEY,,No OAuth app needed,,Composio docs
+bart,bart,API_KEY,,No OAuth app needed,,Composio docs
+basecamp,Basecamp,OAUTH2,Basecamp,Browser automation,no registration endpoint found (0 metadata documents),measured: no DCR; no known API
+baselinker,baselinker,API_KEY,,No OAuth app needed,,Composio docs
+baserow,baserow,API_KEY,,No OAuth app needed,,Composio docs
+basin,basin,API_KEY,,No OAuth app needed,,Composio docs
+beach_day_api,beach_day_api,API_KEY,,No OAuth app needed,,Composio docs
+beaconchain,beaconchain,API_KEY,,No OAuth app needed,,Composio docs
+beaconstac,beaconstac,API_KEY,,No OAuth app needed,,Composio docs
+beamer,beamer,API_KEY,,No OAuth app needed,,Composio docs
+beatapi,beatapi,API_KEY,,No OAuth app needed,,Composio docs
+beehiiv,beehiiv,API_KEY,,No OAuth app needed,,Composio docs
+beeminder,Beeminder,"API_KEY,OAUTH2",Beeminder,Browser automation,no registration endpoint found (0 metadata documents) | API key also supported,measured: no DCR; no known API
+bench,bench,NO_AUTH,,No OAuth app needed,,Composio docs
+benchmark_email,benchmark_email,API_KEY,,No OAuth app needed,,Composio docs
+benzinga,benzinga,API_KEY,,No OAuth app needed,,Composio docs
+bestbuy,bestbuy,API_KEY,,No OAuth app needed,,Composio docs
+better_proposals,better_proposals,API_KEY,,No OAuth app needed,,Composio docs
+better_stack,better_stack,API_KEY,,No OAuth app needed,,Composio docs
+better_stack_mcp,better_stack_mcp,DCR_OAUTH,,"DCR, already used by Composio",,Composio docs
+bettercontact,bettercontact,API_KEY,,No OAuth app needed,,Composio docs
+bexio,bexio,"OAUTH2,BEARER_TOKEN",bexio,Browser automation,no registration endpoint found (0 metadata documents),measured: no DCR; no known API
+bfl,bfl,API_KEY,,No OAuth app needed,,Composio docs
+bidsketch,bidsketch,API_KEY,,No OAuth app needed,,Composio docs
+big_data_cloud,big_data_cloud,API_KEY,,No OAuth app needed,,Composio docs
+bigdata_com_mcp,bigdata_com_mcp,API_KEY,,No OAuth app needed,,Composio docs
+bigmailer,bigmailer,API_KEY,,No OAuth app needed,,Composio docs
+bigml,bigml,API_KEY,,No OAuth app needed,,Composio docs
+bigpicture_io,bigpicture_io,API_KEY,,No OAuth app needed,,Composio docs
+bika,bika,API_KEY,,No OAuth app needed,,Composio docs
+billsby,billsby,API_KEY,,No OAuth app needed,,Composio docs
+bing_webmaster_tools,bing_webmaster_tools,API_KEY,,No OAuth app needed,,Composio docs
+bitbucket,Bitbucket,OAUTH2,Bitbucket,Browser automation,no registration endpoint found (0 metadata documents),measured: no DCR; no known API
+bitly,Bitly,"API_KEY,OAUTH2",Bitly,Browser automation,no registration endpoint found (0 metadata documents) | API key also supported,measured: no DCR; no known API
+bitquery,bitquery,API_KEY,,No OAuth app needed,,Composio docs
+bitwarden,Bitwarden,S2S_OAUTH2,Bitwarden,Browser automation,no registration endpoint found (0 metadata documents),measured: no DCR; no known API
+blackbaud,Blackbaud,OAUTH2,Blackbaud,Browser automation,no registration endpoint found (0 metadata documents),measured: no DCR; no known API
+blackboard,Blackboard,OAUTH2,Blackboard,Human / partner-gated,institution / partner,knowledge (unverified)
+bland_ai,bland_ai,API_KEY,,No OAuth app needed,,Composio docs
+blazemeter,blazemeter,BASIC,,No OAuth app needed,,Composio docs
+blitz_api,blitz_api,API_KEY,,No OAuth app needed,,Composio docs
+blocknative,blocknative,API_KEY,,No OAuth app needed,,Composio docs
+blooio,blooio,API_KEY,,No OAuth app needed,,Composio docs
+bluebarry,bluebarry,API_KEY,,No OAuth app needed,,Composio docs
+bluefox_email,bluefox_email,API_KEY,,No OAuth app needed,,Composio docs
+bluepillow,bluepillow,API_KEY,,No OAuth app needed,,Composio docs
+boldsign,Boldsign,OAUTH2,Boldsign,Browser automation,no registration endpoint found (3 metadata documents),measured: no DCR; no known API
+bolna,bolna,API_KEY,,No OAuth app needed,,Composio docs
+boloforms,boloforms,API_KEY,,No OAuth app needed,,Composio docs
+bolt_iot,bolt_iot,API_KEY,,No OAuth app needed,,Composio docs
+bonsai,bonsai,BASIC,,No OAuth app needed,,Composio docs
+bookingmood,bookingmood,API_KEY,,No OAuth app needed,,Composio docs
+booqable,booqable,API_KEY,,No OAuth app needed,,Composio docs
+borneo,Borneo,"API_KEY,OAUTH2",Borneo,Browser automation,no registration endpoint found (0 metadata documents) | API key also supported,measured: no DCR; no known API
+botbaba,botbaba,API_KEY,,No OAuth app needed,,Composio docs
+botdog,botdog,API_KEY,,No OAuth app needed,,Composio docs
+botmape,botmape,API_KEY,,No OAuth app needed,,Composio docs
+botpenguin,botpenguin,API_KEY,,No OAuth app needed,,Composio docs
+botpress,botpress,API_KEY,,No OAuth app needed,,Composio docs
+botsonic,botsonic,API_KEY,,No OAuth app needed,,Composio docs
+botstar,botstar,API_KEY,,No OAuth app needed,,Composio docs
+botster,botster,API_KEY,,No OAuth app needed,,Composio docs
+bouncer,bouncer,API_KEY,,No OAuth app needed,,Composio docs
+bouncify,bouncify,API_KEY,,No OAuth app needed,,Composio docs
+box,Box,OAUTH2,Box Developer Console,Browser automation,no registration endpoint found (4 metadata documents),measured: no DCR; no known API
+box_mcp,Box MCP,OAUTH2,Box Developer Console,Browser automation,no registration endpoint found (4 metadata documents),measured: no DCR; no known API
+boxhero,boxhero,API_KEY,,No OAuth app needed,,Composio docs
+brain_graph,brain_graph,API_KEY,,No OAuth app needed,,Composio docs
+braintrust,braintrust,API_KEY,,No OAuth app needed,,Composio docs
+brandfetch,brandfetch,API_KEY,,No OAuth app needed,,Composio docs
+brave_search,brave_search,API_KEY,,No OAuth app needed,,Composio docs
+braze,braze,API_KEY,,No OAuth app needed,,Composio docs
+bread_butter,bread_butter,API_KEY,,No OAuth app needed,,Composio docs
+breathehr,breathehr,API_KEY,,No OAuth app needed,,Composio docs
+breeze,breeze,API_KEY,,No OAuth app needed,,Composio docs
+breezy_hr,breezy_hr,API_KEY,,No OAuth app needed,,Composio docs
+brevo,Brevo,"API_KEY,OAUTH2",Brevo,Browser (DCR only on the MCP server),https://mcp.brevo.com/oauth/register | API key also supported,measured: MCP server registration_endpoint
+brex,Brex,"OAUTH2,API_KEY",Brex,Human / partner-gated,business account / partner | also advertises DCR at https://api.brex.com/v3/clients; API key also supported,knowledge (unverified)
+brightdata,brightdata,API_KEY,,No OAuth app needed,,Composio docs
+brilliant_directories,brilliant_directories,API_KEY,,No OAuth app needed,,Composio docs
+browseai,browseai,API_KEY,,No OAuth app needed,,Composio docs
+browser_tool,browser_tool,NO_AUTH,,No OAuth app needed,,Composio docs
+browser_use,browser_use,API_KEY,,No OAuth app needed,,Composio docs
+browseract,browseract,API_KEY,,No OAuth app needed,,Composio docs
+browserbase_mcp,browserbase_mcp,API_KEY,,No OAuth app needed,,Composio docs
+browserbase_tool,browserbase_tool,API_KEY,,No OAuth app needed,,Composio docs
+browserless,browserless,API_KEY,,No OAuth app needed,,Composio docs
+bsc_designer,bsc_designer,API_KEY,,No OAuth app needed,,Composio docs
+btcpay_server,btcpay_server,API_KEY,,No OAuth app needed,,Composio docs
+bubble,bubble,API_KEY,,No OAuth app needed,,Composio docs
+buffer,Buffer,OAUTH2,Buffer,DCR on the main OAuth server,https://auth.buffer.com/reg | MCP DCR at https://auth.buffer.com/reg,measured: registration_endpoint in public metadata
+bug_recorder,bug_recorder,API_KEY,,No OAuth app needed,,Composio docs
+bugbug,bugbug,API_KEY,,No OAuth app needed,,Composio docs
+bugherd,bugherd,API_KEY,,No OAuth app needed,,Composio docs
+bugsnag,bugsnag,API_KEY,,No OAuth app needed,,Composio docs
+builder_io,builder_io,API_KEY,,No OAuth app needed,,Composio docs
+buildkite,buildkite,API_KEY,,No OAuth app needed,,Composio docs
+builtwith,builtwith,API_KEY,,No OAuth app needed,,Composio docs
+bulk_email_checker,bulk_email_checker,API_KEY,,No OAuth app needed,,Composio docs
+bulkpublish,bulkpublish,API_KEY,,No OAuth app needed,,Composio docs
+bunnycdn,bunnycdn,API_KEY,,No OAuth app needed,,Composio docs
+byte_plus_ark,byte_plus_ark,API_KEY,,No OAuth app needed,,Composio docs
+byteforms,byteforms,API_KEY,,No OAuth app needed,,Composio docs
+cabinpanda,cabinpanda,API_KEY,,No OAuth app needed,,Composio docs
+cal,Cal,"API_KEY,OAUTH2",Cal,Browser (DCR only on the MCP server),https://mcp.cal.com/oauth/register | API key also supported,measured: MCP server registration_endpoint
+calendarhero,calendarhero,API_KEY,,No OAuth app needed,,Composio docs
+calendly,Calendly,OAUTH2,Calendly,DCR on the main OAuth server,https://calendly.com/oauth/register | MCP DCR at https://calendly.com/oauth/register,measured: registration_endpoint in public metadata
+calendly_mcp,calendly_mcp,DCR_OAUTH,,"DCR, already used by Composio",,Composio docs
+callback24,callback24,API_KEY,,No OAuth app needed,,Composio docs
+callerapi,callerapi,API_KEY,,No OAuth app needed,,Composio docs
+callingly,callingly,API_KEY,,No OAuth app needed,,Composio docs
+callonthego,callonthego,API_KEY,,No OAuth app needed,,Composio docs
+callpage,callpage,API_KEY,,No OAuth app needed,,Composio docs
+camb_ai,camb_ai,API_KEY,,No OAuth app needed,,Composio docs
+campaign_cleaner,campaign_cleaner,API_KEY,,No OAuth app needed,,Composio docs
+campayn,campayn,API_KEY,,No OAuth app needed,,Composio docs
+candid_mcp,candid_mcp,DCR_OAUTH,,"DCR, already used by Composio",,Composio docs
+canny,canny,API_KEY,,No OAuth app needed,,Composio docs
+canva,Canva,OAUTH2,Canva,Browser (DCR only on the MCP server),https://mcp.canva.com/register,measured: MCP server registration_endpoint
+canva_mcp,canva_mcp,DCR_OAUTH,,"DCR, already used by Composio",,Composio docs
+canvas,Canvas,"OAUTH2,API_KEY",Canvas,Human / partner-gated,admin of a Canvas instance | API key also supported,knowledge (unverified)
+capsolver,capsolver,API_KEY,,No OAuth app needed,,Composio docs
+capsule_crm,Capsule CRM,"OAUTH2,API_KEY",Capsule CRM,Browser automation,no registration endpoint found (6 metadata documents) | API key also supported,measured: no DCR; no known API
+captions,captions,API_KEY,,No OAuth app needed,,Composio docs
+capturekit,capturekit,API_KEY,,No OAuth app needed,,Composio docs
+carbon_voice_mcp,carbon_voice_mcp,DCR_OAUTH,,"DCR, already used by Composio",,Composio docs
+carbone,carbone,API_KEY,,No OAuth app needed,,Composio docs
+cardclan,cardclan,API_KEY,,No OAuth app needed,,Composio docs
+cardly,cardly,API_KEY,,No OAuth app needed,,Composio docs
+carsxe,carsxe,API_KEY,,No OAuth app needed,,Composio docs
+carta,Carta,"OAUTH2,S2S_OAUTH2",Carta,Human / partner-gated,partner programme,knowledge (unverified)
+cartesia,cartesia,API_KEY,,No OAuth app needed,,Composio docs
+cashfree_payments_mcp,cashfree_payments_mcp,DCR_OAUTH,,"DCR, already used by Composio",,Composio docs
+castingwords,castingwords,API_KEY,,No OAuth app needed,,Composio docs
+cats,cats,API_KEY,,No OAuth app needed,,Composio docs
+cdr_platform,cdr_platform,API_KEY,,No OAuth app needed,,Composio docs
+celigo,celigo,API_KEY,,No OAuth app needed,,Composio docs
+census_bureau,census_bureau,API_KEY,,No OAuth app needed,,Composio docs
+centralstationcrm,centralstationcrm,API_KEY,,No OAuth app needed,,Composio docs
+ceramic,ceramic,API_KEY,,No OAuth app needed,,Composio docs
+cert_seal,cert_seal,API_KEY,,No OAuth app needed,,Composio docs
+certifier,certifier,API_KEY,,No OAuth app needed,,Composio docs
+chameleon,chameleon,API_KEY,,No OAuth app needed,,Composio docs
+charla,charla,API_KEY,,No OAuth app needed,,Composio docs
+chartly,chartly,API_KEY,,No OAuth app needed,,Composio docs
+chartmogul,chartmogul,API_KEY,,No OAuth app needed,,Composio docs
+chaser,chaser,API_KEY,,No OAuth app needed,,Composio docs
+chatbotkit,chatbotkit,API_KEY,,No OAuth app needed,,Composio docs
+chatfai,chatfai,API_KEY,,No OAuth app needed,,Composio docs
+chatforma,chatforma,API_KEY,,No OAuth app needed,,Composio docs
+chatwork,chatwork,API_KEY,,No OAuth app needed,,Composio docs
+check_cherry,check_cherry,API_KEY,,No OAuth app needed,,Composio docs
+checkflow,checkflow,API_KEY,,No OAuth app needed,,Composio docs
+checkvist,checkvist,API_KEY,,No OAuth app needed,,Composio docs
+chmeetings,chmeetings,API_KEY,,No OAuth app needed,,Composio docs
+cincopa,cincopa,API_KEY,,No OAuth app needed,,Composio docs
+circleback_mcp,circleback_mcp,DCR_OAUTH,,"DCR, already used by Composio",,Composio docs
+circleci,circleci,API_KEY,,No OAuth app needed,,Composio docs
+claid_ai,claid_ai,API_KEY,,No OAuth app needed,,Composio docs
+clarify_mcp,clarify_mcp,DCR_OAUTH,,"DCR, already used by Composio",,Composio docs
+clarity_ai_mcp,clarity_ai_mcp,NO_AUTH,,No OAuth app needed,,Composio docs
+classmarker,classmarker,API_KEY,,No OAuth app needed,,Composio docs
+clay,clay,API_KEY,,No OAuth app needed,,Composio docs
+clay_mcp,clay_mcp,DCR_OAUTH,,"DCR, already used by Composio",,Composio docs
+clearout,clearout,API_KEY,,No OAuth app needed,,Composio docs
+cleverreach,CleverReach,OAUTH2,CleverReach,Browser automation,no registration endpoint found (0 metadata documents),measured: no DCR; no known API
+clickfunnels,ClickFunnels 2.0,"OAUTH2,API_KEY",ClickFunnels 2.0,DCR on the main OAuth server,https://accounts.myclickfunnels.com/oauth/register | MCP DCR at https://mcp.myclickfunnels.com/register; API key also supported,measured: registration_endpoint in public metadata
+clickhouse,clickhouse,BASIC,,No OAuth app needed,,Composio docs
+clickhouse_mcp,clickhouse_mcp,DCR_OAUTH,,"DCR, already used by Composio",,Composio docs
+clickmeeting,clickmeeting,API_KEY,,No OAuth app needed,,Composio docs
+clicksend,clicksend,BASIC,,No OAuth app needed,,Composio docs
+clickup,ClickUp,"OAUTH2,API_KEY",ClickUp,Browser (DCR only on the MCP server),https://mcp.clickup.com/oauth/register | API key also supported,measured: MCP server registration_endpoint
+clickup_mcp,clickup_mcp,DCR_OAUTH,,"DCR, already used by Composio",,Composio docs
+clientary,clientary,API_KEY,,No OAuth app needed,,Composio docs
+clio_manage,Clio Manage,OAUTH2,Clio Manage,Browser automation,no registration endpoint found (0 metadata documents),measured: no DCR; no known API
+clockify,Clockify,"API_KEY,OAUTH2",Clockify,Browser automation,no registration endpoint found (0 metadata documents) | API key also supported,measured: no DCR; no known API
+cloro,cloro,API_KEY,,No OAuth app needed,,Composio docs
+close,close,API_KEY,,No OAuth app needed,,Composio docs
+close_mcp,close_mcp,DCR_OAUTH,,"DCR, already used by Composio",,Composio docs
+cloud_66,Cloud 66,OAUTH2,Cloud 66,Browser automation,no registration endpoint found (0 metadata documents),measured: no DCR; no known API
+cloud_pdf,cloud_pdf,API_KEY,,No OAuth app needed,,Composio docs
+cloudcart,cloudcart,API_KEY,,No OAuth app needed,,Composio docs
+cloudconvert,cloudconvert,API_KEY,,No OAuth app needed,,Composio docs
+cloudflare,cloudflare,API_KEY,,No OAuth app needed,,Composio docs
+cloudflare_api_key,cloudflare_api_key,API_KEY,,No OAuth app needed,,Composio docs
+cloudflare_browser_rendering,cloudflare_browser_rendering,API_KEY,,No OAuth app needed,,Composio docs
+cloudflare_mcp,cloudflare_mcp,DCR_OAUTH,,"DCR, already used by Composio",,Composio docs
+cloudinary,cloudinary,API_KEY,,No OAuth app needed,,Composio docs
+cloudlayer,cloudlayer,API_KEY,,No OAuth app needed,,Composio docs
+cloudpress,cloudpress,API_KEY,,No OAuth app needed,,Composio docs
+cloudsmith,cloudsmith,API_KEY,,No OAuth app needed,,Composio docs
+clover,Clover,"OAUTH2,API_KEY",Clover,Browser automation,no registration endpoint found (0 metadata documents) | API key also supported,measured: no DCR; no known API
+clueso_mcp,clueso_mcp,DCR_OAUTH,,"DCR, already used by Composio",,Composio docs
+coassemble,coassemble,API_KEY,,No OAuth app needed,,Composio docs
+coda,coda,API_KEY,,No OAuth app needed,,Composio docs
+codacy,codacy,API_KEY,,No OAuth app needed,,Composio docs
+codemagic,codemagic,API_KEY,,No OAuth app needed,,Composio docs
+codereadr,codereadr,API_KEY,,No OAuth app needed,,Composio docs
+cody,cody,API_KEY,,No OAuth app needed,,Composio docs
+cohere,cohere,API_KEY,,No OAuth app needed,,Composio docs
+coinbase,coinbase,API_KEY,,No OAuth app needed,,Composio docs
+coinbase_agents_mcp,coinbase_agents_mcp,DCR_OAUTH,,"DCR, already used by Composio",,Composio docs
+coinbase_wallet_mcp,coinbase_wallet_mcp,DCR_OAUTH,,"DCR, already used by Composio",,Composio docs
+coingecko,coingecko,API_KEY,,No OAuth app needed,,Composio docs
+coinmarketcal,coinmarketcal,API_KEY,,No OAuth app needed,,Composio docs
+coinmarketcap,coinmarketcap,API_KEY,,No OAuth app needed,,Composio docs
+coinranking,coinranking,API_KEY,,No OAuth app needed,,Composio docs
+college_football_data,college_football_data,API_KEY,,No OAuth app needed,,Composio docs
+cometapi,cometapi,API_KEY,,No OAuth app needed,,Composio docs
+commcare,commcare,API_KEY,,No OAuth app needed,,Composio docs
+commerce_layer,Commerce Layer,S2S_OAUTH2,Commerce Layer,Browser automation,no registration endpoint found (0 metadata documents),measured: no DCR; no known API
+common_room_mcp,common_room_mcp,DCR_OAUTH,,"DCR, already used by Composio",,Composio docs
+company_url_finder,company_url_finder,API_KEY,,No OAuth app needed,,Composio docs
+companycam,companycam,API_KEY,,No OAuth app needed,,Composio docs
+companyenrich,companyenrich,API_KEY,,No OAuth app needed,,Composio docs
+compdf,compdf,API_KEY,,No OAuth app needed,,Composio docs
+composio,composio,NO_AUTH,,No OAuth app needed,,Composio docs
+composio_search,composio_search,NO_AUTH,,No OAuth app needed,,Composio docs
+conductor,conductor,API_KEY,,No OAuth app needed,,Composio docs
+configcat,configcat,API_KEY,,No OAuth app needed,,Composio docs
+confluence,Confluence,"OAUTH2,S2S_OAUTH2,API_KEY",Atlassian Developer Console,DCR on the main OAuth server,https://auth.atlassian.com/oidc/register | MCP DCR at https://mcp.atlassian.com/v1/register; API key also supported,measured: registration_endpoint in public metadata
+connecteam,connecteam,API_KEY,,No OAuth app needed,,Composio docs
+consensus,consensus,API_KEY,,No OAuth app needed,,Composio docs
+consensus_mcp,consensus_mcp,DCR_OAUTH,,"DCR, already used by Composio",,Composio docs
+constant_contact,Constant Contact,OAUTH2,Constant Contact,Browser automation,no registration endpoint found (0 metadata documents),measured: no DCR; no known API
+contactout,contactout,API_KEY,,No OAuth app needed,,Composio docs
+contacts_plus,Contacts+,OAUTH2,Contacts+,Browser (DCR only on the MCP server),https://mcp.contactsplus.com/register,measured: MCP server registration_endpoint
+content_studio,content_studio,API_KEY,,No OAuth app needed,,Composio docs
+contentdrips,contentdrips,API_KEY,,No OAuth app needed,,Composio docs
+contentful,Contentful,"OAUTH2,API_KEY",Contentful,Browser (DCR only on the MCP server),https://mcp.contentful.com/register | API key also supported,measured: MCP server registration_endpoint
+contentful_graphql,contentful_graphql,API_KEY,,No OAuth app needed,,Composio docs
+contentsquare_mcp,contentsquare_mcp,DCR_OAUTH,,"DCR, already used by Composio",,Composio docs
+context7_mcp,context7_mcp,API_KEY,,No OAuth app needed,,Composio docs
+context_dev,context_dev,API_KEY,,No OAuth app needed,,Composio docs
+contractbook,contractbook,API_KEY,,No OAuth app needed,,Composio docs
+control_d,control_d,API_KEY,,No OAuth app needed,,Composio docs
+conversion_tools,conversion_tools,API_KEY,,No OAuth app needed,,Composio docs
+convertapi,convertapi,API_KEY,,No OAuth app needed,,Composio docs
+convex,convex,"API_KEY,BEARER_TOKEN",,No OAuth app needed,,Composio docs
+conveyor,conveyor,API_KEY,,No OAuth app needed,,Composio docs
+convolo_ai,convolo_ai,API_KEY,,No OAuth app needed,,Composio docs
+copper,copper,API_KEY,,No OAuth app needed,,Composio docs
+copyleaks,copyleaks,API_KEY,,No OAuth app needed,,Composio docs
+coresignal,coresignal,API_KEY,,No OAuth app needed,,Composio docs
+corrently,corrently,API_KEY,,No OAuth app needed,,Composio docs
+countdown_api,countdown_api,API_KEY,,No OAuth app needed,,Composio docs
+coupa,Coupa,OAUTH2,Coupa,Human / partner-gated,customer instance,knowledge (unverified)
+cradl_ai,Cradl AI,S2S_OAUTH2,Cradl AI,Browser automation,no registration endpoint found (2 metadata documents),measured: no DCR; no known API
+craft_mcp,craft_mcp,DCR_OAUTH,,"DCR, already used by Composio",,Composio docs
+craftmypdf,craftmypdf,API_KEY,,No OAuth app needed,,Composio docs
+crawlbase,crawlbase,API_KEY,,No OAuth app needed,,Composio docs
+creatomate,creatomate,API_KEY,,No OAuth app needed,,Composio docs
+creem,creem,API_KEY,,No OAuth app needed,,Composio docs
+crew_ai,crew_ai,API_KEY,,No OAuth app needed,,Composio docs
+crisp,crisp,API_KEY,,No OAuth app needed,,Composio docs
+cronfree_time_scheduler,cronfree_time_scheduler,API_KEY,,No OAuth app needed,,Composio docs
+cronly,cronly,API_KEY,,No OAuth app needed,,Composio docs
+crowdin,Crowdin,"API_KEY,OAUTH2",Crowdin,Browser (DCR only on the MCP server),https://mcp.crowdin.com/register | API key also supported,measured: MCP server registration_endpoint
+crowterminal,crowterminal,"API_KEY,BASIC",,No OAuth app needed,,Composio docs
+crunchbase,crunchbase,API_KEY,,No OAuth app needed,,Composio docs
+crustdata,crustdata,API_KEY,,No OAuth app needed,,Composio docs
+csvbox,csvbox,API_KEY,,No OAuth app needed,,Composio docs
+cults,cults,API_KEY,,No OAuth app needed,,Composio docs
+curated,curated,API_KEY,,No OAuth app needed,,Composio docs
+currencyscoop,currencyscoop,API_KEY,,No OAuth app needed,,Composio docs
+currents_api,currents_api,API_KEY,,No OAuth app needed,,Composio docs
+cursor,cursor,API_KEY,,No OAuth app needed,,Composio docs
+customerio,customerio,API_KEY,,No OAuth app needed,,Composio docs
+customerio_mcp,customerio_mcp,DCR_OAUTH,,"DCR, already used by Composio",,Composio docs
+customgpt,customgpt,API_KEY,,No OAuth app needed,,Composio docs
+customjs,customjs,API_KEY,,No OAuth app needed,,Composio docs
+cutt_ly,cutt_ly,API_KEY,,No OAuth app needed,,Composio docs
+cve_now_mcp,cve_now_mcp,NO_AUTH,,No OAuth app needed,,Composio docs
+d2lbrightspace,D2L Brightspace,OAUTH2,D2L Brightspace,Human / partner-gated,institution instance,knowledge (unverified)
+dadata_ru,dadata_ru,API_KEY,,No OAuth app needed,,Composio docs
+daffy,daffy,API_KEY,,No OAuth app needed,,Composio docs
+daily,daily,API_KEY,,No OAuth app needed,,Composio docs
+dailybot,dailybot,API_KEY,,No OAuth app needed,,Composio docs
+dart,Dart,"OAUTH2,API_KEY",Dart,Browser automation,no registration endpoint found (4 metadata documents) | API key also supported,measured: no DCR; no known API
+data247,data247,API_KEY,,No OAuth app needed,,Composio docs
+databox,databox,API_KEY,,No OAuth app needed,,Composio docs
+databricks,Databricks,"OAUTH2,API_KEY",Databricks,Management API,Account API: custom OAuth app integrations | API key also supported,knowledge (vendor docs)
+datadog,Datadog,"OAUTH2,API_KEY,BEARER_TOKEN",Datadog,Browser (DCR only on the MCP server),https://app.datadoghq.com/api/v2/oauth2/register | API key also supported,measured: MCP server registration_endpoint
+datadog_mcp,datadog_mcp,DCR_OAUTH,,"DCR, already used by Composio",,Composio docs
+dataforseo,dataforseo,BASIC,,No OAuth app needed,,Composio docs
+datagma,datagma,API_KEY,,No OAuth app needed,,Composio docs
+datarobot,datarobot,API_KEY,,No OAuth app needed,,Composio docs
+datascope,datascope,API_KEY,,No OAuth app needed,,Composio docs
+daytona,Daytona,"API_KEY,OAUTH2",Daytona,Browser automation,no registration endpoint found (2 metadata documents) | API key also supported,measured: no DCR; no known API
+dbt_cloud,dbt Cloud,"BEARER_TOKEN,OAUTH2",dbt Cloud,Browser automation,no registration endpoint found (2 metadata documents),measured: no DCR; no known API
+deadline_funnel,deadline_funnel,API_KEY,,No OAuth app needed,,Composio docs
+debitura,debitura,API_KEY,,No OAuth app needed,,Composio docs
+debounce,debounce,API_KEY,,No OAuth app needed,,Composio docs
+deel,Deel,OAUTH2,Deel,Human / partner-gated,partner programme,knowledge (unverified)
+deepgram,deepgram,API_KEY,,No OAuth app needed,,Composio docs
+deepimage,deepimage,API_KEY,,No OAuth app needed,,Composio docs
+deepl_mcp,deepl_mcp,DCR_OAUTH,,"DCR, already used by Composio",,Composio docs
+deepseek,deepseek,API_KEY,,No OAuth app needed,,Composio docs
+deepwiki_mcp,deepwiki_mcp,NO_AUTH,,No OAuth app needed,,Composio docs
+delighted,delighted,API_KEY,,No OAuth app needed,,Composio docs
+demio,demio,API_KEY,,No OAuth app needed,,Composio docs
+deployhq,deployhq,BASIC,,No OAuth app needed,,Composio docs
+deputy,Deputy,OAUTH2,Deputy,Browser automation,no registration endpoint found (0 metadata documents),measured: no DCR; no known API
+descript_mcp,descript_mcp,DCR_OAUTH,,"DCR, already used by Composio",,Composio docs
+desktime,desktime,API_KEY,,No OAuth app needed,,Composio docs
+detrack,detrack,API_KEY,,No OAuth app needed,,Composio docs
+dev_cycle,DevCycle,S2S_OAUTH2,DevCycle,Browser (DCR only on the MCP server),https://mcp.devcycle.com/oauth/register,measured: MCP server registration_endpoint
+devin_mcp,devin_mcp,API_KEY,,No OAuth app needed,,Composio docs
+devolens,devolens,API_KEY,,No OAuth app needed,,Composio docs
+devto,devto,API_KEY,,No OAuth app needed,,Composio docs
+dialmycalls,dialmycalls,API_KEY,,No OAuth app needed,,Composio docs
+dialpad,Dialpad,"OAUTH2,API_KEY",Dialpad,DCR on the main OAuth server,https://dialpad.com/oauth2/register | MCP DCR at https://dialpad.com/oauth2/register; API key also supported,measured: registration_endpoint in public metadata
+dice_mcp,dice_mcp,NO_AUTH,,No OAuth app needed,,Composio docs
+dictionary_api,dictionary_api,API_KEY,,No OAuth app needed,,Composio docs
+didit,didit,API_KEY,,No OAuth app needed,,Composio docs
+diffbot,diffbot,API_KEY,,No OAuth app needed,,Composio docs
+dify,dify,API_KEY,,No OAuth app needed,,Composio docs
+digicert,digicert,API_KEY,,No OAuth app needed,,Composio docs
+digital_humani,digital_humani,API_KEY,,No OAuth app needed,,Composio docs
+digital_ocean,DigitalOcean,"API_KEY,OAUTH2",DigitalOcean,Browser (DCR only on the MCP server),https://cloud.digitalocean.com/v1/oauth/register | API key also supported,measured: MCP server registration_endpoint
+directiq,directiq,API_KEY,,No OAuth app needed,,Composio docs
+discord,Discord,OAUTH2,Discord Developer Portal,Browser automation,no registration endpoint found (7 metadata documents),measured: no DCR; no known API
+discordbot,Discord Bot,OAUTH2,Discord Developer Portal,Browser automation,no registration endpoint found (7 metadata documents),measured: no DCR; no known API
+disqus,Disqus,OAUTH2,Disqus,Browser automation,no registration endpoint found (0 metadata documents),measured: no DCR; no known API
+dnsfilter,dnsfilter,API_KEY,,No OAuth app needed,,Composio docs
+dock_certs,dock_certs,API_KEY,,No OAuth app needed,,Composio docs
+docker_hub,docker_hub,API_KEY,,No OAuth app needed,,Composio docs
+docmosis,docmosis,API_KEY,,No OAuth app needed,,Composio docs
+docnify,docnify,API_KEY,,No OAuth app needed,,Composio docs
+docparser,docparser,API_KEY,,No OAuth app needed,,Composio docs
+docraptor,docraptor,API_KEY,,No OAuth app needed,,Composio docs
+docsautomator,docsautomator,API_KEY,,No OAuth app needed,,Composio docs
+docsbot_ai,docsbot_ai,API_KEY,,No OAuth app needed,,Composio docs
+docsumo,docsumo,API_KEY,,No OAuth app needed,,Composio docs
+docugenerate,docugenerate,API_KEY,,No OAuth app needed,,Composio docs
+documenso,documenso,API_KEY,,No OAuth app needed,,Composio docs
+documentero,documentero,API_KEY,,No OAuth app needed,,Composio docs
+documint,documint,API_KEY,,No OAuth app needed,,Composio docs
+docupilot,docupilot,API_KEY,,No OAuth app needed,,Composio docs
+docupipe,docupipe,API_KEY,,No OAuth app needed,,Composio docs
+docupost,docupost,API_KEY,,No OAuth app needed,,Composio docs
+docupotion,docupotion,API_KEY,,No OAuth app needed,,Composio docs
+docuseal,docuseal,API_KEY,,No OAuth app needed,,Composio docs
+docusign,DocuSign,OAUTH2,DocuSign,Browser automation,no registration endpoint found (2 metadata documents),measured: no DCR; no known API
+domotz_mcp,domotz_mcp,API_KEY,,No OAuth app needed,,Composio docs
+donately,donately,API_KEY,,No OAuth app needed,,Composio docs
+doppler,doppler,API_KEY,,No OAuth app needed,,Composio docs
+doppler_marketing_automation,doppler_marketing_automation,API_KEY,,No OAuth app needed,,Composio docs
+doppler_secretops,doppler_secretops,API_KEY,,No OAuth app needed,,Composio docs
+dotsimple,dotsimple,API_KEY,,No OAuth app needed,,Composio docs
+dovetail,dovetail,API_KEY,,No OAuth app needed,,Composio docs
+dpd2,dpd2,API_KEY,,No OAuth app needed,,Composio docs
+draftable,draftable,API_KEY,,No OAuth app needed,,Composio docs
+dreamstudio,dreamstudio,API_KEY,,No OAuth app needed,,Composio docs
+dribbble,Dribbble,OAUTH2,Dribbble,Browser automation,no registration endpoint found (0 metadata documents),measured: no DCR; no known API
+dripcel,dripcel,API_KEY,,No OAuth app needed,,Composio docs
+dromo,dromo,API_KEY,,No OAuth app needed,,Composio docs
+drop_to_cdn,drop_to_cdn,API_KEY,,No OAuth app needed,,Composio docs
+dropbox,Dropbox,OAUTH2,Dropbox App Console,DCR on the main OAuth server,https://www.dropbox.com/oauth2/register | MCP DCR at https://www.dropbox.com/oauth2/register,measured: registration_endpoint in public metadata
+dropbox_sign,Dropbox Sign,"API_KEY,OAUTH2",Dropbox Sign,Management API,API: POST /v3/api_app (creates the OAuth app) | API key also supported,knowledge (vendor docs)
+dropcontact,dropcontact,API_KEY,,No OAuth app needed,,Composio docs
+dropleads,dropleads,API_KEY,,No OAuth app needed,,Composio docs
+dub,Dub,"API_KEY,OAUTH2",Dub,Browser automation,no registration endpoint found (0 metadata documents) | API key also supported,measured: no DCR; no known API
+dungeon_fighter_online,dungeon_fighter_online,API_KEY,,No OAuth app needed,,Composio docs
+dynamic_mockups,dynamic_mockups,API_KEY,,No OAuth app needed,,Composio docs
+dynamics365,Dynamics 365,OAUTH2,Microsoft Entra ID (app registration),Management API,"Microsoft Graph: POST /applications, then addPassword for a client secret",knowledge (vendor docs)
+dynapictures,dynapictures,API_KEY,,No OAuth app needed,,Composio docs
+dynatrace,Dynatrace,OAUTH2,Dynatrace,Browser automation,no registration endpoint found (0 metadata documents),measured: no DCR; no known API
+dynosend,dynosend,API_KEY,,No OAuth app needed,,Composio docs
+e2b,e2b,API_KEY,,No OAuth app needed,,Composio docs
+eagle_doc,eagle_doc,API_KEY,,No OAuth app needed,,Composio docs
+easy_email_verification,easy_email_verification,API_KEY,,No OAuth app needed,,Composio docs
+ebay,eBay,S2S_OAUTH2,eBay,Browser automation,no registration endpoint found (0 metadata documents),measured: no DCR; no known API
+echtpost,echtpost,API_KEY,,No OAuth app needed,,Composio docs
+ecologi,ecologi,API_KEY,,No OAuth app needed,,Composio docs
+eden_ai,eden_ai,API_KEY,,No OAuth app needed,,Composio docs
+edworking,edworking,API_KEY,,No OAuth app needed,,Composio docs
+egnyte,Egnyte,OAUTH2,Egnyte,Browser automation,no registration endpoint found (0 metadata documents),measured: no DCR; no known API
+elai,elai,API_KEY,,No OAuth app needed,,Composio docs
+elastic_email,elastic_email,API_KEY,,No OAuth app needed,,Composio docs
+elasticsearch,elasticsearch,"API_KEY,BASIC",,No OAuth app needed,,Composio docs
+eledo,eledo,API_KEY,,No OAuth app needed,,Composio docs
+elevenlabs,elevenlabs,API_KEY,,No OAuth app needed,,Composio docs
+elevenreader,elevenreader,API_KEY,,No OAuth app needed,,Composio docs
+elorus,elorus,API_KEY,,No OAuth app needed,,Composio docs
+emailable,emailable,API_KEY,,No OAuth app needed,,Composio docs
+emaillistverify,emaillistverify,API_KEY,,No OAuth app needed,,Composio docs
+emailoctopus,emailoctopus,API_KEY,,No OAuth app needed,,Composio docs
+emailvalidation,emailvalidation,API_KEY,,No OAuth app needed,,Composio docs
+emelia,emelia,API_KEY,,No OAuth app needed,,Composio docs
+encodian,encodian,API_KEY,,No OAuth app needed,,Composio docs
+endorsal,endorsal,API_KEY,,No OAuth app needed,,Composio docs
+enforcedflow,enforcedflow,API_KEY,,No OAuth app needed,,Composio docs
+engage,engage,BASIC,,No OAuth app needed,,Composio docs
+engage_platform,engage_platform,API_KEY,,No OAuth app needed,,Composio docs
+enginemailer,enginemailer,API_KEY,,No OAuth app needed,,Composio docs
+enigma,enigma,API_KEY,,No OAuth app needed,,Composio docs
+enrich,enrich,API_KEY,,No OAuth app needed,,Composio docs
+enrich_layer,enrich_layer,API_KEY,,No OAuth app needed,,Composio docs
+entelligence,entelligence,NO_AUTH,,No OAuth app needed,,Composio docs
+eodhd_apis,eodhd_apis,API_KEY,,No OAuth app needed,,Composio docs
+epic_games,Epic Games,OAUTH2,Epic Games,Browser automation,no registration endpoint found (0 metadata documents),measured: no DCR; no known API
+era_context_mcp,era_context_mcp,DCR_OAUTH,,"DCR, already used by Composio",,Composio docs
+eranol,eranol,API_KEY,,No OAuth app needed,,Composio docs
+eraser_mcp,eraser_mcp,DCR_OAUTH,,"DCR, already used by Composio",,Composio docs
+erpnext,erpnext,API_KEY,,No OAuth app needed,,Composio docs
+esignatures,esignatures,API_KEY,,No OAuth app needed,,Composio docs
+esignatures_io,esignatures_io,API_KEY,,No OAuth app needed,,Composio docs
+espocrm,espocrm,API_KEY,,No OAuth app needed,,Composio docs
+esputnik,esputnik,API_KEY,,No OAuth app needed,,Composio docs
+etermin,etermin,API_KEY,,No OAuth app needed,,Composio docs
+etherscan,etherscan,API_KEY,,No OAuth app needed,,Composio docs
+evenium,evenium,API_KEY,,No OAuth app needed,,Composio docs
+eventbrite,Eventbrite,OAUTH2,Eventbrite,Browser automation,no registration endpoint found (0 metadata documents),measured: no DCR; no known API
+eventee,eventee,API_KEY,,No OAuth app needed,,Composio docs
+eventzilla,eventzilla,API_KEY,,No OAuth app needed,,Composio docs
+everhour,everhour,API_KEY,,No OAuth app needed,,Composio docs
+eversign,eversign,API_KEY,,No OAuth app needed,,Composio docs
+exa,exa,"API_KEY,BEARER_TOKEN",,No OAuth app needed,,Composio docs
+excalidraw_mcp,excalidraw_mcp,NO_AUTH,,No OAuth app needed,,Composio docs
+excel,Excel,"OAUTH2,S2S_OAUTH2",Microsoft Entra ID (app registration),Management API,"Microsoft Graph: POST /applications, then addPassword for a client secret",knowledge (vendor docs)
+exceptionless,exceptionless,API_KEY,,No OAuth app needed,,Composio docs
+exist,Exist,OAUTH2,Exist,Browser automation,no registration endpoint found (0 metadata documents),measured: no DCR; no known API
+explorium,explorium,API_KEY,,No OAuth app needed,,Composio docs
+explorium_mcp,explorium_mcp,API_KEY,,No OAuth app needed,,Composio docs
+expofp,expofp,API_KEY,,No OAuth app needed,,Composio docs
+extracta_ai,extracta_ai,API_KEY,,No OAuth app needed,,Composio docs
+extrovert,extrovert,API_KEY,,No OAuth app needed,,Composio docs
+facebook,Facebook,OAUTH2,Meta for Developers,Browser automation,no registration endpoint found (3 metadata documents),measured: no DCR; no known API
+faceup,faceup,API_KEY,,No OAuth app needed,,Composio docs
+fairing,fairing,API_KEY,,No OAuth app needed,,Composio docs
+fal_ai,fal_ai,API_KEY,,No OAuth app needed,,Composio docs
+faraday,faraday,API_KEY,,No OAuth app needed,,Composio docs
+fathom,Fathom,"OAUTH2,API_KEY",Fathom,Browser (DCR only on the MCP server),https://fathom.video/mcp/oauth/register | API key also supported,measured: MCP server registration_endpoint
+feathery,feathery,API_KEY,,No OAuth app needed,,Composio docs
+feedbear,feedbear,API_KEY,,No OAuth app needed,,Composio docs
+fellow_ai_mcp,fellow_ai_mcp,DCR_OAUTH,,"DCR, already used by Composio",,Composio docs
+felt,felt,API_KEY,,No OAuth app needed,,Composio docs
+fiber,fiber,API_KEY,,No OAuth app needed,,Composio docs
+fibery,fibery,API_KEY,,No OAuth app needed,,Composio docs
+fidel_api,fidel_api,API_KEY,,No OAuth app needed,,Composio docs
+figma,Figma,"OAUTH2,API_KEY",Figma,Browser (DCR only on the MCP server),https://api.figma.com/v1/oauth/mcp/register | API key also supported,measured: MCP server registration_endpoint
+files_com,files_com,API_KEY,,No OAuth app needed,,Composio docs
+filetopdf,filetopdf,API_KEY,,No OAuth app needed,,Composio docs
+fillout_forms,fillout_forms,API_KEY,,No OAuth app needed,,Composio docs
+finage,finage,API_KEY,,No OAuth app needed,,Composio docs
+financial_datasets_ai,financial_datasets_ai,API_KEY,,No OAuth app needed,,Composio docs
+financial_datasets_ai_mcp,financial_datasets_ai_mcp,DCR_OAUTH,,"DCR, already used by Composio",,Composio docs
+findymail,findymail,API_KEY,,No OAuth app needed,,Composio docs
+finerworks,finerworks,API_KEY,,No OAuth app needed,,Composio docs
+fingertip,fingertip,API_KEY,,No OAuth app needed,,Composio docs
+finlight,finlight,API_KEY,,No OAuth app needed,,Composio docs
+finmei,finmei,API_KEY,,No OAuth app needed,,Composio docs
+finmo,finmo,API_KEY,,No OAuth app needed,,Composio docs
+finnhub,finnhub,API_KEY,,No OAuth app needed,,Composio docs
+finviz,finviz,API_KEY,,No OAuth app needed,,Composio docs
+firebase,firebase,API_KEY,,No OAuth app needed,,Composio docs
+fireberry,fireberry,API_KEY,,No OAuth app needed,,Composio docs
+firecrawl,firecrawl,API_KEY,,No OAuth app needed,,Composio docs
+fireflies,fireflies,API_KEY,,No OAuth app needed,,Composio docs
+fireworks_ai,fireworks_ai,API_KEY,,No OAuth app needed,,Composio docs
+firmable,firmable,API_KEY,,No OAuth app needed,,Composio docs
+firmao,firmao,API_KEY,,No OAuth app needed,,Composio docs
+fish_audio,fish_audio,API_KEY,,No OAuth app needed,,Composio docs
+fixer,fixer,API_KEY,,No OAuth app needed,,Composio docs
+fixer_io,fixer_io,API_KEY,,No OAuth app needed,,Composio docs
+flatfile,flatfile,API_KEY,,No OAuth app needed,,Composio docs
+fleetio,fleetio,API_KEY,,No OAuth app needed,,Composio docs
+flexisign,flexisign,API_KEY,,No OAuth app needed,,Composio docs
+float,float,API_KEY,,No OAuth app needed,,Composio docs
+flotiq,flotiq,API_KEY,,No OAuth app needed,,Composio docs
+flowiseai,flowiseai,API_KEY,,No OAuth app needed,,Composio docs
+flutterwave,flutterwave,API_KEY,,No OAuth app needed,,Composio docs
+fluxguard,fluxguard,API_KEY,,No OAuth app needed,,Composio docs
+fly,fly,API_KEY,,No OAuth app needed,,Composio docs
+folk,folk,API_KEY,,No OAuth app needed,,Composio docs
+follow_up_boss,Follow Up Boss,"API_KEY,OAUTH2",Follow Up Boss,Browser automation,no registration endpoint found (2 metadata documents) | API key also supported,measured: no DCR; no known API
+fomo,fomo,API_KEY,,No OAuth app needed,,Composio docs
+forcemanager,forcemanager,API_KEY,,No OAuth app needed,,Composio docs
+formbricks,formbricks,API_KEY,,No OAuth app needed,,Composio docs
+formcarry,formcarry,API_KEY,,No OAuth app needed,,Composio docs
+formcrafts,formcrafts,API_KEY,,No OAuth app needed,,Composio docs
+formdesk,formdesk,API_KEY,,No OAuth app needed,,Composio docs
+formilla,formilla,API_KEY,,No OAuth app needed,,Composio docs
+formsite,formsite,API_KEY,,No OAuth app needed,,Composio docs
+foursquare,foursquare,API_KEY,,No OAuth app needed,,Composio docs
+frame_io_v4,Frame.io V4,OAUTH2,Frame.io V4,Browser (DCR only on the MCP server),https://mcp.frame.io/register,measured: MCP server registration_endpoint
+framer,framer,API_KEY,,No OAuth app needed,,Composio docs
+fraudlabs_pro,fraudlabs_pro,API_KEY,,No OAuth app needed,,Composio docs
+freeagent,Freeagent,OAUTH2,Freeagent,Browser automation,no registration endpoint found (1 metadata documents),measured: no DCR; no known API
+freee,freee,OAUTH2,freee,Browser (DCR only on the MCP server),https://mcp.freee.co.jp/register,measured: MCP server registration_endpoint
+freshbooks,FreshBooks,OAUTH2,FreshBooks,DCR on the main OAuth server,https://auth.freshbooks.com/service/auth/oauth/registration,measured: registration_endpoint in public metadata
+freshdesk,freshdesk,API_KEY,,No OAuth app needed,,Composio docs
+freshsales,Freshsales,"API_KEY,OAUTH2",Freshsales,Browser automation,no registration endpoint found (0 metadata documents) | API key also supported,measured: no DCR; no known API
+freshservice,freshservice,API_KEY,,No OAuth app needed,,Composio docs
+front,Front,"API_KEY,OAUTH2",Front,Browser automation,no registration endpoint found (4 metadata documents) | API key also supported,measured: no DCR; no known API
+fullenrich,fullenrich,API_KEY,,No OAuth app needed,,Composio docs
+fullstory,fullstory,API_KEY,,No OAuth app needed,,Composio docs
+fuseai,fuseai,API_KEY,,No OAuth app needed,,Composio docs
+fuseai_mcp,fuseai_mcp,DCR_OAUTH,,"DCR, already used by Composio",,Composio docs
+fusedesk,fusedesk,API_KEY,,No OAuth app needed,,Composio docs
+futureagi,futureagi,API_KEY,,No OAuth app needed,,Composio docs
+gagelist,Gagelist,S2S_OAUTH2,Gagelist,Browser automation,no registration endpoint found (2 metadata documents),measured: no DCR; no known API
+gamma,gamma,API_KEY,,No OAuth app needed,,Composio docs
+gan_ai,gan_ai,API_KEY,,No OAuth app needed,,Composio docs
+gatherup,gatherup,API_KEY,,No OAuth app needed,,Composio docs
+geekflare,geekflare,API_KEY,,No OAuth app needed,,Composio docs
+gelato,gelato,API_KEY,,No OAuth app needed,,Composio docs
+gemini,gemini,"NO_AUTH,API_KEY",,No OAuth app needed,,Composio docs
+gender_api,gender_api,API_KEY,,No OAuth app needed,,Composio docs
+genderapi_io,genderapi_io,API_KEY,,No OAuth app needed,,Composio docs
+genderize,genderize,API_KEY,,No OAuth app needed,,Composio docs
+geoapify,geoapify,API_KEY,,No OAuth app needed,,Composio docs
+geocodio,geocodio,API_KEY,,No OAuth app needed,,Composio docs
+geokeo,geokeo,API_KEY,,No OAuth app needed,,Composio docs
+get_transcribe,get_transcribe,API_KEY,,No OAuth app needed,,Composio docs
+getanyapi,getanyapi,API_KEY,,No OAuth app needed,,Composio docs
+getform,getform,API_KEY,,No OAuth app needed,,Composio docs
+getprospect,getprospect,API_KEY,,No OAuth app needed,,Composio docs
+getresponse,GetResponse,"API_KEY,OAUTH2",GetResponse,Browser automation,no registration endpoint found (3 metadata documents) | API key also supported,measured: no DCR; no known API
+gift_up,gift_up,API_KEY,,No OAuth app needed,,Composio docs
+gigasheet,gigasheet,API_KEY,,No OAuth app needed,,Composio docs
+giphy,giphy,API_KEY,,No OAuth app needed,,Composio docs
+gist,gist,API_KEY,,No OAuth app needed,,Composio docs
+gitea,gitea,API_KEY,,No OAuth app needed,,Composio docs
+github,GitHub,OAUTH2,GitHub,Manifest + one click,"GitHub App manifest flow: one click, then POST /app-manifests/{code}/conversions returns client ID, secret and key",knowledge (vendor docs)
+github_mcp,github_mcp,API_KEY,,No OAuth app needed,,Composio docs
+gitlab,GitLab,"OAUTH2,API_KEY",GitLab,DCR on the main OAuth server,https://gitlab.com/oauth/register | API key also supported,measured: registration_endpoint in public metadata
+givebutter,givebutter,API_KEY,,No OAuth app needed,,Composio docs
+gladia,gladia,API_KEY,,No OAuth app needed,,Composio docs
+glasp,glasp,API_KEY,,No OAuth app needed,,Composio docs
+gleap,gleap,API_KEY,,No OAuth app needed,,Composio docs
+gleif,gleif,NO_AUTH,,No OAuth app needed,,Composio docs
+glen_mcp,glen_mcp,DCR_OAUTH,,"DCR, already used by Composio",,Composio docs
+glide_mcp,glide_mcp,DCR_OAUTH,,"DCR, already used by Composio",,Composio docs
+globalping,globalping,API_KEY,,No OAuth app needed,,Composio docs
+gmail,Gmail,OAUTH2,Google Cloud (OAuth client),Browser automation,no registration endpoint found (2 metadata documents),measured: no DCR; no known API
+go_table,go_table,API_KEY,,No OAuth app needed,,Composio docs
+go_to_training,GoTo Training,OAUTH2,GoTo Training,Browser automation,no registration endpoint found (1 metadata documents),measured: no DCR; no known API
+gocardless_mcp,gocardless_mcp,DCR_OAUTH,,"DCR, already used by Composio",,Composio docs
+godaddy_mcp,godaddy_mcp,NO_AUTH,,No OAuth app needed,,Composio docs
+godial,godial,API_KEY,,No OAuth app needed,,Composio docs
+gofile,gofile,API_KEY,,No OAuth app needed,,Composio docs
+gong,Gong,"BASIC,OAUTH2",Gong,Human / partner-gated,customer account | MCP DCR at https://app.gong.io/oauth2/register,knowledge (unverified)
+goodapi_plant_trees,goodapi_plant_trees,API_KEY,,No OAuth app needed,,Composio docs
+goodbits,goodbits,API_KEY,,No OAuth app needed,,Composio docs
+goody,goody,API_KEY,,No OAuth app needed,,Composio docs
+google_address_validation,google_address_validation,API_KEY,,No OAuth app needed,,Composio docs
+google_admin,Google Admin,OAUTH2,Google Cloud (OAuth client),Browser automation,no registration endpoint found (2 metadata documents),measured: no DCR; no known API
+google_adsense,Google AdSense,OAUTH2,Google Cloud (OAuth client),Browser automation,no registration endpoint found (2 metadata documents),measured: no DCR; no known API
+google_analytics,Google Analytics,OAUTH2,Google Cloud (OAuth client),Browser automation,no registration endpoint found (2 metadata documents),measured: no DCR; no known API
+google_business_profile,Google Business Profile,OAUTH2,Google Cloud (OAuth client),Browser automation,no registration endpoint found (2 metadata documents),measured: no DCR; no known API
+google_chat,Google Chat,OAUTH2,Google Cloud (OAuth client),Browser automation,no registration endpoint found (2 metadata documents),measured: no DCR; no known API
+google_classroom,Google Classroom,OAUTH2,Google Cloud (OAuth client),Browser automation,no registration endpoint found (2 metadata documents),measured: no DCR; no known API
+google_cloud_vision,google_cloud_vision,API_KEY,,No OAuth app needed,,Composio docs
+google_data_studio,Google Data Studio,OAUTH2,Google Cloud (OAuth client),Browser automation,no registration endpoint found (2 metadata documents),measured: no DCR; no known API
+google_maps,Google Maps,"OAUTH2,API_KEY",Google Cloud (OAuth client),Browser automation,no registration endpoint found (2 metadata documents) | API key also supported,measured: no DCR; no known API
+google_merchant,Google Merchant Center,OAUTH2,Google Cloud (OAuth client),Browser automation,no registration endpoint found (2 metadata documents),measured: no DCR; no known API
+google_search_console,Google Search Console,OAUTH2,Google Cloud (OAuth client),Browser automation,no registration endpoint found (2 metadata documents),measured: no DCR; no known API
+google_stitch,google_stitch,API_KEY,,No OAuth app needed,,Composio docs
+googleads,Google Ads,OAUTH2,Google Cloud (OAuth client),Browser automation,no registration endpoint found (2 metadata documents),measured: no DCR; no known API
+googlebigquery,Google BigQuery,"OAUTH2,GOOGLE_SERVICE_ACCOUNT",Google Cloud (OAuth client),Browser automation,no registration endpoint found (2 metadata documents),measured: no DCR; no known API
+googlecalendar,Google Calendar,OAUTH2,Google Cloud (OAuth client),Browser automation,no registration endpoint found (2 metadata documents),measured: no DCR; no known API
+googlecontacts,Googlecontacts,OAUTH2,Google Cloud (OAuth client),Browser automation,no registration endpoint found (2 metadata documents),measured: no DCR; no known API
+googledocs,Google Docs,OAUTH2,Google Cloud (OAuth client),Browser automation,no registration endpoint found (2 metadata documents),measured: no DCR; no known API
+googledrive,Google Drive,OAUTH2,Google Cloud (OAuth client),Browser automation,no registration endpoint found (2 metadata documents),measured: no DCR; no known API
+googleforms,Googleforms,OAUTH2,Google Cloud (OAuth client),Browser automation,no registration endpoint found (2 metadata documents),measured: no DCR; no known API
+googlemeet,Google Meet,OAUTH2,Google Cloud (OAuth client),Browser automation,no registration endpoint found (2 metadata documents),measured: no DCR; no known API
+googlephotos,Google Photos,OAUTH2,Google Cloud (OAuth client),Browser automation,no registration endpoint found (2 metadata documents),measured: no DCR; no known API
+googlesheets,Google Sheets,OAUTH2,Google Cloud (OAuth client),Browser automation,no registration endpoint found (2 metadata documents),measured: no DCR; no known API
+googleslides,Google Slides,OAUTH2,Google Cloud (OAuth client),Browser automation,no registration endpoint found (2 metadata documents),measured: no DCR; no known API
+googlesuper,Google Super,"OAUTH2,API_KEY",Google Cloud (OAuth client),Browser automation,no registration endpoint found (2 metadata documents) | API key also supported,measured: no DCR; no known API
+googletasks,Google Tasks,OAUTH2,Google Cloud (OAuth client),Browser automation,no registration endpoint found (2 metadata documents),measured: no DCR; no known API
+gorgias,Gorgias,"API_KEY,OAUTH2",Gorgias,Browser (DCR only on the MCP server),https://mcp.gorgias.com/register | API key also supported,measured: MCP server registration_endpoint
+gorilladesk,gorilladesk,API_KEY,,No OAuth app needed,,Composio docs
+gosquared,gosquared,API_KEY,,No OAuth app needed,,Composio docs
+gptbots,gptbots,API_KEY,,No OAuth app needed,,Composio docs
+gradium,gradium,API_KEY,,No OAuth app needed,,Composio docs
+grafana,grafana,BEARER_TOKEN,,No OAuth app needed,,Composio docs
+grafana_cloud_mcp,grafana_cloud_mcp,DCR_OAUTH,,"DCR, already used by Composio",,Composio docs
+grafbase,grafbase,API_KEY,,No OAuth app needed,,Composio docs
+grain,grain,API_KEY,,No OAuth app needed,,Composio docs
+granola_mcp,granola_mcp,DCR_OAUTH,,"DCR, already used by Composio",,Composio docs
+granted_mcp,granted_mcp,NO_AUTH,,No OAuth app needed,,Composio docs
+graphhopper,graphhopper,API_KEY,,No OAuth app needed,,Composio docs
+greenhouse,Greenhouse,"S2S_OAUTH2,OAUTH2",Greenhouse,Human / partner-gated,partner programme | also advertises DCR at https://auth.greenhouse.io/register; MCP DCR at https://mcp.greenhouse.io/oauth/register,knowledge (unverified)
+greptile_mcp,greptile_mcp,DCR_OAUTH,,"DCR, already used by Composio",,Composio docs
+griptape,griptape,API_KEY,,No OAuth app needed,,Composio docs
+grist,grist,API_KEY,,No OAuth app needed,,Composio docs
+grok,grok,API_KEY,,No OAuth app needed,,Composio docs
+groqcloud,groqcloud,API_KEY,,No OAuth app needed,,Composio docs
+gtmetrix,gtmetrix,API_KEY,,No OAuth app needed,,Composio docs
+gumroad,Gumroad,OAUTH2,Gumroad,DCR on the main OAuth server,https://gumroad.com/muse/v1/oauth2/register,measured: registration_endpoint in public metadata
+gusto,Gusto,OAUTH2,Gusto,Browser automation,no registration endpoint found (2 metadata documents),measured: no DCR; no known API
+habitica,habitica,API_KEY,,No OAuth app needed,,Composio docs
+hackernews,hackernews,NO_AUTH,,No OAuth app needed,,Composio docs
+hackerrank_work,hackerrank_work,API_KEY,,No OAuth app needed,,Composio docs
+hackmd,hackmd,API_KEY,,No OAuth app needed,,Composio docs
+halopsa,HaloPSA,OAUTH2,HaloPSA,Browser automation,no registration endpoint found (3 metadata documents),measured: no DCR; no known API
+handwrite,handwrite,API_KEY,,No OAuth app needed,,Composio docs
+handwrytten,handwrytten,API_KEY,,No OAuth app needed,,Composio docs
+happy_scribe,happy_scribe,API_KEY,,No OAuth app needed,,Composio docs
+harness,harness,API_KEY,,No OAuth app needed,,Composio docs
+harvest,Harvest,OAUTH2,Harvest,Browser automation,no registration endpoint found (0 metadata documents),measured: no DCR; no known API
+harvey,harvey,API_KEY,,No OAuth app needed,,Composio docs
+hashnode,hashnode,API_KEY,,No OAuth app needed,,Composio docs
+headout,headout,API_KEY,,No OAuth app needed,,Composio docs
+heartbeat,heartbeat,API_KEY,,No OAuth app needed,,Composio docs
+heights_platform,heights_platform,API_KEY,,No OAuth app needed,,Composio docs
+hello_tracks,hello_tracks,API_KEY,,No OAuth app needed,,Composio docs
+helloleads,helloleads,API_KEY,,No OAuth app needed,,Composio docs
+help_scout,Help Scout,OAUTH2,Help Scout,Browser (DCR only on the MCP server),https://mcp.helpscout.net/oauth/register,measured: MCP server registration_endpoint
+help_spot,help_spot,API_KEY,,No OAuth app needed,,Composio docs
+helpdesk,helpdesk,API_KEY,,No OAuth app needed,,Composio docs
+helpwise,helpwise,API_KEY,,No OAuth app needed,,Composio docs
+here,here,API_KEY,,No OAuth app needed,,Composio docs
+hex,hex,API_KEY,,No OAuth app needed,,Composio docs
+heygen,heygen,API_KEY,,No OAuth app needed,,Composio docs
+heyreach,heyreach,API_KEY,,No OAuth app needed,,Composio docs
+heyy,heyy,API_KEY,,No OAuth app needed,,Composio docs
+heyzine,heyzine,API_KEY,,No OAuth app needed,,Composio docs
+hibob,hibob,API_KEY,,No OAuth app needed,,Composio docs
+higgsfield,higgsfield,API_KEY,,No OAuth app needed,,Composio docs
+higgsfield_mcp,higgsfield_mcp,DCR_OAUTH,,"DCR, already used by Composio",,Composio docs
+highergov,highergov,API_KEY,,No OAuth app needed,,Composio docs
+highlevel_agency,HighLevel Agency,OAUTH2,HighLevel Marketplace,Browser automation,no registration endpoint found (0 metadata documents),measured: no DCR; no known API
+highlevel_location,HighLevel Location,"OAUTH2,BEARER_TOKEN",HighLevel Marketplace,Browser automation,no registration endpoint found (0 metadata documents),measured: no DCR; no known API
+highlevel_mcp,highlevel_mcp,API_KEY,,No OAuth app needed,,Composio docs
+hireflix,hireflix,API_KEY,,No OAuth app needed,,Composio docs
+hitl,hitl,API_KEY,,No OAuth app needed,,Composio docs
+hitpay,hitpay,API_KEY,,No OAuth app needed,,Composio docs
+hive,hive,API_KEY,,No OAuth app needed,,Composio docs
+hjarni,hjarni,API_KEY,,No OAuth app needed,,Composio docs
+hlr_lookup,hlr_lookup,API_KEY,,No OAuth app needed,,Composio docs
+holded,holded,API_KEY,,No OAuth app needed,,Composio docs
+honcho,honcho,API_KEY,,No OAuth app needed,,Composio docs
+honeybadger,honeybadger,API_KEY,,No OAuth app needed,,Composio docs
+honeycomb_mcp,honeycomb_mcp,DCR_OAUTH,,"DCR, already used by Composio",,Composio docs
+honeyhive,honeyhive,API_KEY,,No OAuth app needed,,Composio docs
+hookdeck,hookdeck,API_KEY,,No OAuth app needed,,Composio docs
+hostinger,hostinger,API_KEY,,No OAuth app needed,,Composio docs
+hotspotsystem,hotspotsystem,API_KEY,,No OAuth app needed,,Composio docs
+housecall_pro,housecall_pro,API_KEY,,No OAuth app needed,,Composio docs
+hr_partner,hr_partner,API_KEY,,No OAuth app needed,,Composio docs
+html_to_image,html_to_image,API_KEY,,No OAuth app needed,,Composio docs
+htmlcss_to_image,htmlcss_to_image,API_KEY,,No OAuth app needed,,Composio docs
+hub_planner,hub_planner,API_KEY,,No OAuth app needed,,Composio docs
+hubspot,HubSpot,"OAUTH2,API_KEY",HubSpot,CLI / infrastructure as code,HubSpot CLI: hs project upload (2025.2+ developer platform) | API key also supported,knowledge (vendor docs)
+hugging_face,Hugging Face,"API_KEY,OAUTH2",Hugging Face,DCR on the main OAuth server,https://huggingface.co/oauth/register | API key also supported,measured: registration_endpoint in public metadata
+humanitix,humanitix,API_KEY,,No OAuth app needed,,Composio docs
+humanloop,humanloop,API_KEY,,No OAuth app needed,,Composio docs
+hunter,hunter,API_KEY,,No OAuth app needed,,Composio docs
+hypeauditor,hypeauditor,API_KEY,,No OAuth app needed,,Composio docs
+hyperbrowser,hyperbrowser,API_KEY,,No OAuth app needed,,Composio docs
+hyperise,hyperise,API_KEY,,No OAuth app needed,,Composio docs
+hystruct,hystruct,API_KEY,,No OAuth app needed,,Composio docs
+i_love_pdf,i_love_pdf,API_KEY,,No OAuth app needed,,Composio docs
+ibm_x_force_exchange,ibm_x_force_exchange,API_KEY,,No OAuth app needed,,Composio docs
+icypeas,icypeas,API_KEY,,No OAuth app needed,,Composio docs
+idealpostcodes,idealpostcodes,API_KEY,,No OAuth app needed,,Composio docs
+identitycheck,identitycheck,API_KEY,,No OAuth app needed,,Composio docs
+ignav_flights,ignav_flights,API_KEY,,No OAuth app needed,,Composio docs
+ignav_flights_mcp,ignav_flights_mcp,DCR_OAUTH,,"DCR, already used by Composio",,Composio docs
+ignisign,ignisign,API_KEY,,No OAuth app needed,,Composio docs
+ilert,ilert,API_KEY,,No OAuth app needed,,Composio docs
+imagekit_io,imagekit_io,API_KEY,,No OAuth app needed,,Composio docs
+imagerouter,imagerouter,API_KEY,,No OAuth app needed,,Composio docs
+imagior,imagior,API_KEY,,No OAuth app needed,,Composio docs
+imejis_io,imejis_io,API_KEY,,No OAuth app needed,,Composio docs
+imgbb,imgbb,API_KEY,,No OAuth app needed,,Composio docs
+imgix,imgix,API_KEY,,No OAuth app needed,,Composio docs
+imply_polaris,Imply Polaris,"API_KEY,S2S_OAUTH2",Imply Polaris,Browser automation,no registration endpoint found (0 metadata documents) | API key also supported,measured: no DCR; no known API
+inblog,inblog,API_KEY,,No OAuth app needed,,Composio docs
+incident_io,incident_io,API_KEY,,No OAuth app needed,,Composio docs
+infisical,Infisical,"OAUTH2,BEARER_TOKEN",Infisical,Browser automation,no registration endpoint found (0 metadata documents),measured: no DCR; no known API
+influxdb_cloud,influxdb_cloud,API_KEY,,No OAuth app needed,,Composio docs
+inistate,inistate,API_KEY,,No OAuth app needed,,Composio docs
+insighto_ai,insighto_ai,API_KEY,,No OAuth app needed,,Composio docs
+inspo_mcp,inspo_mcp,NO_AUTH,,No OAuth app needed,,Composio docs
+instagram,Instagram,OAUTH2,Meta for Developers,Browser automation,no registration endpoint found (3 metadata documents),measured: no DCR; no known API
+instantly,instantly,API_KEY,,No OAuth app needed,,Composio docs
+instatus,instatus,API_KEY,,No OAuth app needed,,Composio docs
+intelliprint,intelliprint,API_KEY,,No OAuth app needed,,Composio docs
+intercom,Intercom,OAUTH2,Intercom,Browser (DCR only on the MCP server),https://mcp.intercom.com/register,measured: MCP server registration_endpoint
+intercom_mcp,intercom_mcp,API_KEY,,No OAuth app needed,,Composio docs
+interzoid,interzoid,API_KEY,,No OAuth app needed,,Composio docs
+interzoid_mcp,interzoid_mcp,API_KEY,,No OAuth app needed,,Composio docs
+invalid_bounce,invalid_bounce,API_KEY,,No OAuth app needed,,Composio docs
+invofox,invofox,API_KEY,,No OAuth app needed,,Composio docs
+inworld_ai,inworld_ai,API_KEY,,No OAuth app needed,,Composio docs
+ip2location,ip2location,API_KEY,,No OAuth app needed,,Composio docs
+ip2location_io,ip2location_io,API_KEY,,No OAuth app needed,,Composio docs
+ip2proxy,ip2proxy,API_KEY,,No OAuth app needed,,Composio docs
+ip2whois,ip2whois,API_KEY,,No OAuth app needed,,Composio docs
+ip_registry,ip_registry,API_KEY,,No OAuth app needed,,Composio docs
+ipdata_co,ipdata_co,API_KEY,,No OAuth app needed,,Composio docs
+ipgeolocation,ipgeolocation,API_KEY,,No OAuth app needed,,Composio docs
+ipinfo_io,ipinfo_io,API_KEY,,No OAuth app needed,,Composio docs
+iplocate,iplocate,API_KEY,,No OAuth app needed,,Composio docs
+iqair_airvisual,iqair_airvisual,API_KEY,,No OAuth app needed,,Composio docs
+ironclad,Ironclad,OAUTH2,Ironclad,Human / partner-gated,customer account,knowledge (unverified)
+iterable,iterable,API_KEY,,No OAuth app needed,,Composio docs
+iterate,iterate,API_KEY,,No OAuth app needed,,Composio docs
+itm_platform,itm_platform,API_KEY,,No OAuth app needed,,Composio docs
+jam,jam,API_KEY,,No OAuth app needed,,Composio docs
+jentic_mcp,jentic_mcp,DCR_OAUTH,,"DCR, already used by Composio",,Composio docs
+jev,jev,API_KEY,,No OAuth app needed,,Composio docs
+jibble,Jibble,S2S_OAUTH2,Jibble,Browser (DCR only on the MCP server),https://mcp.jibble.io/register,measured: MCP server registration_endpoint
+jigsawstack,jigsawstack,API_KEY,,No OAuth app needed,,Composio docs
+jinko,jinko,API_KEY,,No OAuth app needed,,Composio docs
+jira,Jira,"OAUTH2,S2S_OAUTH2,API_KEY",Atlassian Developer Console,DCR on the main OAuth server,https://auth.atlassian.com/oidc/register | MCP DCR at https://mcp.atlassian.com/v1/register; API key also supported,measured: registration_endpoint in public metadata
+job_search,job_search,API_KEY,,No OAuth app needed,,Composio docs
+jobber,Jobber,OAUTH2,Jobber,Browser automation,no registration endpoint found (2 metadata documents),measured: no DCR; no known API
+jobnimbus,jobnimbus,API_KEY,,No OAuth app needed,,Composio docs
+jogg_ai,jogg_ai,API_KEY,,No OAuth app needed,,Composio docs
+jotform,jotform,API_KEY,,No OAuth app needed,,Composio docs
+jotform_sign,jotform_sign,API_KEY,,No OAuth app needed,,Composio docs
+judge_me,Judge.me,OAUTH2,Judge.me,Browser automation,no registration endpoint found (0 metadata documents),measured: no DCR; no known API
+jumpcloud,jumpcloud,API_KEY,,No OAuth app needed,,Composio docs
+junglescout,junglescout,API_KEY,,No OAuth app needed,,Composio docs
+just_one_api,just_one_api,API_KEY,,No OAuth app needed,,Composio docs
+kadoa,kadoa,API_KEY,,No OAuth app needed,,Composio docs
+kaggle,kaggle,API_KEY,,No OAuth app needed,,Composio docs
+kaleido,kaleido,API_KEY,,No OAuth app needed,,Composio docs
+kanban_tool,kanban_tool,API_KEY,,No OAuth app needed,,Composio docs
+kanbanize,kanbanize,API_KEY,,No OAuth app needed,,Composio docs
+kapso,kapso,API_KEY,,No OAuth app needed,,Composio docs
+keen_io,keen_io,API_KEY,,No OAuth app needed,,Composio docs
+keenable,keenable,API_KEY,,No OAuth app needed,,Composio docs
+keiki_mcp,keiki_mcp,DCR_OAUTH,,"DCR, already used by Composio",,Composio docs
+kernel,kernel,API_KEY,,No OAuth app needed,,Composio docs
+kernel_mcp,kernel_mcp,DCR_OAUTH,,"DCR, already used by Composio",,Composio docs
+keyword,keyword,API_KEY,,No OAuth app needed,,Composio docs
+keyzy,keyzy,API_KEY,,No OAuth app needed,,Composio docs
+kibana,kibana,"API_KEY,BASIC",,No OAuth app needed,,Composio docs
+kick,Kick,OAUTH2,Kick,Browser automation,no registration endpoint found (0 metadata documents),measured: no DCR; no known API
+kickbox,kickbox,API_KEY,,No OAuth app needed,,Composio docs
+kieai,kieai,API_KEY,,No OAuth app needed,,Composio docs
+kintone,kintone,API_KEY,,No OAuth app needed,,Composio docs
+kintone_rest,Kintone REST,OAUTH2,Kintone REST,Browser automation,no registration endpoint found (0 metadata documents),measured: no DCR; no known API
+kit,Kit,"OAUTH2,API_KEY",Kit,DCR on the main OAuth server,https://app.kit.com/oauth/register | API key also supported,measured: registration_endpoint in public metadata
+klarna,klarna,API_KEY,,No OAuth app needed,,Composio docs
+klaviyo,Klaviyo,"API_KEY,OAUTH2",Klaviyo,Browser (DCR only on the MCP server),https://mcp.klaviyo.com/register | API key also supported,measured: MCP server registration_endpoint
+klazify,klazify,API_KEY,,No OAuth app needed,,Composio docs
+klipfolio,klipfolio,API_KEY,,No OAuth app needed,,Composio docs
+knack,knack,API_KEY,,No OAuth app needed,,Composio docs
+ko_fi,ko_fi,API_KEY,,No OAuth app needed,,Composio docs
+kobotoolbox,kobotoolbox,API_KEY,,No OAuth app needed,,Composio docs
+kommo,Kommo,OAUTH2,Kommo,Browser automation,no registration endpoint found (0 metadata documents),measured: no DCR; no known API
+kommunicate,kommunicate,API_KEY,,No OAuth app needed,,Composio docs
+kontent_ai,kontent_ai,API_KEY,,No OAuth app needed,,Composio docs
+kraken_io,kraken_io,API_KEY,,No OAuth app needed,,Composio docs
+l2s,l2s,API_KEY,,No OAuth app needed,,Composio docs
+labs64_netlicensing,labs64_netlicensing,API_KEY,,No OAuth app needed,,Composio docs
+labsmobile,labsmobile,BASIC,,No OAuth app needed,,Composio docs
+lagrowthmachine,lagrowthmachine,API_KEY,,No OAuth app needed,,Composio docs
+lakera_guard,lakera_guard,API_KEY,,No OAuth app needed,,Composio docs
+landbot,landbot,API_KEY,,No OAuth app needed,,Composio docs
+langbase,langbase,API_KEY,,No OAuth app needed,,Composio docs
+langfuse,langfuse,API_KEY,,No OAuth app needed,,Composio docs
+laposta,laposta,API_KEY,,No OAuth app needed,,Composio docs
+launch_darkly,LaunchDarkly,"API_KEY,OAUTH2",LaunchDarkly,Browser (DCR only on the MCP server),https://app.launchdarkly.com/trust/oauth/register/dcr | API key also supported,measured: MCP server registration_endpoint
+layerre,layerre,API_KEY,,No OAuth app needed,,Composio docs
+lc_cx,lc_cx,API_KEY,,No OAuth app needed,,Composio docs
+leadboxer,leadboxer,API_KEY,,No OAuth app needed,,Composio docs
+leadfeeder,leadfeeder,API_KEY,,No OAuth app needed,,Composio docs
+leadiq,leadiq,API_KEY,,No OAuth app needed,,Composio docs
+leadmagic,leadmagic,API_KEY,,No OAuth app needed,,Composio docs
+leadoku,leadoku,API_KEY,,No OAuth app needed,,Composio docs
+leadsforge,leadsforge,API_KEY,,No OAuth app needed,,Composio docs
+leexi,leexi,API_KEY,,No OAuth app needed,,Composio docs
+legal_data_hunter_mcp,legal_data_hunter_mcp,DCR_OAUTH,,"DCR, already used by Composio",,Composio docs
+leiga,leiga,API_KEY,,No OAuth app needed,,Composio docs
+lemlist,lemlist,API_KEY,,No OAuth app needed,,Composio docs
+lemon_squeezy,lemon_squeezy,API_KEY,,No OAuth app needed,,Composio docs
+lessonspace,lessonspace,API_KEY,,No OAuth app needed,,Composio docs
+lettr,lettr,API_KEY,,No OAuth app needed,,Composio docs
+lever,Lever,"API_KEY,OAUTH2",Lever,Human / partner-gated,partner programme | API key also supported,knowledge (unverified)
+leverly,leverly,API_KEY,,No OAuth app needed,,Composio docs
+lexoffice,lexoffice,API_KEY,,No OAuth app needed,,Composio docs
+lightspeed,Lightspeed Retail X-Series,OAUTH2,Lightspeed Retail X-Series,Browser automation,no registration endpoint found (0 metadata documents),measured: no DCR; no known API
+lilt_mcp,lilt_mcp,DCR_OAUTH,,"DCR, already used by Composio",,Composio docs
+limadata,limadata,API_KEY,,No OAuth app needed,,Composio docs
+line,line,API_KEY,,No OAuth app needed,,Composio docs
+linear,Linear,"OAUTH2,API_KEY",Linear,Browser (DCR only on the MCP server),https://mcp.linear.app/register | API key also supported,measured: MCP server registration_endpoint
+linear_mcp,linear_mcp,DCR_OAUTH,,"DCR, already used by Composio",,Composio docs
+linguapop,linguapop,API_KEY,,No OAuth app needed,,Composio docs
+linguin_ai,linguin_ai,API_KEY,,No OAuth app needed,,Composio docs
+link_twin,link_twin,API_KEY,,No OAuth app needed,,Composio docs
+linkedin,LinkedIn,OAUTH2,LinkedIn Developers,Browser automation,no registration endpoint found (0 metadata documents),measured: no DCR; no known API
+linkedin_ads,Linkedin Ads,OAUTH2,LinkedIn Developers,Human / partner-gated,Marketing Developer Platform approval,knowledge (unverified)
+linkhut,Linkhut,OAUTH2,Linkhut,Browser automation,no registration endpoint found (0 metadata documents),measured: no DCR; no known API
+linkly,linkly,API_KEY,,No OAuth app needed,,Composio docs
+linkup,linkup,API_KEY,,No OAuth app needed,,Composio docs
+linode,Linode,"OAUTH2,API_KEY",Linode,Browser automation,no registration endpoint found (0 metadata documents) | API key also supported,measured: no DCR; no known API
+linq,linq,API_KEY,,No OAuth app needed,,Composio docs
+listclean,listclean,API_KEY,,No OAuth app needed,,Composio docs
+listennotes,listennotes,API_KEY,,No OAuth app needed,,Composio docs
+livechat,LiveChat,OAUTH2,LiveChat,Browser automation,no registration endpoint found (0 metadata documents),measured: no DCR; no known API
+livesession,livesession,API_KEY,,No OAuth app needed,,Composio docs
+llm_api,llm_api,API_KEY,,No OAuth app needed,,Composio docs
+llmwhisperer,llmwhisperer,API_KEY,,No OAuth app needed,,Composio docs
+lmnt,lmnt,API_KEY,,No OAuth app needed,,Composio docs
+lob,lob,API_KEY,,No OAuth app needed,,Composio docs
+lodgify,Lodgify,"API_KEY,OAUTH2",Lodgify,Browser automation,no registration endpoint found (3 metadata documents) | API key also supported,measured: no DCR; no known API
+logo_dev,logo_dev,API_KEY,,No OAuth app needed,,Composio docs
+lokalise,lokalise,API_KEY,,No OAuth app needed,,Composio docs
+longbridge_mcp,longbridge_mcp,DCR_OAUTH,,"DCR, already used by Composio",,Composio docs
+loomio,loomio,API_KEY,,No OAuth app needed,,Composio docs
+loops_so,loops_so,API_KEY,,No OAuth app needed,,Composio docs
+loyverse,loyverse,API_KEY,,No OAuth app needed,,Composio docs
+lucid_mcp,lucid_mcp,DCR_OAUTH,,"DCR, already used by Composio",,Composio docs
+luma_labs,luma_labs,API_KEY,,No OAuth app needed,,Composio docs
+lumify,lumify,API_KEY,,No OAuth app needed,,Composio docs
+lusha,lusha,API_KEY,,No OAuth app needed,,Composio docs
+lyzr,lyzr,API_KEY,,No OAuth app needed,,Composio docs
+magic_hour,magic_hour,API_KEY,,No OAuth app needed,,Composio docs
+magic_patterns_mcp,magic_patterns_mcp,DCR_OAUTH,,"DCR, already used by Composio",,Composio docs
+magicslides,magicslides,API_KEY,,No OAuth app needed,,Composio docs
+magnetic,magnetic,API_KEY,,No OAuth app needed,,Composio docs
+mail_up,MailUp,OAUTH2,MailUp,Browser automation,no registration endpoint found (0 metadata documents),measured: no DCR; no known API
+mailbluster,mailbluster,API_KEY,,No OAuth app needed,,Composio docs
+mailboxlayer,mailboxlayer,API_KEY,,No OAuth app needed,,Composio docs
+mailboxvalidator,mailboxvalidator,API_KEY,,No OAuth app needed,,Composio docs
+mailcheck,mailcheck,API_KEY,,No OAuth app needed,,Composio docs
+mailchimp,Mailchimp,OAUTH2,Mailchimp,Browser automation,no registration endpoint found (1 metadata documents),measured: no DCR; no known API
+mailcoach,mailcoach,API_KEY,,No OAuth app needed,,Composio docs
+maildroppa,maildroppa,API_KEY,,No OAuth app needed,,Composio docs
+mailercheck,mailercheck,API_KEY,,No OAuth app needed,,Composio docs
+mailercloud,mailercloud,API_KEY,,No OAuth app needed,,Composio docs
+mailerlite,mailerlite,API_KEY,,No OAuth app needed,,Composio docs
+mailersend,mailersend,API_KEY,,No OAuth app needed,,Composio docs
+mailfloss,mailfloss,API_KEY,,No OAuth app needed,,Composio docs
+mails_so,mails_so,API_KEY,,No OAuth app needed,,Composio docs
+mailslurp,mailslurp,API_KEY,,No OAuth app needed,,Composio docs
+mailsoftly,mailsoftly,API_KEY,,No OAuth app needed,,Composio docs
+mailtrap,mailtrap,BEARER_TOKEN,,No OAuth app needed,,Composio docs
+maintainx,maintainx,API_KEY,,No OAuth app needed,,Composio docs
+make,make,API_KEY,,No OAuth app needed,,Composio docs
+malwarebytes_mcp,malwarebytes_mcp,NO_AUTH,,No OAuth app needed,,Composio docs
+managed-auth,managed-auth,NONE,,No OAuth app needed,,Composio docs
+manus,manus,API_KEY,,No OAuth app needed,,Composio docs
+manyreach,manyreach,API_KEY,,No OAuth app needed,,Composio docs
+mapbox,mapbox,API_KEY,,No OAuth app needed,,Composio docs
+mapflow,mapflow,API_KEY,,No OAuth app needed,,Composio docs
+mapulus,mapulus,API_KEY,,No OAuth app needed,,Composio docs
+marcopolo_mcp,marcopolo_mcp,DCR_OAUTH,,"DCR, already used by Composio",,Composio docs
+marketstack,marketstack,API_KEY,,No OAuth app needed,,Composio docs
+markup_ai,markup_ai,API_KEY,,No OAuth app needed,,Composio docs
+mathpix,mathpix,API_KEY,,No OAuth app needed,,Composio docs
+matterport,Matterport,"BASIC,OAUTH2",Matterport,Browser automation,no registration endpoint found (0 metadata documents),measured: no DCR; no known API
+maxio,maxio,API_KEY,,No OAuth app needed,,Composio docs
+melo,melo,API_KEY,,No OAuth app needed,,Composio docs
+mem,mem,API_KEY,,No OAuth app needed,,Composio docs
+mem0,mem0,API_KEY,,No OAuth app needed,,Composio docs
+memberspot,memberspot,API_KEY,,No OAuth app needed,,Composio docs
+memberstack,memberstack,API_KEY,,No OAuth app needed,,Composio docs
+membervault,membervault,API_KEY,,No OAuth app needed,,Composio docs
+memelord,memelord,API_KEY,,No OAuth app needed,,Composio docs
+memelord_mcp,memelord_mcp,"DCR_OAUTH,API_KEY",,"DCR, already used by Composio",,Composio docs
+merchantpro,merchantpro,API_KEY,,No OAuth app needed,,Composio docs
+mercury_mcp,mercury_mcp,DCR_OAUTH,,"DCR, already used by Composio",,Composio docs
+mermaid_chart_mcp,mermaid_chart_mcp,NO_AUTH,,No OAuth app needed,,Composio docs
+meshy,meshy,API_KEY,,No OAuth app needed,,Composio docs
+meta-tools,meta-tools,NONE,,No OAuth app needed,,Composio docs
+metaads,Meta Ads,"OAUTH2,API_KEY",Meta for Developers,Browser automation,no registration endpoint found (3 metadata documents) | API key also supported,measured: no DCR; no known API
+metabase,metabase,API_KEY,,No OAuth app needed,,Composio docs
+metaphor,metaphor,API_KEY,,No OAuth app needed,,Composio docs
+metatextai,metatextai,API_KEY,,No OAuth app needed,,Composio docs
+metricool_mcp,metricool_mcp,DCR_OAUTH,,"DCR, already used by Composio",,Composio docs
+mezmo,mezmo,API_KEY,,No OAuth app needed,,Composio docs
+microsoft_365,Microsoft 365,OAUTH2,Microsoft Entra ID (app registration),Management API,"Microsoft Graph: POST /applications, then addPassword for a client secret",knowledge (vendor docs)
+microsoft_advertising,Microsoft Advertising,OAUTH2,Microsoft Entra ID (app registration),Management API,"Microsoft Graph: POST /applications, then addPassword for a client secret",knowledge (vendor docs)
+microsoft_bookings,Microsoft Bookings,OAUTH2,Microsoft Entra ID (app registration),Management API,"Microsoft Graph: POST /applications, then addPassword for a client secret",knowledge (vendor docs)
+microsoft_clarity,microsoft_clarity,API_KEY,,No OAuth app needed,,Composio docs
+microsoft_entra_id,Microsoft Entra ID,"OAUTH2,S2S_OAUTH2",Microsoft Entra ID (app registration),Management API,"Microsoft Graph: POST /applications, then addPassword for a client secret",knowledge (vendor docs)
+microsoft_intune,Microsoft Intune,"OAUTH2,S2S_OAUTH2",Microsoft Entra ID (app registration),Management API,"Microsoft Graph: POST /applications, then addPassword for a client secret",knowledge (vendor docs)
+microsoft_planner,Microsoft Planner,OAUTH2,Microsoft Entra ID (app registration),Management API,"Microsoft Graph: POST /applications, then addPassword for a client secret",knowledge (vendor docs)
+microsoft_power_bi,Microsoft Power Bi,OAUTH2,Microsoft Entra ID (app registration),Management API,"Microsoft Graph: POST /applications, then addPassword for a client secret",knowledge (vendor docs)
+microsoft_powerpoint,Microsoft PowerPoint,OAUTH2,Microsoft Entra ID (app registration),Management API,"Microsoft Graph: POST /applications, then addPassword for a client secret",knowledge (vendor docs)
+microsoft_purview,Microsoft Purview,"OAUTH2,S2S_OAUTH2",Microsoft Entra ID (app registration),Management API,"Microsoft Graph: POST /applications, then addPassword for a client secret",knowledge (vendor docs)
+microsoft_teams,Microsoft Teams,"OAUTH2,S2S_OAUTH2",Microsoft Entra ID (app registration),Management API,"Microsoft Graph: POST /applications, then addPassword for a client secret",knowledge (vendor docs)
+microsoft_todo,Microsoft To Do,OAUTH2,Microsoft Entra ID (app registration),Management API,"Microsoft Graph: POST /applications, then addPassword for a client secret",knowledge (vendor docs)
+microsoft_viva_engage,Microsoft Viva Engage,OAUTH2,Microsoft Entra ID (app registration),Management API,"Microsoft Graph: POST /applications, then addPassword for a client secret",knowledge (vendor docs)
+microsoft_word,Microsoft Word,OAUTH2,Microsoft Entra ID (app registration),Management API,"Microsoft Graph: POST /applications, then addPassword for a client secret",knowledge (vendor docs)
+midpage_mcp,midpage_mcp,DCR_OAUTH,,"DCR, already used by Composio",,Composio docs
+mighty_networks,mighty_networks,API_KEY,,No OAuth app needed,,Composio docs
+mihu_ai,mihu_ai,API_KEY,,No OAuth app needed,,Composio docs
+mindbody,mindbody,API_KEY,,No OAuth app needed,,Composio docs
+minelead,minelead,API_KEY,,No OAuth app needed,,Composio docs
+minerstat,minerstat,API_KEY,,No OAuth app needed,,Composio docs
+minimax,minimax,API_KEY,,No OAuth app needed,,Composio docs
+mintlify,mintlify,API_KEY,,No OAuth app needed,,Composio docs
+mintlify_mcp,mintlify_mcp,DCR_OAUTH,,"DCR, already used by Composio",,Composio docs
+miro,Miro,OAUTH2,Miro,Browser (DCR only on the MCP server),https://mcp.miro.com/register,measured: MCP server registration_endpoint
+missive,missive,API_KEY,,No OAuth app needed,,Composio docs
+mistral_ai,mistral_ai,API_KEY,,No OAuth app needed,,Composio docs
+mixmax,mixmax,API_KEY,,No OAuth app needed,,Composio docs
+mixpanel,mixpanel,BASIC,,No OAuth app needed,,Composio docs
+mobbin_mcp,mobbin_mcp,DCR_OAUTH,,"DCR, already used by Composio",,Composio docs
+mocean,mocean,API_KEY,,No OAuth app needed,,Composio docs
+moco,moco,API_KEY,,No OAuth app needed,,Composio docs
+modelry,modelry,API_KEY,,No OAuth app needed,,Composio docs
+modem,modem,API_KEY,,No OAuth app needed,,Composio docs
+modem_mcp,modem_mcp,DCR_OAUTH,,"DCR, already used by Composio",,Composio docs
+moderationapi,moderationapi,API_KEY,,No OAuth app needed,,Composio docs
+moltsets,moltsets,API_KEY,,No OAuth app needed,,Composio docs
+monday,Monday,OAUTH2,Monday,DCR on the main OAuth server,https://auth.monday.com/oauth_ms/oauth/register | MCP DCR at https://auth.monday.com/oauth_ms/oauth/register,measured: registration_endpoint in public metadata
+monday_mcp,monday_mcp,DCR_OAUTH,,"DCR, already used by Composio",,Composio docs
+money_forward,Money Forward,OAUTH2,Money Forward,Browser automation,no registration endpoint found (1 metadata documents),measured: no DCR; no known API
+moneybird,Moneybird,"OAUTH2,API_KEY",Moneybird,DCR on the main OAuth server,https://moneybird.com/oauth/register | API key also supported,measured: registration_endpoint in public metadata
+mongodb,MongoDB,S2S_OAUTH2,MongoDB Atlas,DCR on the main OAuth server,https://auth.mongodb.com/oauth2/v1/clients,measured: registration_endpoint in public metadata
+mongodb_mcp,MongoDB MCP,S2S_OAUTH2,MongoDB Atlas,DCR on the main OAuth server,https://auth.mongodb.com/oauth2/v1/clients,measured: registration_endpoint in public metadata
+moonclerk,moonclerk,API_KEY,,No OAuth app needed,,Composio docs
+moosend,moosend,API_KEY,,No OAuth app needed,,Composio docs
+mopinion,mopinion,API_KEY,,No OAuth app needed,,Composio docs
+more_trees,more_trees,API_KEY,,No OAuth app needed,,Composio docs
+mospi_mcp,mospi_mcp,NO_AUTH,,No OAuth app needed,,Composio docs
+motherduck_mcp,motherduck_mcp,DCR_OAUTH,,"DCR, already used by Composio",,Composio docs
+motion,motion,API_KEY,,No OAuth app needed,,Composio docs
+moz,moz,API_KEY,,No OAuth app needed,,Composio docs
+mrscraper,mrscraper,API_KEY,,No OAuth app needed,,Composio docs
+msg91,msg91,API_KEY,,No OAuth app needed,,Composio docs
+muapi,muapi,API_KEY,,No OAuth app needed,,Composio docs
+mural,Mural,OAUTH2,Mural,Browser automation,no registration endpoint found (1 metadata documents),measured: no DCR; no known API
+mx_technologies,mx_technologies,BASIC,,No OAuth app needed,,Composio docs
+mx_toolbox,mx_toolbox,API_KEY,,No OAuth app needed,,Composio docs
+myemailverifier,myemailverifier,API_KEY,,No OAuth app needed,,Composio docs
+namsor,namsor,API_KEY,,No OAuth app needed,,Composio docs
+nango,nango,API_KEY,,No OAuth app needed,,Composio docs
+nano_nets,nano_nets,API_KEY,,No OAuth app needed,,Composio docs
+nanonets_ocr,nanonets_ocr,API_KEY,,No OAuth app needed,,Composio docs
+nasa,nasa,API_KEY,,No OAuth app needed,,Composio docs
+nasdaq,nasdaq,API_KEY,,No OAuth app needed,,Composio docs
+navan,Navan,S2S_OAUTH2,Navan,Human / partner-gated,customer account | MCP DCR at https://login.navan.com/oidc/register,knowledge (unverified)
+needle,needle,API_KEY,,No OAuth app needed,,Composio docs
+neetoform,neetoform,API_KEY,,No OAuth app needed,,Composio docs
+neo4j,Neo4J,"OAUTH2,BASIC,API_KEY,S2S_OAUTH2",Neo4J,Browser automation,no registration endpoint found (0 metadata documents) | API key also supported,measured: no DCR; no known API
+neon,Neon,"API_KEY,OAUTH2",Neon,Browser (DCR only on the MCP server),https://mcp.neon.tech/api/register | API key also supported,measured: MCP server registration_endpoint
+neon_mcp,neon_mcp,DCR_OAUTH,,"DCR, already used by Composio",,Composio docs
+nethunt_crm,nethunt_crm,BASIC,,No OAuth app needed,,Composio docs
+netlicensing,netlicensing,API_KEY,,No OAuth app needed,,Composio docs
+netlify_mcp,netlify_mcp,DCR_OAUTH,,"DCR, already used by Composio",,Composio docs
+netsuite,Netsuite,OAUTH2,Netsuite,Human / partner-gated,paid NetSuite account (DCR is per account) | also advertises DCR at https://6262239.suitetalk.api.netsuite.com/services/rest/auth/oauth2/v1/register; MCP DCR at https://mcp.netsuite.com/services/rest/auth/oauth2/v1/register,knowledge (unverified)
+neuronwriter,neuronwriter,API_KEY,,No OAuth app needed,,Composio docs
+neutrino,neutrino,API_KEY,,No OAuth app needed,,Composio docs
+neverbounce,neverbounce,API_KEY,,No OAuth app needed,,Composio docs
+new_relic,new_relic,API_KEY,,No OAuth app needed,,Composio docs
+news_api,news_api,API_KEY,,No OAuth app needed,,Composio docs
+nextdns,nextdns,API_KEY,,No OAuth app needed,,Composio docs
+ngram,ngram,API_KEY,,No OAuth app needed,,Composio docs
+ngrok,ngrok,API_KEY,,No OAuth app needed,,Composio docs
+niftyimages,niftyimages,API_KEY,,No OAuth app needed,,Composio docs
+ninox,ninox,API_KEY,,No OAuth app needed,,Composio docs
+nmkr_studio,nmkr_studio,API_KEY,,No OAuth app needed,,Composio docs
+nocodb,nocodb,API_KEY,,No OAuth app needed,,Composio docs
+nocrm_io,nocrm_io,API_KEY,,No OAuth app needed,,Composio docs
+noloco,noloco,API_KEY,,No OAuth app needed,,Composio docs
+northflank,northflank,API_KEY,,No OAuth app needed,,Composio docs
+notebook_lm,NotebookLM,OAUTH2,Google Cloud (OAuth client),Browser automation,no registration endpoint found (2 metadata documents),measured: no DCR; no known API
+notion,Notion,"OAUTH2,API_KEY",Notion,Browser (DCR only on the MCP server),https://mcp.notion.com/register | API key also supported,measured: MCP server registration_endpoint
+notion_mcp,notion_mcp,DCR_OAUTH,,"DCR, already used by Composio",,Composio docs
+notra,notra,API_KEY,,No OAuth app needed,,Composio docs
+nozbe_teams,nozbe_teams,API_KEY,,No OAuth app needed,,Composio docs
+npm,npm,API_KEY,,No OAuth app needed,,Composio docs
+ntfy,ntfy,"API_KEY,BASIC",,No OAuth app needed,,Composio docs
+nusii_proposals,nusii_proposals,API_KEY,,No OAuth app needed,,Composio docs
+nutrient_document_web_services_api,nutrient_document_web_services_api,API_KEY,,No OAuth app needed,,Composio docs
+nutshell,nutshell,BASIC,,No OAuth app needed,,Composio docs
+nylas_mcp,nylas_mcp,API_KEY,,No OAuth app needed,,Composio docs
+oboard,oboard,API_KEY,,No OAuth app needed,,Composio docs
+ocean_io,ocean_io,API_KEY,,No OAuth app needed,,Composio docs
+ocr_web_service,ocr_web_service,BASIC,,No OAuth app needed,,Composio docs
+ocrspace,ocrspace,API_KEY,,No OAuth app needed,,Composio docs
+octagon_mcp,octagon_mcp,DCR_OAUTH,,"DCR, already used by Composio",,Composio docs
+octen,octen,API_KEY,,No OAuth app needed,,Composio docs
+odata,odata,BASIC,,No OAuth app needed,,Composio docs
+odoo,odoo,API_KEY,,No OAuth app needed,,Composio docs
+oksign,oksign,API_KEY,,No OAuth app needed,,Composio docs
+okzest,okzest,API_KEY,,No OAuth app needed,,Composio docs
+ollama,ollama,API_KEY,,No OAuth app needed,,Composio docs
+olostep,olostep,API_KEY,,No OAuth app needed,,Composio docs
+omnisend,Omnisend,"API_KEY,OAUTH2",Omnisend,Browser (DCR only on the MCP server),https://app.omnisend.com/oauth2/register | API key also supported,measured: MCP server registration_endpoint
+one_drive,OneDrive,"OAUTH2,S2S_OAUTH2",Microsoft Entra ID (app registration),Management API,"Microsoft Graph: POST /applications, then addPassword for a client secret",knowledge (vendor docs)
+onedesk,onedesk,API_KEY,,No OAuth app needed,,Composio docs
+onenote,Microsoft OneNote,OAUTH2,Microsoft Entra ID (app registration),Management API,"Microsoft Graph: POST /applications, then addPassword for a client secret",knowledge (vendor docs)
+onepage,onepage,BEARER_TOKEN,,No OAuth app needed,,Composio docs
+onesignal_rest_api,onesignal_rest_api,API_KEY,,No OAuth app needed,,Composio docs
+onesignal_user_auth,onesignal_user_auth,API_KEY,,No OAuth app needed,,Composio docs
+onesimpleapi,onesimpleapi,API_KEY,,No OAuth app needed,,Composio docs
+onetapcheckin,onetapcheckin,API_KEY,,No OAuth app needed,,Composio docs
+oneup,oneup,API_KEY,,No OAuth app needed,,Composio docs
+onlyoffice_docspace,onlyoffice_docspace,API_KEY,,No OAuth app needed,,Composio docs
+onlysocial,onlysocial,API_KEY,,No OAuth app needed,,Composio docs
+open_register,open_register,API_KEY,,No OAuth app needed,,Composio docs
+open_sea,open_sea,API_KEY,,No OAuth app needed,,Composio docs
+openai,openai,API_KEY,,No OAuth app needed,,Composio docs
+openalex,openalex,API_KEY,,No OAuth app needed,,Composio docs
+opencage,opencage,API_KEY,,No OAuth app needed,,Composio docs
+openfunnel_agent_primitives,openfunnel_agent_primitives,API_KEY,,No OAuth app needed,,Composio docs
+opengraph_io,opengraph_io,API_KEY,,No OAuth app needed,,Composio docs
+openlayer,openlayer,API_KEY,,No OAuth app needed,,Composio docs
+openperplex,openperplex,API_KEY,,No OAuth app needed,,Composio docs
+openrouter,openrouter,API_KEY,,No OAuth app needed,,Composio docs
+openui,openui,API_KEY,,No OAuth app needed,,Composio docs
+openweather_api,openweather_api,API_KEY,,No OAuth app needed,,Composio docs
+openweb_ninja,openweb_ninja,API_KEY,,No OAuth app needed,,Composio docs
+opn_form,opn_form,API_KEY,,No OAuth app needed,,Composio docs
+optimoroute,optimoroute,API_KEY,,No OAuth app needed,,Composio docs
+order_desk,order_desk,API_KEY,,No OAuth app needed,,Composio docs
+ordinal,ordinal,API_KEY,,No OAuth app needed,,Composio docs
+orgo,orgo,API_KEY,,No OAuth app needed,,Composio docs
+orshot,orshot,API_KEY,,No OAuth app needed,,Composio docs
+osv,osv,NO_AUTH,,No OAuth app needed,,Composio docs
+otter_ai_mcp,otter_ai_mcp,DCR_OAUTH,,"DCR, already used by Composio",,Composio docs
+outline,outline,API_KEY,,No OAuth app needed,,Composio docs
+outlook,Outlook,"OAUTH2,S2S_OAUTH2",Microsoft Entra ID (app registration),Management API,"Microsoft Graph: POST /applications, then addPassword for a client secret",knowledge (vendor docs)
+owl_protocol,owl_protocol,API_KEY,,No OAuth app needed,,Composio docs
+page_vitals,page_vitals,API_KEY,,No OAuth app needed,,Composio docs
+page_x,page_x,API_KEY,,No OAuth app needed,,Composio docs
+pagerduty,PagerDuty,"OAUTH2,API_KEY",PagerDuty,Browser automation,no registration endpoint found (2 metadata documents) | API key also supported,measured: no DCR; no known API
+pandadoc,pandadoc,API_KEY,,No OAuth app needed,,Composio docs
+pandadoc_mcp,pandadoc_mcp,DCR_OAUTH,,"DCR, already used by Composio",,Composio docs
+paperform,paperform,API_KEY,,No OAuth app needed,,Composio docs
+paradym,paradym,API_KEY,,No OAuth app needed,,Composio docs
+parallel,parallel,API_KEY,,No OAuth app needed,,Composio docs
+parallel_task_mcp,parallel_task_mcp,DCR_OAUTH,,"DCR, already used by Composio",,Composio docs
+parma,Parma,"OAUTH2,API_KEY",Parma,Browser automation,no registration endpoint found (0 metadata documents) | API key also supported,measured: no DCR; no known API
+parsehub,parsehub,API_KEY,,No OAuth app needed,,Composio docs
+parsera,parsera,API_KEY,,No OAuth app needed,,Composio docs
+parseur,parseur,API_KEY,,No OAuth app needed,,Composio docs
+parsio,parsio,API_KEY,,No OAuth app needed,,Composio docs
+parsio_io,parsio_io,API_KEY,,No OAuth app needed,,Composio docs
+particl_mcp,particl_mcp,DCR_OAUTH,,"DCR, already used by Composio",,Composio docs
+passcreator,passcreator,API_KEY,,No OAuth app needed,,Composio docs
+passslot,passslot,API_KEY,,No OAuth app needed,,Composio docs
+past_dev,past_dev,API_KEY,,No OAuth app needed,,Composio docs
+paychasers,paychasers,API_KEY,,No OAuth app needed,,Composio docs
+payhere,payhere,API_KEY,,No OAuth app needed,,Composio docs
+payhip,payhip,API_KEY,,No OAuth app needed,,Composio docs
+paypal,Paypal,S2S_OAUTH2,PayPal Developer,DCR on the main OAuth server,https://api.paypal.com/v1/oauth2/applications | MCP DCR at https://mcp.paypal.com/register,measured: registration_endpoint in public metadata
+paystack,paystack,API_KEY,,No OAuth app needed,,Composio docs
+pdf4me,pdf4me,API_KEY,,No OAuth app needed,,Composio docs
+pdf_api_io,pdf_api_io,API_KEY,,No OAuth app needed,,Composio docs
+pdf_blocks,pdf_blocks,API_KEY,,No OAuth app needed,,Composio docs
+pdf_co,pdf_co,API_KEY,,No OAuth app needed,,Composio docs
+pdf_munk,pdf_munk,API_KEY,,No OAuth app needed,,Composio docs
+pdf_vector,pdf_vector,API_KEY,,No OAuth app needed,,Composio docs
+pdfgen,pdfgen,API_KEY,,No OAuth app needed,,Composio docs
+pdfless,pdfless,API_KEY,,No OAuth app needed,,Composio docs
+pdfmonkey,pdfmonkey,API_KEY,,No OAuth app needed,,Composio docs
+peaka,peaka,API_KEY,,No OAuth app needed,,Composio docs
+peec_ai_mcp,peec_ai_mcp,DCR_OAUTH,,"DCR, already used by Composio",,Composio docs
+peerdom,peerdom,API_KEY,,No OAuth app needed,,Composio docs
+penpot,penpot,API_KEY,,No OAuth app needed,,Composio docs
+peopledatalabs,peopledatalabs,API_KEY,,No OAuth app needed,,Composio docs
+perigon,perigon,API_KEY,,No OAuth app needed,,Composio docs
+perplexityai,perplexityai,API_KEY,,No OAuth app needed,,Composio docs
+persistiq,persistiq,API_KEY,,No OAuth app needed,,Composio docs
+persona,persona,API_KEY,,No OAuth app needed,,Composio docs
+personio,Personio,S2S_OAUTH2,Personio,Human / partner-gated,customer account,knowledge (unverified)
+pexels,pexels,API_KEY,,No OAuth app needed,,Composio docs
+phantombuster,phantombuster,API_KEY,,No OAuth app needed,,Composio docs
+phone_harness,phone_harness,API_KEY,,No OAuth app needed,,Composio docs
+photon_mcp,photon_mcp,DCR_OAUTH,,"DCR, already used by Composio",,Composio docs
+photoroom,photoroom,API_KEY,,No OAuth app needed,,Composio docs
+picnie,picnie,API_KEY,,No OAuth app needed,,Composio docs
+piggy,piggy,API_KEY,,No OAuth app needed,,Composio docs
+pigment,pigment,API_KEY,,No OAuth app needed,,Composio docs
+piloterr,piloterr,API_KEY,,No OAuth app needed,,Composio docs
+pilvio,pilvio,API_KEY,,No OAuth app needed,,Composio docs
+pinata,pinata,API_KEY,,No OAuth app needed,,Composio docs
+pinecone,Pinecone,"API_KEY,OAUTH2",Pinecone,Browser automation,no registration endpoint found (2 metadata documents) | API key also supported,measured: no DCR; no known API
+pingdom,pingdom,API_KEY,,No OAuth app needed,,Composio docs
+pinterest,Pinterest,OAUTH2,Pinterest Developers,Browser automation,no registration endpoint found (0 metadata documents),measured: no DCR; no known API
+pinterest_ads,Pinterest Ads,OAUTH2,Pinterest Developers,Browser automation,no registration endpoint found (0 metadata documents),measured: no DCR; no known API
+pipedrive,Pipedrive,"OAUTH2,API_KEY",Pipedrive,Browser automation,no registration endpoint found (0 metadata documents) | API key also supported,measured: no DCR; no known API
+pipeless,pipeless,API_KEY,,No OAuth app needed,,Composio docs
+pipeline_crm,pipeline_crm,API_KEY,,No OAuth app needed,,Composio docs
+pivot,pivot,API_KEY,,No OAuth app needed,,Composio docs
+placekey,placekey,API_KEY,,No OAuth app needed,,Composio docs
+placid,placid,API_KEY,,No OAuth app needed,,Composio docs
+plaid,plaid,API_KEY,,No OAuth app needed,,Composio docs
+plaid_mcp,plaid_mcp,DCR_OAUTH,,"DCR, already used by Composio",,Composio docs
+plain,plain,API_KEY,,No OAuth app needed,,Composio docs
+plain_mcp,plain_mcp,DCR_OAUTH,,"DCR, already used by Composio",,Composio docs
+planetscale,PlanetScale,OAUTH2,PlanetScale,DCR on the main OAuth server,https://auth.planetscale.com/oauth/registration,measured: registration_endpoint in public metadata
+planly,planly,API_KEY,,No OAuth app needed,,Composio docs
+planyo_online_booking,planyo_online_booking,API_KEY,,No OAuth app needed,,Composio docs
+plasmic,plasmic,API_KEY,,No OAuth app needed,,Composio docs
+platerecognizer,platerecognizer,API_KEY,,No OAuth app needed,,Composio docs
+plausible_analytics,plausible_analytics,API_KEY,,No OAuth app needed,,Composio docs
+plisio,plisio,API_KEY,,No OAuth app needed,,Composio docs
+plivo,plivo,API_KEY,,No OAuth app needed,,Composio docs
+ploid,ploid,API_KEY,,No OAuth app needed,,Composio docs
+pneumatic,pneumatic,API_KEY,,No OAuth app needed,,Composio docs
+pocketsmith,pocketsmith,API_KEY,,No OAuth app needed,,Composio docs
+podio,Podio,OAUTH2,Podio,Browser (DCR only on the MCP server),https://mcp.podio.com/oauth/register,measured: MCP server registration_endpoint
+pointagram,pointagram,API_KEY,,No OAuth app needed,,Composio docs
+polar,Polar,"OAUTH2,API_KEY",Polar,DCR on the main OAuth server,https://api.polar.sh/v1/oauth2/register | API key also supported,measured: registration_endpoint in public metadata
+polar_signals_mcp,polar_signals_mcp,API_KEY,,No OAuth app needed,,Composio docs
+polygon,polygon,API_KEY,,No OAuth app needed,,Composio docs
+polygon_io,polygon_io,API_KEY,,No OAuth app needed,,Composio docs
+polymarket,polymarket,API_KEY,,No OAuth app needed,,Composio docs
+polymarket_us,polymarket_us,API_KEY,,No OAuth app needed,,Composio docs
+poma_grill,poma_grill,API_KEY,,No OAuth app needed,,Composio docs
+poof,poof,API_KEY,,No OAuth app needed,,Composio docs
+pophive_mcp,pophive_mcp,NO_AUTH,,No OAuth app needed,,Composio docs
+popupsmart,popupsmart,API_KEY,,No OAuth app needed,,Composio docs
+postal_data_api,postal_data_api,API_KEY,,No OAuth app needed,,Composio docs
+postalytics,postalytics,API_KEY,,No OAuth app needed,,Composio docs
+postgrid,postgrid,API_KEY,,No OAuth app needed,,Composio docs
+postgrid_verify,postgrid_verify,API_KEY,,No OAuth app needed,,Composio docs
+posthog,posthog,API_KEY,,No OAuth app needed,,Composio docs
+posthog_mcp,posthog_mcp,DCR_OAUTH,,"DCR, already used by Composio",,Composio docs
+postiz_mcp,postiz_mcp,API_KEY,,No OAuth app needed,,Composio docs
+postman,postman,API_KEY,,No OAuth app needed,,Composio docs
+postmark,postmark,API_KEY,,No OAuth app needed,,Composio docs
+postpone,postpone,API_KEY,,No OAuth app needed,,Composio docs
+predict_leads,predict_leads,API_KEY,,No OAuth app needed,,Composio docs
+prerender,prerender,API_KEY,,No OAuth app needed,,Composio docs
+presenton,presenton,API_KEY,,No OAuth app needed,,Composio docs
+printautopilot,printautopilot,API_KEY,,No OAuth app needed,,Composio docs
+printify,printify,API_KEY,,No OAuth app needed,,Composio docs
+prisma,Prisma,"OAUTH2,API_KEY",Prisma,DCR on the main OAuth server,https://auth.prisma.io/register | MCP DCR at https://auth.prisma.io/register; API key also supported,measured: registration_endpoint in public metadata
+prismic,prismic,API_KEY,,No OAuth app needed,,Composio docs
+proabono,proabono,BASIC,,No OAuth app needed,,Composio docs
+process_street,process_street,API_KEY,,No OAuth app needed,,Composio docs
+procfu,procfu,API_KEY,,No OAuth app needed,,Composio docs
+productboard,Productboard,"API_KEY,OAUTH2",Productboard,Browser (DCR only on the MCP server),https://mcp.productboard.com/oauth2/register | API key also supported,measured: MCP server registration_endpoint
+productlane,productlane,API_KEY,,No OAuth app needed,,Composio docs
+productnow_mcp,productnow_mcp,DCR_OAUTH,,"DCR, already used by Composio",,Composio docs
+project_bubble,project_bubble,API_KEY,,No OAuth app needed,,Composio docs
+prompt_hub,prompt_hub,API_KEY,,No OAuth app needed,,Composio docs
+promptlayer,promptlayer,API_KEY,,No OAuth app needed,,Composio docs
+promptmate_io,promptmate_io,API_KEY,,No OAuth app needed,,Composio docs
+proofly,proofly,API_KEY,,No OAuth app needed,,Composio docs
+prospeo,prospeo,API_KEY,,No OAuth app needed,,Composio docs
+proxiedmail,proxiedmail,API_KEY,,No OAuth app needed,,Composio docs
+pumble,pumble,API_KEY,,No OAuth app needed,,Composio docs
+purechecker,purechecker,API_KEY,,No OAuth app needed,,Composio docs
+push_alert,push_alert,API_KEY,,No OAuth app needed,,Composio docs
+push_by_techulus,push_by_techulus,API_KEY,,No OAuth app needed,,Composio docs
+pushbullet,Pushbullet,"OAUTH2,API_KEY",Pushbullet,Browser automation,no registration endpoint found (0 metadata documents) | API key also supported,measured: no DCR; no known API
+pushinator,pushinator,API_KEY,,No OAuth app needed,,Composio docs
+pushover,pushover,API_KEY,,No OAuth app needed,,Composio docs
+pylon_mcp,pylon_mcp,DCR_OAUTH,,"DCR, already used by Composio",,Composio docs
+quaderno,quaderno,API_KEY,,No OAuth app needed,,Composio docs
+quickbooks,QuickBooks,OAUTH2,QuickBooks,Browser automation,no registration endpoint found (0 metadata documents),measured: no DCR; no known API
+quickenrich,quickenrich,API_KEY,,No OAuth app needed,,Composio docs
+quicknode_mcp,quicknode_mcp,DCR_OAUTH,,"DCR, already used by Composio",,Composio docs
+quiltt,quiltt,API_KEY,,No OAuth app needed,,Composio docs
+quintadb,quintadb,API_KEY,,No OAuth app needed,,Composio docs
+quire,Quire,OAUTH2,Quire,Browser automation,no registration endpoint found (0 metadata documents),measured: no DCR; no known API
+quo,quo,API_KEY,,No OAuth app needed,,Composio docs
+qwilr,qwilr,API_KEY,,No OAuth app needed,,Composio docs
+radar,radar,API_KEY,,No OAuth app needed,,Composio docs
+rafflys,rafflys,API_KEY,,No OAuth app needed,,Composio docs
+ragic,ragic,API_KEY,,No OAuth app needed,,Composio docs
+ragie,ragie,API_KEY,,No OAuth app needed,,Composio docs
+railway,Railway,"API_KEY,OAUTH2",Railway,Browser (DCR only on the MCP server),https://backboard.railway.com/oauth/register | API key also supported,measured: MCP server registration_endpoint
+railway_mcp,Railway MCP,OAUTH2,Railway,Browser (DCR only on the MCP server),https://backboard.railway.com/oauth/register,measured: MCP server registration_endpoint
+raindrop,raindrop,API_KEY,,No OAuth app needed,,Composio docs
+raisely,raisely,API_KEY,,No OAuth app needed,,Composio docs
+ramp,Ramp,OAUTH2,Ramp,Human / partner-gated,business account | MCP DCR at https://mcp.ramp.com/register,knowledge (unverified)
+ramp_mcp,ramp_mcp,DCR_OAUTH,,"DCR, already used by Composio",,Composio docs
+rawg_video_games_database,rawg_video_games_database,API_KEY,,No OAuth app needed,,Composio docs
+razorpay,Razorpay,"API_KEY,OAUTH2",Razorpay,Browser (DCR only on the MCP server),https://mcp.razorpay.com/register | API key also supported,measured: MCP server registration_endpoint
+rd_station_marketing,RD Station Marketing,OAUTH2,RD Station Marketing,Browser automation,no registration endpoint found (0 metadata documents),measured: no DCR; no known API
+re_amaze,re_amaze,API_KEY,,No OAuth app needed,,Composio docs
+read_ai_mcp,read_ai_mcp,DCR_OAUTH,,"DCR, already used by Composio",,Composio docs
+readwise_reader,readwise_reader,API_KEY,,No OAuth app needed,,Composio docs
+realphonevalidation,realphonevalidation,API_KEY,,No OAuth app needed,,Composio docs
+rebrandly,Rebrandly,OAUTH2,Rebrandly,Browser (DCR only on the MCP server),https://sensational-elixir-82.authkit.app/oauth2/register,measured: MCP server registration_endpoint
+recallai,recallai,API_KEY,,No OAuth app needed,,Composio docs
+recraft,recraft,API_KEY,,No OAuth app needed,,Composio docs
+recraft_mcp,recraft_mcp,DCR_OAUTH,,"DCR, already used by Composio",,Composio docs
+recruitee,Recruitee,"API_KEY,OAUTH2",Recruitee,Browser automation,no registration endpoint found (0 metadata documents) | API key also supported,measured: no DCR; no known API
+recurly,recurly,API_KEY,,No OAuth app needed,,Composio docs
+redcircle_api,redcircle_api,API_KEY,,No OAuth app needed,,Composio docs
+reddit,Reddit,OAUTH2,Reddit apps,Human / partner-gated,ads API access approval,knowledge (unverified)
+reddit_ads,Reddit Ads,OAUTH2,Reddit apps,Human / partner-gated,ads API access approval,knowledge (unverified)
+redirect_pizza,redirect_pizza,API_KEY,,No OAuth app needed,,Composio docs
+referralrock,referralrock,BASIC,,No OAuth app needed,,Composio docs
+refiner,refiner,API_KEY,,No OAuth app needed,,Composio docs
+reloadly,Reloadly,S2S_OAUTH2,Reloadly,Browser automation,no registration endpoint found (0 metadata documents),measured: no DCR; no known API
+remarkety,remarkety,API_KEY,,No OAuth app needed,,Composio docs
+remote_retrieval,remote_retrieval,API_KEY,,No OAuth app needed,,Composio docs
+remove_bg,remove_bg,API_KEY,,No OAuth app needed,,Composio docs
+render,render,API_KEY,,No OAuth app needed,,Composio docs
+renderform,renderform,API_KEY,,No OAuth app needed,,Composio docs
+rentman,rentman,API_KEY,,No OAuth app needed,,Composio docs
+repairshopr,repairshopr,API_KEY,,No OAuth app needed,,Composio docs
+replay_mcp,replay_mcp,API_KEY,,No OAuth app needed,,Composio docs
+replicate,replicate,API_KEY,,No OAuth app needed,,Composio docs
+reply,reply,API_KEY,,No OAuth app needed,,Composio docs
+reply_io,reply_io,API_KEY,,No OAuth app needed,,Composio docs
+request_tracker,request_tracker,API_KEY,,No OAuth app needed,,Composio docs
+resend,Resend,"API_KEY,OAUTH2",Resend,DCR on the main OAuth server,https://api.resend.com/oauth/register | MCP DCR at https://api.resend.com/oauth/register; API key also supported,measured: registration_endpoint in public metadata
+resend_mcp,resend_mcp,DCR_OAUTH,,"DCR, already used by Composio",,Composio docs
+resource_planner,resource_planner,API_KEY,,No OAuth app needed,,Composio docs
+respond_io,respond_io,API_KEY,,No OAuth app needed,,Composio docs
+retable,retable,API_KEY,,No OAuth app needed,,Composio docs
+retailed,retailed,API_KEY,,No OAuth app needed,,Composio docs
+retellai,retellai,API_KEY,,No OAuth app needed,,Composio docs
+reteno,reteno,API_KEY,,No OAuth app needed,,Composio docs
+retently,retently,API_KEY,,No OAuth app needed,,Composio docs
+rev,rev,API_KEY,,No OAuth app needed,,Composio docs
+rev_ai,rev_ai,API_KEY,,No OAuth app needed,,Composio docs
+revolt,revolt,API_KEY,,No OAuth app needed,,Composio docs
+rillet,Rillet,"API_KEY,OAUTH2,DCR_OAUTH",Rillet,DCR on the main OAuth server,https://api.rillet.com/oauth2/register | API key also supported,measured: registration_endpoint in public metadata
+rippling,Rippling,"OAUTH2,API_KEY",Rippling,Human / partner-gated,partner programme | also advertises DCR at https://app.rippling.com/api/o/register/; API key also supported,knowledge (unverified)
+ritekit,ritekit,API_KEY,,No OAuth app needed,,Composio docs
+rize,rize,API_KEY,,No OAuth app needed,,Composio docs
+rkvst,rkvst,API_KEY,,No OAuth app needed,,Composio docs
+roam,Roam,"API_KEY,OAUTH2",Roam,DCR on the main OAuth server,https://ro.am/oauth/register | API key also supported,measured: registration_endpoint in public metadata
+roboflow,roboflow,API_KEY,,No OAuth app needed,,Composio docs
+rocket_reach,rocket_reach,API_KEY,,No OAuth app needed,,Composio docs
+rocketadmin,rocketadmin,API_KEY,,No OAuth app needed,,Composio docs
+rocketlane,rocketlane,API_KEY,,No OAuth app needed,,Composio docs
+rollbar,rollbar,API_KEY,,No OAuth app needed,,Composio docs
+rootly,rootly,API_KEY,,No OAuth app needed,,Composio docs
+rosette_text_analytics,rosette_text_analytics,API_KEY,,No OAuth app needed,,Composio docs
+route4me,route4me,API_KEY,,No OAuth app needed,,Composio docs
+rudderstack_transformation,rudderstack_transformation,BASIC,,No OAuth app needed,,Composio docs
+runpod,runpod,API_KEY,,No OAuth app needed,,Composio docs
+runway,runway,API_KEY,,No OAuth app needed,,Composio docs
+safetyculture,safetyculture,API_KEY,,No OAuth app needed,,Composio docs
+sage_intacct,Sage Intacct,OAUTH2,Sage Intacct,Human / partner-gated,partner/subscription,knowledge (unverified)
+salesflare,salesflare,API_KEY,,No OAuth app needed,,Composio docs
+salesforce,Salesforce,"OAUTH2,S2S_OAUTH2",Salesforce (Connected / External Client App),DCR on the main OAuth server,https://login.salesforce.com/services/oauth2/register,measured: registration_endpoint in public metadata
+salesforce_data_360,Salesforce Data 360,OAUTH2,Salesforce (Connected / External Client App),DCR on the main OAuth server,https://login.salesforce.com/services/oauth2/register,measured: registration_endpoint in public metadata
+salesforce_service_cloud,Salesforce Service Cloud,OAUTH2,Salesforce (Connected / External Client App),DCR on the main OAuth server,https://login.salesforce.com/services/oauth2/register,measured: registration_endpoint in public metadata
+salesmate,salesmate,API_KEY,,No OAuth app needed,,Composio docs
+salesrobot,salesrobot,API_KEY,,No OAuth app needed,,Composio docs
+sanity,sanity,API_KEY,,No OAuth app needed,,Composio docs
+sap_successfactors,sap_successfactors,SAML,,No OAuth app needed,,Composio docs
+saperly,saperly,API_KEY,,No OAuth app needed,,Composio docs
+saperly_mcp,saperly_mcp,API_KEY,,No OAuth app needed,,Composio docs
+satismeter,satismeter,API_KEY,,No OAuth app needed,,Composio docs
+saucelabs,saucelabs,BASIC,,No OAuth app needed,,Composio docs
+scale_ai,scale_ai,API_KEY,,No OAuth app needed,,Composio docs
+scheduleonce,Scheduleonce,"API_KEY,OAUTH2",Scheduleonce,Browser automation,no registration endpoint found (0 metadata documents) | API key also supported,measured: no DCR; no known API
+scorecard_mcp,scorecard_mcp,DCR_OAUTH,,"DCR, already used by Composio",,Composio docs
+scrape_do,scrape_do,API_KEY,,No OAuth app needed,,Composio docs
+scrapecreators,scrapecreators,API_KEY,,No OAuth app needed,,Composio docs
+scrapegraph_ai,scrapegraph_ai,API_KEY,,No OAuth app needed,,Composio docs
+scrapfly,scrapfly,API_KEY,,No OAuth app needed,,Composio docs
+scrapingant,scrapingant,API_KEY,,No OAuth app needed,,Composio docs
+scrapingbee,scrapingbee,API_KEY,,No OAuth app needed,,Composio docs
+screenshot_api,screenshot_api,API_KEY,,No OAuth app needed,,Composio docs
+screenshot_fyi,screenshot_fyi,API_KEY,,No OAuth app needed,,Composio docs
+screenshotone,screenshotone,API_KEY,,No OAuth app needed,,Composio docs
+seam,seam,API_KEY,,No OAuth app needed,,Composio docs
+search1api,search1api,API_KEY,,No OAuth app needed,,Composio docs
+search_api,search_api,API_KEY,,No OAuth app needed,,Composio docs
+searchapi_mcp,searchapi_mcp,DCR_OAUTH,,"DCR, already used by Composio",,Composio docs
+seat_geek,seat_geek,NO_AUTH,,No OAuth app needed,,Composio docs
+seatable,seatable,API_KEY,,No OAuth app needed,,Composio docs
+sec,sec,API_KEY,,No OAuth app needed,,Composio docs
+securitytrails,securitytrails,API_KEY,,No OAuth app needed,,Composio docs
+seek_table,seek_table,API_KEY,,No OAuth app needed,,Composio docs
+segment,segment,API_KEY,,No OAuth app needed,,Composio docs
+segmetrics,segmetrics,API_KEY,,No OAuth app needed,,Composio docs
+semanticscholar,semanticscholar,API_KEY,,No OAuth app needed,,Composio docs
+semrush,semrush,API_KEY,,No OAuth app needed,,Composio docs
+semrush_mcp,semrush_mcp,DCR_OAUTH,,"DCR, already used by Composio",,Composio docs
+send_pulse,SendPulse,"API_KEY,S2S_OAUTH2",SendPulse,Browser (DCR only on the MCP server),https://mcp.sendpulse.com/oauth/register | API key also supported,measured: MCP server registration_endpoint
+sendbird,sendbird,API_KEY,,No OAuth app needed,,Composio docs
+sendbird_ai_chabot,sendbird_ai_chabot,API_KEY,,No OAuth app needed,,Composio docs
+sender,sender,API_KEY,,No OAuth app needed,,Composio docs
+sendfox,sendfox,API_KEY,,No OAuth app needed,,Composio docs
+sendgrid,sendgrid,API_KEY,,No OAuth app needed,,Composio docs
+sendlane,sendlane,API_KEY,,No OAuth app needed,,Composio docs
+sendloop,Sendloop,"API_KEY,OAUTH2",Sendloop,Browser automation,no registration endpoint found (0 metadata documents) | API key also supported,measured: no DCR; no known API
+sendspark,sendspark,API_KEY,,No OAuth app needed,,Composio docs
+sensibo,sensibo,API_KEY,,No OAuth app needed,,Composio docs
+sentry,Sentry,OAUTH2,Sentry,Browser (DCR only on the MCP server),https://mcp.sentry.dev/oauth/register,measured: MCP server registration_endpoint
+sentry_mcp,sentry_mcp,DCR_OAUTH,,"DCR, already used by Composio",,Composio docs
+seoptimer,seoptimer,API_KEY,,No OAuth app needed,,Composio docs
+seqera,seqera,API_KEY,,No OAuth app needed,,Composio docs
+sequenzy,sequenzy,API_KEY,,No OAuth app needed,,Composio docs
+serpapi,serpapi,API_KEY,,No OAuth app needed,,Composio docs
+serpdog,serpdog,API_KEY,,No OAuth app needed,,Composio docs
+serper,serper,API_KEY,,No OAuth app needed,,Composio docs
+serphouse,serphouse,API_KEY,,No OAuth app needed,,Composio docs
+serply,serply,API_KEY,,No OAuth app needed,,Composio docs
+serveravatar,serveravatar,API_KEY,,No OAuth app needed,,Composio docs
+servicem8,Servicem8,OAUTH2,Servicem8,DCR on the main OAuth server,https://api.servicem8.com/oauth/register,measured: registration_endpoint in public metadata
+servicenow,ServiceNow,"BASIC,OAUTH2,S2S_OAUTH2",ServiceNow,Management API,Instance REST Table API on oauth_entity (free Personal Developer Instance),knowledge (vendor docs)
+servicetitan,ServiceTitan,S2S_OAUTH2,ServiceTitan,Human / partner-gated,developer programme application,knowledge (unverified)
+sevdesk,sevdesk,API_KEY,,No OAuth app needed,,Composio docs
+seven_io,seven_io,API_KEY,,No OAuth app needed,,Composio docs
+share_point,SharePoint,"OAUTH2,S2S_OAUTH2",Microsoft Entra ID (app registration),Management API,"Microsoft Graph: POST /applications, then addPassword for a client secret",knowledge (vendor docs)
+sharepoint_graph,SharePoint Graph,"OAUTH2,S2S_OAUTH2",Microsoft Entra ID (app registration),Management API,"Microsoft Graph: POST /applications, then addPassword for a client secret",knowledge (vendor docs)
+shipday,shipday,"BASIC,API_KEY",,No OAuth app needed,,Composio docs
+shipengine,shipengine,API_KEY,,No OAuth app needed,,Composio docs
+shippo,Shippo,"API_KEY,OAUTH2",Shippo,DCR on the main OAuth server,https://goshippo.com/oauth/clients | API key also supported,measured: registration_endpoint in public metadata
+shopify,Shopify,"OAUTH2,S2S_OAUTH2",Shopify,CLI / infrastructure as code,"Shopify CLI: app config TOML, shopify app deploy",knowledge (vendor docs)
+short_io,short_io,API_KEY,,No OAuth app needed,,Composio docs
+short_menu,short_menu,API_KEY,,No OAuth app needed,,Composio docs
+shortcut,shortcut,API_KEY,,No OAuth app needed,,Composio docs
+shorten_rest,shorten_rest,API_KEY,,No OAuth app needed,,Composio docs
+shortpixel,shortpixel,API_KEY,,No OAuth app needed,,Composio docs
+shotstack,shotstack,API_KEY,,No OAuth app needed,,Composio docs
+sideshow,sideshow,API_KEY,,No OAuth app needed,,Composio docs
+sideshow_mcp,sideshow_mcp,DCR_OAUTH,,"DCR, already used by Composio",,Composio docs
+sidetracker,sidetracker,API_KEY,,No OAuth app needed,,Composio docs
+sign_now,SignNow,OAUTH2,SignNow,Browser automation,no registration endpoint found (0 metadata documents),measured: no DCR; no known API
+signaturely,signaturely,API_KEY,,No OAuth app needed,,Composio docs
+signpath,signpath,API_KEY,,No OAuth app needed,,Composio docs
+signwell,signwell,API_KEY,,No OAuth app needed,,Composio docs
+similarweb_digitalrank_api,similarweb_digitalrank_api,API_KEY,,No OAuth app needed,,Composio docs
+simla_com,simla_com,API_KEY,,No OAuth app needed,,Composio docs
+simple_analytics,simple_analytics,API_KEY,,No OAuth app needed,,Composio docs
+simple_localize,simple_localize,API_KEY,,No OAuth app needed,,Composio docs
+simplekpi,simplekpi,BASIC,,No OAuth app needed,,Composio docs
+simplero,simplero,API_KEY,,No OAuth app needed,,Composio docs
+simplesat,simplesat,API_KEY,,No OAuth app needed,,Composio docs
+simplescraper_mcp,simplescraper_mcp,DCR_OAUTH,,"DCR, already used by Composio",,Composio docs
+siteleaf,siteleaf,"API_KEY,BASIC",,No OAuth app needed,,Composio docs
+sitespeakai,sitespeakai,API_KEY,,No OAuth app needed,,Composio docs
+skyfire,skyfire,API_KEY,,No OAuth app needed,,Composio docs
+skyvern,skyvern,API_KEY,,No OAuth app needed,,Composio docs
+slack,Slack,OAUTH2,Slack apps,Management API,apps.manifest.create with an app configuration token (already used by this agent),knowledge (vendor docs)
+slackbot,Slackbot,OAUTH2,Slack apps,Management API,apps.manifest.create with an app configuration token (already used by this agent),knowledge (vendor docs)
+slazzer,slazzer,API_KEY,,No OAuth app needed,,Composio docs
+slidesgpt_mcp,slidesgpt_mcp,NO_AUTH,,No OAuth app needed,,Composio docs
+slite,slite,API_KEY,,No OAuth app needed,,Composio docs
+smarthr,smarthr,API_KEY,,No OAuth app needed,,Composio docs
+smartlead,smartlead,API_KEY,,No OAuth app needed,,Composio docs
+smartproxy,smartproxy,API_KEY,,No OAuth app needed,,Composio docs
+smartsheet,Smartsheet,"OAUTH2,BEARER_TOKEN",Smartsheet,Browser automation,no registration endpoint found (2 metadata documents),measured: no DCR; no known API
+smokeball,Smokeball,OAUTH2,Smokeball,Human / partner-gated,partner programme,knowledge (unverified)
+smol_machines,smol_machines,API_KEY,,No OAuth app needed,,Composio docs
+sms_alert,sms_alert,API_KEY,,No OAuth app needed,,Composio docs
+smtp2go,smtp2go,API_KEY,,No OAuth app needed,,Composio docs
+smtping,smtping,API_KEY,,No OAuth app needed,,Composio docs
+smugmug,smugmug,API_KEY,,No OAuth app needed,,Composio docs
+snapchat,Snapchat,OAUTH2,Snapchat,Human / partner-gated,Marketing API approval,knowledge (unverified)
+sncf,sncf,API_KEY,,No OAuth app needed,,Composio docs
+snowflake,Snowflake,OAUTH2,Snowflake,Management API,"SQL: CREATE SECURITY INTEGRATION ... OAUTH_CLIENT = CUSTOM, then SYSTEM$SHOW_OAUTH_CLIENT_SECRETS",knowledge (vendor docs)
+snowflake_basic,snowflake_basic,BASIC,,No OAuth app needed,,Composio docs
+snyk,Snyk,OAUTH2,Snyk,Browser automation,no registration endpoint found (0 metadata documents),measured: no DCR; no known API
+softr,softr,API_KEY,,No OAuth app needed,,Composio docs
+solcast,solcast,API_KEY,,No OAuth app needed,,Composio docs
+soundcloud,SoundCloud,OAUTH2,SoundCloud,Browser automation,no registration endpoint found (0 metadata documents),measured: no DCR; no known API
+sourcegraph,sourcegraph,API_KEY,,No OAuth app needed,,Composio docs
+specific,specific,API_KEY,,No OAuth app needed,,Composio docs
+speechmatics,speechmatics,API_KEY,,No OAuth app needed,,Composio docs
+splice_mcp,splice_mcp,DCR_OAUTH,,"DCR, already used by Composio",,Composio docs
+splitwise,Splitwise,"OAUTH2,API_KEY",Splitwise,Browser automation,no registration endpoint found (0 metadata documents) | API key also supported,measured: no DCR; no known API
+spoki,spoki,API_KEY,,No OAuth app needed,,Composio docs
+spondyr,spondyr,API_KEY,,No OAuth app needed,,Composio docs
+spotify,Spotify,OAUTH2,Spotify,Browser automation,no registration endpoint found (0 metadata documents),measured: no DCR; no known API
+spotlightr,spotlightr,API_KEY,,No OAuth app needed,,Composio docs
+spydra,spydra,API_KEY,,No OAuth app needed,,Composio docs
+square,Square,OAUTH2,Square,Browser (DCR only on the MCP server),https://mcp.squareup.com/register,measured: MCP server registration_endpoint
+sslmate_cert_spotter_api,sslmate_cert_spotter_api,API_KEY,,No OAuth app needed,,Composio docs
+stack_ai,stack_ai,API_KEY,,No OAuth app needed,,Composio docs
+stack_exchange,Stack Exchange,OAUTH2,Stack Exchange,Browser automation,no registration endpoint found (0 metadata documents),measured: no DCR; no known API
+stackby,stackby,API_KEY,,No OAuth app needed,,Composio docs
+stannp,stannp,API_KEY,,No OAuth app needed,,Composio docs
+starshipit,starshipit,API_KEY,,No OAuth app needed,,Composio docs
+starton,starton,API_KEY,,No OAuth app needed,,Composio docs
+statsig,statsig,API_KEY,,No OAuth app needed,,Composio docs
+statsig_mcp,statsig_mcp,DCR_OAUTH,,"DCR, already used by Composio",,Composio docs
+statuscake,statuscake,API_KEY,,No OAuth app needed,,Composio docs
+storeganise,storeganise,API_KEY,,No OAuth app needed,,Composio docs
+storerocket,storerocket,API_KEY,,No OAuth app needed,,Composio docs
+stormboard,stormboard,API_KEY,,No OAuth app needed,,Composio docs
+stormglass_io,stormglass_io,API_KEY,,No OAuth app needed,,Composio docs
+storyblok,Storyblok,"API_KEY,OAUTH2",Storyblok,Browser (DCR only on the MCP server),https://mcp.storyblok.com/oauth/register | API key also supported,measured: MCP server registration_endpoint
+strale,strale,API_KEY,,No OAuth app needed,,Composio docs
+streamtime,streamtime,API_KEY,,No OAuth app needed,,Composio docs
+stripe,Stripe,"API_KEY,OAUTH2",Stripe,Browser (DCR only on the MCP server),https://access.stripe.com/mcp/oauth2/register | API key also supported,measured: MCP server registration_endpoint
+stripe_mcp,stripe_mcp,DCR_OAUTH,,"DCR, already used by Composio",,Composio docs
+studio_by_ai21_labs,studio_by_ai21_labs,API_KEY,,No OAuth app needed,,Composio docs
+stytch_mcp,stytch_mcp,DCR_OAUTH,,"DCR, already used by Composio",,Composio docs
+suitedash,suitedash,API_KEY,,No OAuth app needed,,Composio docs
+supabase,Supabase,"OAUTH2,API_KEY",Supabase,DCR on the main OAuth server,https://api.supabase.com/platform/oauth/apps/register | MCP DCR at https://api.supabase.com/platform/oauth/apps/register; API key also supported,measured: registration_endpoint in public metadata
+supabase_mcp,supabase_mcp,DCR_OAUTH,,"DCR, already used by Composio",,Composio docs
+supabase_read_mcp,supabase_read_mcp,DCR_OAUTH,,"DCR, already used by Composio",,Composio docs
+supadata,supadata,API_KEY,,No OAuth app needed,,Composio docs
+superchat,superchat,API_KEY,,No OAuth app needed,,Composio docs
+supermemory,supermemory,API_KEY,,No OAuth app needed,,Composio docs
+supersaas,supersaas,"API_KEY,BASIC",,No OAuth app needed,,Composio docs
+supportbee,supportbee,API_KEY,,No OAuth app needed,,Composio docs
+supportivekoala,supportivekoala,API_KEY,,No OAuth app needed,,Composio docs
+surecontact,surecontact,API_KEY,,No OAuth app needed,,Composio docs
+surf,surf,API_KEY,,No OAuth app needed,,Composio docs
+survey_monkey,SurveyMonkey,"OAUTH2,API_KEY",SurveyMonkey,Browser (DCR only on the MCP server),https://mcp.surveymonkey.com/register | API key also supported,measured: MCP server registration_endpoint
+svix,svix,API_KEY,,No OAuth app needed,,Composio docs
+swaggerhub,swaggerhub,API_KEY,,No OAuth app needed,,Composio docs
+swarmsyncai,swarmsyncai,API_KEY,,No OAuth app needed,,Composio docs
+sympla,sympla,API_KEY,,No OAuth app needed,,Composio docs
+synthesize_bio_mcp,synthesize_bio_mcp,DCR_OAUTH,,"DCR, already used by Composio",,Composio docs
+synthflow_ai,synthflow_ai,API_KEY,,No OAuth app needed,,Composio docs
+tableau,tableau,API_KEY,,No OAuth app needed,,Composio docs
+taggun,taggun,API_KEY,,No OAuth app needed,,Composio docs
+tailscale,tailscale,API_KEY,,No OAuth app needed,,Composio docs
+talenthr,talenthr,API_KEY,,No OAuth app needed,,Composio docs
+tally,Tally,"API_KEY,OAUTH2",Tally,DCR on the main OAuth server,https://api.tally.so/oauth/register | MCP DCR at https://api.tally.so/oauth/register/mcp; API key also supported,measured: registration_endpoint in public metadata
+tapfiliate,tapfiliate,API_KEY,,No OAuth app needed,,Composio docs
+taskrabbit_mcp,taskrabbit_mcp,NO_AUTH,,No OAuth app needed,,Composio docs
+tave,tave,API_KEY,,No OAuth app needed,,Composio docs
+tavily,tavily,API_KEY,,No OAuth app needed,,Composio docs
+tavily_mcp,tavily_mcp,DCR_OAUTH,,"DCR, already used by Composio",,Composio docs
+taxjar,taxjar,API_KEY,,No OAuth app needed,,Composio docs
+teamcamp,teamcamp,API_KEY,,No OAuth app needed,,Composio docs
+teamleader,Teamleader Focus,OAUTH2,Teamleader Focus,Browser automation,no registration endpoint found (0 metadata documents),measured: no DCR; no known API
+teamwork,teamwork,API_KEY,,No OAuth app needed,,Composio docs
+telegram,telegram,API_KEY,,No OAuth app needed,,Composio docs
+telnyx,telnyx,API_KEY,,No OAuth app needed,,Composio docs
+teltel,teltel,API_KEY,,No OAuth app needed,,Composio docs
+templated,templated,API_KEY,,No OAuth app needed,,Composio docs
+templatefox,templatefox,API_KEY,,No OAuth app needed,,Composio docs
+temporal,temporal,API_KEY,,No OAuth app needed,,Composio docs
+text_to_pdf,text_to_pdf,NO_AUTH,,No OAuth app needed,,Composio docs
+textcortex,textcortex,API_KEY,,No OAuth app needed,,Composio docs
+textit,textit,API_KEY,,No OAuth app needed,,Composio docs
+textrazor,textrazor,API_KEY,,No OAuth app needed,,Composio docs
+thanks_io,thanks_io,API_KEY,,No OAuth app needed,,Composio docs
+the_odds_api,the_odds_api,API_KEY,,No OAuth app needed,,Composio docs
+the_org,the_org,API_KEY,,No OAuth app needed,,Composio docs
+thecompaniesapi,thecompaniesapi,API_KEY,,No OAuth app needed,,Composio docs
+theirstack,theirstack,API_KEY,,No OAuth app needed,,Composio docs
+thoughtspot_spotter_mcp,thoughtspot_spotter_mcp,DCR_OAUTH,,"DCR, already used by Composio",,Composio docs
+threads,Threads,OAUTH2,Meta for Developers,Browser automation,no registration endpoint found (3 metadata documents),measured: no DCR; no known API
+ticket_tailor_mcp,ticket_tailor_mcp,DCR_OAUTH,,"DCR, already used by Composio",,Composio docs
+ticketmaster,Ticketmaster,"API_KEY,OAUTH2",Ticketmaster,Browser automation,no registration endpoint found (0 metadata documents) | API key also supported,measured: no DCR; no known API
+ticktick,Ticktick,OAUTH2,Ticktick,DCR on the main OAuth server,https://api.ticktick.com/oauth/register | MCP DCR at https://api.ticktick.com/oauth/register,measured: registration_endpoint in public metadata
+tidb_cloud,tidb_cloud,API_KEY,,No OAuth app needed,,Composio docs
+tidy,tidy,API_KEY,,No OAuth app needed,,Composio docs
+tik_hub,tik_hub,API_KEY,,No OAuth app needed,,Composio docs
+tiktok,Tiktok,OAUTH2,TikTok for Developers,Human / partner-gated,app review for most scopes,knowledge (unverified)
+tiktok_ads,TikTok Ads,OAUTH2,TikTok for Developers,Human / partner-gated,app review for most scopes,knowledge (unverified)
+timecamp,timecamp,API_KEY,,No OAuth app needed,,Composio docs
+timelinesai,timelinesai,API_KEY,,No OAuth app needed,,Composio docs
+timelink,timelink,API_KEY,,No OAuth app needed,,Composio docs
+timely,Timely,OAUTH2,Timely,Browser automation,no registration endpoint found (0 metadata documents),measured: no DCR; no known API
+tinyfish,tinyfish,API_KEY,,No OAuth app needed,,Composio docs
+tinyfish_mcp,tinyfish_mcp,DCR_OAUTH,,"DCR, already used by Composio",,Composio docs
+tinypng,tinypng,API_KEY,,No OAuth app needed,,Composio docs
+tinyurl,tinyurl,API_KEY,,No OAuth app needed,,Composio docs
+tipalti,Tipalti,"OAUTH2,S2S_OAUTH2",Tipalti,Human / partner-gated,customer account,knowledge (unverified)
+tisane,tisane,API_KEY,,No OAuth app needed,,Composio docs
+tldv,tldv,API_KEY,,No OAuth app needed,,Composio docs
+todoist,Todoist,OAUTH2,Todoist,DCR on the main OAuth server,https://todoist.com/oauth/register,measured: registration_endpoint in public metadata
+todoist_mcp,todoist_mcp,DCR_OAUTH,,"DCR, already used by Composio",,Composio docs
+toggl,toggl,API_KEY,,No OAuth app needed,,Composio docs
+toggl_track,toggl_track,API_KEY,,No OAuth app needed,,Composio docs
+token_metrics,token_metrics,API_KEY,,No OAuth app needed,,Composio docs
+tomba,tomba,API_KEY,,No OAuth app needed,,Composio docs
+tomtom,tomtom,API_KEY,,No OAuth app needed,,Composio docs
+toneden,Toneden,"API_KEY,OAUTH2",Toneden,Browser automation,no registration endpoint found (0 metadata documents) | API key also supported,measured: no DCR; no known API
+tpscheck,tpscheck,API_KEY,,No OAuth app needed,,Composio docs
+trackdesk,trackdesk,API_KEY,,No OAuth app needed,,Composio docs
+transloadit,transloadit,API_KEY,,No OAuth app needed,,Composio docs
+trello,Trello,OAUTH1,Trello,Browser automation,no registration endpoint found (0 metadata documents),measured: no DCR; no known API
+trello_mcp,trello_mcp,DCR_OAUTH,,"DCR, already used by Composio",,Composio docs
+trestle,trestle,API_KEY,,No OAuth app needed,,Composio docs
+trigger_dev,trigger_dev,API_KEY,,No OAuth app needed,,Composio docs
+triggercmd,triggercmd,API_KEY,,No OAuth app needed,,Composio docs
+tripadvisor,tripadvisor,API_KEY,,No OAuth app needed,,Composio docs
+tripadvisor_content_api,tripadvisor_content_api,API_KEY,,No OAuth app needed,,Composio docs
+tripo3d,tripo3d,API_KEY,,No OAuth app needed,,Composio docs
+trivago_mcp,trivago_mcp,NO_AUTH,,No OAuth app needed,,Composio docs
+true_list,true_list,API_KEY,,No OAuth app needed,,Composio docs
+truthscan,truthscan,API_KEY,,No OAuth app needed,,Composio docs
+truvera,truvera,API_KEY,,No OAuth app needed,,Composio docs
+tryfundable,tryfundable,API_KEY,,No OAuth app needed,,Composio docs
+turbot_pipes,turbot_pipes,API_KEY,,No OAuth app needed,,Composio docs
+turso,turso,API_KEY,,No OAuth app needed,,Composio docs
+twelve_data,twelve_data,API_KEY,,No OAuth app needed,,Composio docs
+twenty,twenty,API_KEY,,No OAuth app needed,,Composio docs
+twilio,Twilio,"API_KEY,BASIC,S2S_OAUTH2",Twilio,Browser automation,no registration endpoint found (0 metadata documents) | API key also supported,measured: no DCR; no known API
+twitch,Twitch,OAUTH2,Twitch,Browser automation,no registration endpoint found (0 metadata documents),measured: no DCR; no known API
+twitter,Twitter,OAUTH2,X Developer Portal,Browser automation,no registration endpoint found (1 metadata documents),measured: no DCR; no known API
+twittershots,twittershots,API_KEY,,No OAuth app needed,,Composio docs
+twocaptcha,twocaptcha,API_KEY,,No OAuth app needed,,Composio docs
+typecast,typecast,API_KEY,,No OAuth app needed,,Composio docs
+typeform,Typeform,OAUTH2,Typeform,DCR on the main OAuth server,https://api.typeform.com/oauth/register,measured: registration_endpoint in public metadata
+typefully,typefully,API_KEY,,No OAuth app needed,,Composio docs
+typless,typless,API_KEY,,No OAuth app needed,,Composio docs
+u301,u301,API_KEY,,No OAuth app needed,,Composio docs
+unifi,unifi,API_KEY,,No OAuth app needed,,Composio docs
+unione,unione,API_KEY,,No OAuth app needed,,Composio docs
+unipile,unipile,API_KEY,,No OAuth app needed,,Composio docs
+unisender,unisender,API_KEY,,No OAuth app needed,,Composio docs
+uniswap_api,uniswap_api,API_KEY,,No OAuth app needed,,Composio docs
+unleash,unleash,API_KEY,,No OAuth app needed,,Composio docs
+updown_io,updown_io,API_KEY,,No OAuth app needed,,Composio docs
+uplisting,uplisting,API_KEY,,No OAuth app needed,,Composio docs
+upload_post,upload_post,API_KEY,,No OAuth app needed,,Composio docs
+upload_to_url,upload_to_url,API_KEY,,No OAuth app needed,,Composio docs
+uploadcare,uploadcare,API_KEY,,No OAuth app needed,,Composio docs
+uptimerobot,uptimerobot,API_KEY,,No OAuth app needed,,Composio docs
+urlscanio,urlscanio,API_KEY,,No OAuth app needed,,Composio docs
+userflow,userflow,API_KEY,,No OAuth app needed,,Composio docs
+userlist,userlist,API_KEY,,No OAuth app needed,,Composio docs
+v0,v0,API_KEY,,No OAuth app needed,,Composio docs
+vantage_mcp,vantage_mcp,DCR_OAUTH,,"DCR, already used by Composio",,Composio docs
+vapi,vapi,API_KEY,,No OAuth app needed,,Composio docs
+vaquill,vaquill,API_KEY,,No OAuth app needed,,Composio docs
+vast_ai,vast_ai,API_KEY,,No OAuth app needed,,Composio docs
+vectorshift,vectorshift,API_KEY,,No OAuth app needed,,Composio docs
+veo,veo,API_KEY,,No OAuth app needed,,Composio docs
+vercel,Vercel,"OAUTH2,API_KEY",Vercel,DCR on the main OAuth server,https://api.vercel.com/login/oauth/register | MCP DCR at https://vercel.com/api/login/oauth/register; API key also supported,measured: registration_endpoint in public metadata
+vercel_ai_gateway,vercel_ai_gateway,API_KEY,,No OAuth app needed,,Composio docs
+vercel_mcp,vercel_mcp,DCR_OAUTH,,"DCR, already used by Composio",,Composio docs
+verifi_email,verifi_email,API_KEY,,No OAuth app needed,,Composio docs
+verifiedemail,verifiedemail,API_KEY,,No OAuth app needed,,Composio docs
+veriphone,veriphone,API_KEY,,No OAuth app needed,,Composio docs
+veriphone_mcp,veriphone_mcp,API_KEY,,No OAuth app needed,,Composio docs
+veryfi,veryfi,API_KEY,,No OAuth app needed,,Composio docs
+vestaboard,vestaboard,API_KEY,,No OAuth app needed,,Composio docs
+viator_mcp,viator_mcp,NO_AUTH,,No OAuth app needed,,Composio docs
+vibe,Vibe,"OAUTH2,S2S_OAUTH2",Vibe,DCR on the main OAuth server,https://api.vibe.us/v1/auth/oauth2/register | MCP DCR at https://api.vibe.us/v1/auth/oauth2/register,measured: registration_endpoint in public metadata
+vibe_prospecting_mcp,vibe_prospecting_mcp,DCR_OAUTH,,"DCR, already used by Composio",,Composio docs
+video_db,video_db,API_KEY,,No OAuth app needed,,Composio docs
+vidiq_mcp,vidiq_mcp,"DCR_OAUTH,API_KEY",,"DCR, already used by Composio",,Composio docs
+vimeo,Vimeo,OAUTH2,Vimeo,Browser (DCR only on the MCP server),https://mcp.vimeo.com/register,measured: MCP server registration_endpoint
+viral_loops,viral_loops,API_KEY,,No OAuth app needed,,Composio docs
+virustotal,virustotal,API_KEY,,No OAuth app needed,,Composio docs
+visualping,visualping,API_KEY,,No OAuth app needed,,Composio docs
+vlm_run,vlm_run,API_KEY,,No OAuth app needed,,Composio docs
+voiceflow,voiceflow,API_KEY,,No OAuth app needed,,Composio docs
+waboxapp,waboxapp,API_KEY,,No OAuth app needed,,Composio docs
+wachete,wachete,API_KEY,,No OAuth app needed,,Composio docs
+waiverfile,waiverfile,API_KEY,,No OAuth app needed,,Composio docs
+wakatime,WakaTime,OAUTH2,WakaTime,Browser automation,no registration endpoint found (0 metadata documents),measured: no DCR; no known API
+wanikani,wanikani,API_KEY,,No OAuth app needed,,Composio docs
+wati,wati,API_KEY,,No OAuth app needed,,Composio docs
+weathermap,weathermap,NO_AUTH,,No OAuth app needed,,Composio docs
+weaviate_mcp,weaviate_mcp,API_KEY,,No OAuth app needed,,Composio docs
+web3_career,web3_career,API_KEY,,No OAuth app needed,,Composio docs
+webcrawlerapi,webcrawlerapi,API_KEY,,No OAuth app needed,,Composio docs
+webex,Webex,OAUTH2,Webex,Browser automation,no registration endpoint found (0 metadata documents),measured: no DCR; no known API
+webflow,Webflow,"OAUTH2,API_KEY",Webflow,Browser (DCR only on the MCP server),https://mcp.webflow.com/oauth/register | API key also supported,measured: MCP server registration_endpoint
+webpushr,webpushr,API_KEY,,No OAuth app needed,,Composio docs
+webscraper_io,webscraper_io,API_KEY,,No OAuth app needed,,Composio docs
+webscraping_ai,webscraping_ai,API_KEY,,No OAuth app needed,,Composio docs
+webvizio,webvizio,API_KEY,,No OAuth app needed,,Composio docs
+weights_and_biases,weights_and_biases,API_KEY,,No OAuth app needed,,Composio docs
+whatsapp,WhatsApp,"OAUTH2,API_KEY",Meta for Developers,Browser automation,no registration endpoint found (3 metadata documents) | API key also supported,measured: no DCR; no known API
+whautomate,whautomate,API_KEY,,No OAuth app needed,,Composio docs
+whoisfreaks,whoisfreaks,API_KEY,,No OAuth app needed,,Composio docs
+whop,Whop,"API_KEY,OAUTH2",Whop,Browser (DCR only on the MCP server),https://mcp.whop.com/register | API key also supported,measured: MCP server registration_endpoint
+wild_apricot,WildApricot,S2S_OAUTH2,WildApricot,Browser automation,no registration endpoint found (0 metadata documents),measured: no DCR; no known API
+windsor_ai,windsor_ai,API_KEY,,No OAuth app needed,,Composio docs
+winston_ai,winston_ai,API_KEY,,No OAuth app needed,,Composio docs
+wise,wise,API_KEY,,No OAuth app needed,,Composio docs
+wisepops,wisepops,API_KEY,,No OAuth app needed,,Composio docs
+wispr_flow_mcp,wispr_flow_mcp,DCR_OAUTH,,"DCR, already used by Composio",,Composio docs
+wistia,wistia,API_KEY,,No OAuth app needed,,Composio docs
+wit_ai,wit_ai,API_KEY,,No OAuth app needed,,Composio docs
+withpica,withpica,API_KEY,,No OAuth app needed,,Composio docs
+wix,Wix,"OAUTH2,API_KEY",Wix,Browser (DCR only on the MCP server),https://mcp.wix.com/register | API key also supported,measured: MCP server registration_endpoint
+wix_mcp,wix_mcp,DCR_OAUTH,,"DCR, already used by Composio",,Composio docs
+wiza,wiza,API_KEY,,No OAuth app needed,,Composio docs
+wolfram_alpha_api,wolfram_alpha_api,API_KEY,,No OAuth app needed,,Composio docs
+woodpecker_co,woodpecker_co,API_KEY,,No OAuth app needed,,Composio docs
+woop_social,woop_social,API_KEY,,No OAuth app needed,,Composio docs
+wordpress_com,WordPress.com,OAUTH2,WordPress.com,Browser automation,no registration endpoint found (0 metadata documents),measured: no DCR; no known API
+workable,Workable,"OAUTH2,API_KEY",Workable,Browser (DCR only on the MCP server),https://mcp.workable.com/oauth/register | API key also supported,measured: MCP server registration_endpoint
+workday,Workday,OAUTH2,Workday,Human / partner-gated,customer tenant or partner programme,knowledge (unverified)
+workday_adaptive_planning,Workday Adaptive Planning,OAUTH2,Workday,Human / partner-gated,customer tenant or partner programme,knowledge (unverified)
+workday_raas,workday_raas,API_KEY,,No OAuth app needed,,Composio docs
+workiom,workiom,API_KEY,,No OAuth app needed,,Composio docs
+workiz,workiz,API_KEY,,No OAuth app needed,,Composio docs
+workos,workos,API_KEY,,No OAuth app needed,,Composio docs
+worksnaps,worksnaps,API_KEY,,No OAuth app needed,,Composio docs
+world_news_api,world_news_api,API_KEY,,No OAuth app needed,,Composio docs
+wrike,Wrike,OAUTH2,Wrike,Browser automation,no registration endpoint found (0 metadata documents),measured: no DCR; no known API
+writer,writer,API_KEY,,No OAuth app needed,,Composio docs
+wufoo,wufoo,API_KEY,,No OAuth app needed,,Composio docs
+x_mcp,X MCP,OAUTH2,X Developer Portal,Browser automation,no registration endpoint found (1 metadata documents),measured: no DCR; no known API
+xata,xata,API_KEY,,No OAuth app needed,,Composio docs
+xero,Xero,OAUTH2,Xero,Browser automation,no registration endpoint found (1 metadata documents),measured: no DCR; no known API
+y_gy,y_gy,API_KEY,,No OAuth app needed,,Composio docs
+yandex,Yandex,OAUTH2,Yandex,Browser automation,no registration endpoint found (0 metadata documents),measured: no DCR; no known API
+yelp,yelp,"NO_AUTH,API_KEY",,No OAuth app needed,,Composio docs
+ynab,YNAB,OAUTH2,YNAB,DCR on the main OAuth server,https://app.ynab.com/oauth/register,measured: registration_endpoint in public metadata
+yousearch,yousearch,API_KEY,,No OAuth app needed,,Composio docs
+youtube,YouTube,OAUTH2,Google Cloud (OAuth client),Browser automation,no registration endpoint found (2 metadata documents),measured: no DCR; no known API
+youtube_transcript,youtube_transcript,API_KEY,,No OAuth app needed,,Composio docs
+zelt,Zelt,OAUTH2,Zelt,Browser automation,no registration endpoint found (0 metadata documents),measured: no DCR; no known API
+zendesk,Zendesk,OAUTH2,Zendesk,Management API,OAuth Clients API: POST /api/v2/oauth/clients,knowledge (vendor docs)
+zenrows,zenrows,API_KEY,,No OAuth app needed,,Composio docs
+zenserp,zenserp,API_KEY,,No OAuth app needed,,Composio docs
+zep,zep,API_KEY,,No OAuth app needed,,Composio docs
+zeplin,Zeplin,"OAUTH2,API_KEY",Zeplin,Browser automation,no registration endpoint found (0 metadata documents) | API key also supported,measured: no DCR; no known API
+zernio_mcp,zernio_mcp,DCR_OAUTH,,"DCR, already used by Composio",,Composio docs
+zerobounce,zerobounce,API_KEY,,No OAuth app needed,,Composio docs
+zettle,PayPal Zettle,"OAUTH2,S2S_OAUTH2",PayPal Developer,DCR on the main OAuth server,https://api.paypal.com/v1/oauth2/applications | MCP DCR at https://mcp.paypal.com/register,measured: registration_endpoint in public metadata
+zigpoll,zigpoll,API_KEY,,No OAuth app needed,,Composio docs
+zip,zip,API_KEY,,No OAuth app needed,,Composio docs
+ziprecruiter_mcp,ziprecruiter_mcp,NO_AUTH,,No OAuth app needed,,Composio docs
+zixflow,zixflow,API_KEY,,No OAuth app needed,,Composio docs
+zoho,Zoho,OAUTH2,Zoho API Console,Browser automation,no registration endpoint found (1 metadata documents),measured: no DCR; no known API
+zoho_bigin,Zoho Bigin,OAUTH2,Zoho API Console,Browser automation,no registration endpoint found (1 metadata documents),measured: no DCR; no known API
+zoho_books,Zoho Books,OAUTH2,Zoho API Console,Browser automation,no registration endpoint found (1 metadata documents),measured: no DCR; no known API
+zoho_calendar,Zoho Calendar,OAUTH2,Zoho API Console,Browser automation,no registration endpoint found (1 metadata documents),measured: no DCR; no known API
+zoho_campaigns,Zoho Campaigns,OAUTH2,Zoho API Console,Browser automation,no registration endpoint found (1 metadata documents),measured: no DCR; no known API
+zoho_desk,Zoho Desk,OAUTH2,Zoho API Console,Browser automation,no registration endpoint found (1 metadata documents),measured: no DCR; no known API
+zoho_inventory,Zoho Inventory,OAUTH2,Zoho API Console,Browser automation,no registration endpoint found (1 metadata documents),measured: no DCR; no known API
+zoho_invoice,Zoho Invoice,OAUTH2,Zoho API Console,Browser automation,no registration endpoint found (1 metadata documents),measured: no DCR; no known API
+zoho_mail,Zoho Mail,OAUTH2,Zoho API Console,Browser automation,no registration endpoint found (1 metadata documents),measured: no DCR; no known API
+zoho_people,Zoho People,OAUTH2,Zoho API Console,Browser automation,no registration endpoint found (1 metadata documents),measured: no DCR; no known API
+zoho_projects,Zoho Projects,OAUTH2,Zoho API Console,Browser automation,no registration endpoint found (1 metadata documents),measured: no DCR; no known API
+zoho_recruit,Zoho Recruit,OAUTH2,Zoho API Console,Browser automation,no registration endpoint found (1 metadata documents),measured: no DCR; no known API
+zoho_sign,Zoho Sign,OAUTH2,Zoho API Console,Browser automation,no registration endpoint found (1 metadata documents),measured: no DCR; no known API
+zoho_work_drive,Zoho WorkDrive,OAUTH2,Zoho API Console,Browser automation,no registration endpoint found (1 metadata documents),measured: no DCR; no known API
+zoom,Zoom,OAUTH2,Zoom App Marketplace,Browser automation,no registration endpoint found (8 metadata documents),measured: no DCR; no known API
+zoom_chat,Zoom Team Chat,OAUTH2,Zoom App Marketplace,Browser automation,no registration endpoint found (8 metadata documents),measured: no DCR; no known API
+zoominfo,Zoominfo,OAUTH2,Zoom App Marketplace,Human / partner-gated,customer account,knowledge (unverified)
+zulip,zulip,BASIC,,No OAuth app needed,,Composio docs
+zylvie,zylvie,API_KEY,,No OAuth app needed,,Composio docs
+zyte_api,zyte_api,API_KEY,,No OAuth app needed,,Composio docs

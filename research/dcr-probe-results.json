@@ -1,0 +1,2125 @@
+{
+ "AdRoll": {
+  "domain": "adroll.com",
+  "metadata_found": 0,
+  "dcr_api": null,
+  "dcr_mcp": null,
+  "docs": []
+ },
+ "Aha!": {
+  "domain": "aha.io",
+  "metadata_found": 6,
+  "dcr_api": "https://api.aha.io/oauth/register",
+  "dcr_mcp": "https://mcp.aha.io/oauth/register",
+  "docs": [
+   "https://api.aha.io/.well-known/oauth-authorization-server",
+   "https://auth.aha.io/.well-known/oauth-authorization-server",
+   "https://mcp.aha.io/.well-known/oauth-authorization-server",
+   "https://mcp.aha.io/.well-known/oauth-authorization-server",
+   "https://mcp.aha.io/.well-known/oauth-authorization-server",
+   "https://mcp.aha.io/.well-known/oauth-authorization-server"
+  ]
+ },
+ "Ahrefs": {
+  "domain": "ahrefs.com",
+  "metadata_found": 1,
+  "dcr_api": "https://api.ahrefs.com/mcp/register",
+  "dcr_mcp": null,
+  "docs": [
+   "https://api.ahrefs.com/.well-known/oauth-authorization-server"
+  ]
+ },
+ "Aircall": {
+  "domain": "aircall.io",
+  "metadata_found": 2,
+  "dcr_api": null,
+  "dcr_mcp": null,
+  "docs": [
+   "https://id.aircall.io/.well-known/oauth-authorization-server/auth/v2/authorization-server/mcp",
+   "https://id.aircall.io/.well-known/oauth-authorization-server/auth/v2/authorization-server/mcp"
+  ]
+ },
+ "Airtable": {
+  "domain": "airtable.com",
+  "metadata_found": 4,
+  "dcr_api": "https://airtable.com/oauth2/v1/register",
+  "dcr_mcp": "https://airtable.com/oauth2/v1/register",
+  "docs": [
+   "https://airtable.com/.well-known/oauth-authorization-server",
+   "https://mcp.airtable.com/.well-known/oauth-authorization-server",
+   "https://airtable.com/.well-known/oauth-authorization-server/oauth2/v1",
+   "https://airtable.com/.well-known/oauth-authorization-server/oauth2/v1"
+  ]
+ },
+ "Alpaca": {
+  "domain": "alpaca.markets",
+  "metadata_found": 0,
+  "dcr_api": null,
+  "dcr_mcp": null,
+  "docs": []
+ },
+ "Amazon": {
+  "domain": "amazon.com",
+  "metadata_found": 0,
+  "dcr_api": null,
+  "dcr_mcp": null,
+  "docs": []
+ },
+ "Anaplan": {
+  "domain": "anaplan.com",
+  "metadata_found": 0,
+  "dcr_api": null,
+  "dcr_mcp": null,
+  "docs": []
+ },
+ "Apaleo": {
+  "domain": "apaleo.com",
+  "metadata_found": 2,
+  "dcr_api": null,
+  "dcr_mcp": "https://mcp.apaleo.com/register",
+  "docs": [
+   "https://mcp.apaleo.com/.well-known/oauth-authorization-server",
+   "https://mcp.apaleo.com/.well-known/oauth-authorization-server"
+  ]
+ },
+ "Asana": {
+  "domain": "asana.com",
+  "metadata_found": 3,
+  "dcr_api": null,
+  "dcr_mcp": "https://mcp.asana.com/register",
+  "docs": [
+   "https://api.asana.com/.well-known/oauth-authorization-server",
+   "https://mcp.asana.com/.well-known/oauth-authorization-server",
+   "https://mcp.asana.com/.well-known/oauth-authorization-server"
+  ]
+ },
+ "Attio": {
+  "domain": "attio.com",
+  "metadata_found": 5,
+  "dcr_api": null,
+  "dcr_mcp": "https://app.attio.com/oauth/register",
+  "docs": [
+   "https://attio.com/.well-known/oauth-authorization-server",
+   "https://www.attio.com/.well-known/oauth-authorization-server",
+   "https://mcp.attio.com/.well-known/oauth-authorization-server",
+   "https://app.attio.com/.well-known/oauth-authorization-server",
+   "https://app.attio.com/.well-known/oauth-authorization-server"
+  ]
+ },
+ "AWeber": {
+  "domain": "aweber.com",
+  "metadata_found": 3,
+  "dcr_api": null,
+  "dcr_mcp": "https://mcp.aweber.com/oauth/register",
+  "docs": [
+   "https://mcp.aweber.com/.well-known/oauth-authorization-server",
+   "https://mcp.aweber.com/.well-known/oauth-authorization-server",
+   "https://mcp.aweber.com/.well-known/oauth-authorization-server"
+  ]
+ },
+ "Microsoft Entra ID (app registration)": {
+  "domain": "microsoftonline.com",
+  "metadata_found": 2,
+  "dcr_api": null,
+  "dcr_mcp": null,
+  "docs": [
+   "https://login.microsoftonline.com/common/v2.0/.well-known/openid-configuration",
+   "https://login.microsoftonline.com/organizations/v2.0/.well-known/openid-configuration"
+  ]
+ },
+ "BambooHR": {
+  "domain": "bamboohr.com",
+  "metadata_found": 4,
+  "dcr_api": null,
+  "dcr_mcp": null,
+  "docs": [
+   "https://auth.bamboohr.com/.well-known/oauth-authorization-server",
+   "https://auth.bamboohr.com/.well-known/openid-configuration",
+   "https://mcp.bamboohr.com/.well-known/oauth-authorization-server",
+   "https://mcp.bamboohr.com/.well-known/openid-configuration"
+  ]
+ },
+ "Basecamp": {
+  "domain": "37signals.com",
+  "metadata_found": 0,
+  "dcr_api": null,
+  "dcr_mcp": null,
+  "docs": []
+ },
+ "Beeminder": {
+  "domain": "beeminder.com",
+  "metadata_found": 0,
+  "dcr_api": null,
+  "dcr_mcp": null,
+  "docs": []
+ },
+ "bexio": {
+  "domain": "bexio.com",
+  "metadata_found": 0,
+  "dcr_api": null,
+  "dcr_mcp": null,
+  "docs": []
+ },
+ "Bitbucket": {
+  "domain": "bitbucket.org",
+  "metadata_found": 0,
+  "dcr_api": null,
+  "dcr_mcp": null,
+  "docs": []
+ },
+ "Bitly": {
+  "domain": "bitly.com",
+  "metadata_found": 0,
+  "dcr_api": null,
+  "dcr_mcp": null,
+  "docs": []
+ },
+ "Bitwarden": {
+  "domain": "bitwarden.com",
+  "metadata_found": 0,
+  "dcr_api": null,
+  "dcr_mcp": null,
+  "docs": []
+ },
+ "Blackbaud": {
+  "domain": "blackbaud.com",
+  "metadata_found": 0,
+  "dcr_api": null,
+  "dcr_mcp": null,
+  "docs": []
+ },
+ "Blackboard": {
+  "domain": "anthology.com",
+  "metadata_found": 0,
+  "dcr_api": null,
+  "dcr_mcp": null,
+  "docs": []
+ },
+ "Boldsign": {
+  "domain": "boldsign.com",
+  "metadata_found": 3,
+  "dcr_api": null,
+  "dcr_mcp": null,
+  "docs": [
+   "https://mcp.boldsign.com/.well-known/oauth-authorization-server",
+   "https://account.boldsign.com/.well-known/oauth-authorization-server",
+   "https://account.boldsign.com/.well-known/oauth-authorization-server"
+  ]
+ },
+ "Borneo": {
+  "domain": "borneo.io",
+  "metadata_found": 0,
+  "dcr_api": null,
+  "dcr_mcp": null,
+  "docs": []
+ },
+ "Box Developer Console": {
+  "domain": "box.com",
+  "metadata_found": 4,
+  "dcr_api": null,
+  "dcr_mcp": null,
+  "docs": [
+   "https://www.box.com/.well-known/oauth-authorization-server",
+   "https://api.box.com/.well-known/oauth-authorization-server",
+   "https://auth.box.com/.well-known/oauth-authorization-server",
+   "https://api.box.com/.well-known/oauth-authorization-server"
+  ]
+ },
+ "Brevo": {
+  "domain": "brevo.com",
+  "metadata_found": 1,
+  "dcr_api": null,
+  "dcr_mcp": "https://mcp.brevo.com/oauth/register",
+  "docs": [
+   "https://mcp.brevo.com/.well-known/oauth-authorization-server"
+  ]
+ },
+ "Brex": {
+  "domain": "brex.com",
+  "metadata_found": 2,
+  "dcr_api": "https://api.brex.com/v3/clients",
+  "dcr_mcp": null,
+  "docs": [
+   "https://api.brex.com/.well-known/oauth-authorization-server",
+   "https://api.brex.com/.well-known/openid-configuration"
+  ]
+ },
+ "Buffer": {
+  "domain": "buffer.com",
+  "metadata_found": 5,
+  "dcr_api": "https://auth.buffer.com/reg",
+  "dcr_mcp": "https://auth.buffer.com/reg",
+  "docs": [
+   "https://auth.buffer.com/.well-known/oauth-authorization-server",
+   "https://auth.buffer.com/.well-known/openid-configuration",
+   "https://mcp.buffer.com/.well-known/oauth-authorization-server",
+   "https://auth.buffer.com/.well-known/oauth-authorization-server",
+   "https://auth.buffer.com/.well-known/oauth-authorization-server"
+  ]
+ },
+ "Cal": {
+  "domain": "cal.com",
+  "metadata_found": 5,
+  "dcr_api": null,
+  "dcr_mcp": "https://mcp.cal.com/oauth/register",
+  "docs": [
+   "https://cal.com/.well-known/oauth-authorization-server",
+   "https://www.cal.com/.well-known/oauth-authorization-server",
+   "https://mcp.cal.com/.well-known/oauth-authorization-server",
+   "https://mcp.cal.com/.well-known/oauth-authorization-server",
+   "https://mcp.cal.com/.well-known/oauth-authorization-server"
+  ]
+ },
+ "Calendly": {
+  "domain": "calendly.com",
+  "metadata_found": 5,
+  "dcr_api": "https://calendly.com/oauth/register",
+  "dcr_mcp": "https://calendly.com/oauth/register",
+  "docs": [
+   "https://calendly.com/.well-known/oauth-authorization-server",
+   "https://calendly.com/.well-known/openid-configuration",
+   "https://www.calendly.com/.well-known/oauth-authorization-server",
+   "https://www.calendly.com/.well-known/openid-configuration",
+   "https://calendly.com/.well-known/oauth-authorization-server"
+  ]
+ },
+ "Canva": {
+  "domain": "canva.com",
+  "metadata_found": 8,
+  "dcr_api": null,
+  "dcr_mcp": "https://mcp.canva.com/register",
+  "docs": [
+   "https://canva.com/.well-known/oauth-authorization-server",
+   "https://canva.com/.well-known/openid-configuration",
+   "https://www.canva.com/.well-known/oauth-authorization-server",
+   "https://www.canva.com/.well-known/openid-configuration",
+   "https://mcp.canva.com/.well-known/oauth-authorization-server",
+   "https://mcp.canva.com/.well-known/oauth-authorization-server"
+  ]
+ },
+ "Canvas": {
+  "domain": "instructure.com",
+  "metadata_found": 0,
+  "dcr_api": null,
+  "dcr_mcp": null,
+  "docs": []
+ },
+ "Capsule CRM": {
+  "domain": "capsulecrm.com",
+  "metadata_found": 6,
+  "dcr_api": null,
+  "dcr_mcp": null,
+  "docs": [
+   "https://api.capsulecrm.com/.well-known/oauth-authorization-server",
+   "https://api.capsulecrm.com/.well-known/openid-configuration",
+   "https://auth.capsulecrm.com/.well-known/oauth-authorization-server",
+   "https://auth.capsulecrm.com/.well-known/openid-configuration",
+   "https://mcp.capsulecrm.com/.well-known/oauth-authorization-server",
+   "https://mcp.capsulecrm.com/.well-known/openid-configuration"
+  ]
+ },
+ "Carta": {
+  "domain": "carta.com",
+  "metadata_found": 0,
+  "dcr_api": null,
+  "dcr_mcp": null,
+  "docs": []
+ },
+ "CleverReach": {
+  "domain": "cleverreach.com",
+  "metadata_found": 0,
+  "dcr_api": null,
+  "dcr_mcp": null,
+  "docs": []
+ },
+ "ClickFunnels 2.0": {
+  "domain": "myclickfunnels.com",
+  "metadata_found": 5,
+  "dcr_api": "https://accounts.myclickfunnels.com/oauth/register",
+  "dcr_mcp": "https://mcp.myclickfunnels.com/register",
+  "docs": [
+   "https://myclickfunnels.com/.well-known/oauth-authorization-server",
+   "https://api.myclickfunnels.com/.well-known/oauth-authorization-server",
+   "https://auth.myclickfunnels.com/.well-known/oauth-authorization-server",
+   "https://mcp.myclickfunnels.com/.well-known/oauth-authorization-server",
+   "https://mcp.myclickfunnels.com/.well-known/oauth-authorization-server"
+  ]
+ },
+ "ClickUp": {
+  "domain": "clickup.com",
+  "metadata_found": 3,
+  "dcr_api": null,
+  "dcr_mcp": "https://mcp.clickup.com/oauth/register",
+  "docs": [
+   "https://mcp.clickup.com/.well-known/oauth-authorization-server",
+   "https://mcp.clickup.com/.well-known/oauth-authorization-server",
+   "https://mcp.clickup.com/.well-known/oauth-authorization-server"
+  ]
+ },
+ "Clio Manage": {
+  "domain": "clio.com",
+  "metadata_found": 0,
+  "dcr_api": null,
+  "dcr_mcp": null,
+  "docs": []
+ },
+ "Clockify": {
+  "domain": "clockify.me",
+  "metadata_found": 0,
+  "dcr_api": null,
+  "dcr_mcp": null,
+  "docs": []
+ },
+ "Cloud 66": {
+  "domain": "cloud66.com",
+  "metadata_found": 0,
+  "dcr_api": null,
+  "dcr_mcp": null,
+  "docs": []
+ },
+ "Clover": {
+  "domain": "clover.com",
+  "metadata_found": 0,
+  "dcr_api": null,
+  "dcr_mcp": null,
+  "docs": []
+ },
+ "Commerce Layer": {
+  "domain": "commercelayer.io",
+  "metadata_found": 0,
+  "dcr_api": null,
+  "dcr_mcp": null,
+  "docs": []
+ },
+ "Atlassian Developer Console": {
+  "domain": "atlassian.com",
+  "metadata_found": 9,
+  "dcr_api": "https://auth.atlassian.com/oidc/register",
+  "dcr_mcp": "https://mcp.atlassian.com/v1/register",
+  "docs": [
+   "https://auth.atlassian.com/.well-known/oauth-authorization-server",
+   "https://auth.atlassian.com/.well-known/openid-configuration",
+   "https://mcp.atlassian.com/.well-known/oauth-authorization-server",
+   "https://auth.atlassian.com/VCeDsk8ZHncYF1g234fKtc4lNipbBhu3/.well-known/oauth-authorization-server",
+   "https://auth.atlassian.com/.well-known/oauth-authorization-server/VCeDsk8ZHncYF1g234fKtc4lNipbBhu3",
+   "https://auth.atlassian.com/VCeDsk8ZHncYF1g234fKtc4lNipbBhu3/.well-known/oauth-authorization-server"
+  ]
+ },
+ "Constant Contact": {
+  "domain": "constantcontact.com",
+  "metadata_found": 0,
+  "dcr_api": null,
+  "dcr_mcp": null,
+  "docs": []
+ },
+ "Contacts+": {
+  "domain": "contactsplus.com",
+  "metadata_found": 2,
+  "dcr_api": null,
+  "dcr_mcp": "https://mcp.contactsplus.com/register",
+  "docs": [
+   "https://mcp.contactsplus.com/.well-known/oauth-authorization-server",
+   "https://mcp.contactsplus.com/.well-known/oauth-authorization-server"
+  ]
+ },
+ "Contentful": {
+  "domain": "contentful.com",
+  "metadata_found": 4,
+  "dcr_api": null,
+  "dcr_mcp": "https://mcp.contentful.com/register",
+  "docs": [
+   "https://mcp.contentful.com/.well-known/oauth-authorization-server",
+   "https://mcp.contentful.com/.well-known/oauth-authorization-server",
+   "https://mcp.contentful.com/.well-known/oauth-authorization-server",
+   "https://mcp.contentful.com/.well-known/oauth-authorization-server"
+  ]
+ },
+ "Coupa": {
+  "domain": "coupa.com",
+  "metadata_found": 0,
+  "dcr_api": null,
+  "dcr_mcp": null,
+  "docs": []
+ },
+ "Cradl AI": {
+  "domain": "cradl.ai",
+  "metadata_found": 2,
+  "dcr_api": null,
+  "dcr_mcp": null,
+  "docs": [
+   "https://auth.cradl.ai/.well-known/oauth-authorization-server",
+   "https://auth.cradl.ai/.well-known/openid-configuration"
+  ]
+ },
+ "Crowdin": {
+  "domain": "crowdin.com",
+  "metadata_found": 3,
+  "dcr_api": null,
+  "dcr_mcp": "https://mcp.crowdin.com/register",
+  "docs": [
+   "https://mcp.crowdin.com/.well-known/oauth-authorization-server",
+   "https://mcp.crowdin.com/.well-known/oauth-authorization-server",
+   "https://mcp.crowdin.com/.well-known/oauth-authorization-server"
+  ]
+ },
+ "D2L Brightspace": {
+  "domain": "d2l.com",
+  "metadata_found": 0,
+  "dcr_api": null,
+  "dcr_mcp": null,
+  "docs": []
+ },
+ "Dart": {
+  "domain": "itsdart.com",
+  "metadata_found": 4,
+  "dcr_api": null,
+  "dcr_mcp": null,
+  "docs": [
+   "https://itsdart.com/.well-known/oauth-authorization-server",
+   "https://itsdart.com/.well-known/openid-configuration",
+   "https://www.itsdart.com/.well-known/oauth-authorization-server",
+   "https://www.itsdart.com/.well-known/openid-configuration"
+  ]
+ },
+ "Databricks": {
+  "domain": "databricks.com",
+  "metadata_found": 0,
+  "dcr_api": null,
+  "dcr_mcp": null,
+  "docs": []
+ },
+ "Datadog": {
+  "domain": "datadoghq.com",
+  "metadata_found": 2,
+  "dcr_api": null,
+  "dcr_mcp": "https://app.datadoghq.com/api/v2/oauth2/register",
+  "docs": [
+   "https://mcp.datadoghq.com/.well-known/oauth-authorization-server",
+   "https://mcp.datadoghq.com/.well-known/oauth-authorization-server/v1/mcp"
+  ]
+ },
+ "Daytona": {
+  "domain": "daytona.io",
+  "metadata_found": 2,
+  "dcr_api": null,
+  "dcr_mcp": null,
+  "docs": [
+   "https://auth.daytona.io/.well-known/oauth-authorization-server",
+   "https://auth.daytona.io/.well-known/openid-configuration"
+  ]
+ },
+ "dbt Cloud": {
+  "domain": "getdbt.com",
+  "metadata_found": 2,
+  "dcr_api": null,
+  "dcr_mcp": null,
+  "docs": [
+   "https://auth.getdbt.com/.well-known/oauth-authorization-server",
+   "https://auth.getdbt.com/.well-known/openid-configuration"
+  ]
+ },
+ "Deel": {
+  "domain": "deel.com",
+  "metadata_found": 2,
+  "dcr_api": null,
+  "dcr_mcp": null,
+  "docs": [
+   "https://api.deel.com/.well-known/oauth-authorization-server",
+   "https://api.deel.com/.well-known/openid-configuration"
+  ]
+ },
+ "Deputy": {
+  "domain": "deputy.com",
+  "metadata_found": 0,
+  "dcr_api": null,
+  "dcr_mcp": null,
+  "docs": []
+ },
+ "DevCycle": {
+  "domain": "devcycle.com",
+  "metadata_found": 4,
+  "dcr_api": null,
+  "dcr_mcp": "https://mcp.devcycle.com/oauth/register",
+  "docs": [
+   "https://auth.devcycle.com/.well-known/oauth-authorization-server",
+   "https://auth.devcycle.com/.well-known/openid-configuration",
+   "https://mcp.devcycle.com/.well-known/oauth-authorization-server",
+   "https://mcp.devcycle.com/.well-known/oauth-authorization-server"
+  ]
+ },
+ "Dialpad": {
+  "domain": "dialpad.com",
+  "metadata_found": 4,
+  "dcr_api": "https://dialpad.com/oauth2/register",
+  "dcr_mcp": "https://dialpad.com/oauth2/register",
+  "docs": [
+   "https://dialpad.com/.well-known/oauth-authorization-server",
+   "https://dialpad.com/.well-known/openid-configuration",
+   "https://dialpad.com/.well-known/oauth-authorization-server",
+   "https://dialpad.com/.well-known/oauth-authorization-server"
+  ]
+ },
+ "DigitalOcean": {
+  "domain": "digitalocean.com",
+  "metadata_found": 1,
+  "dcr_api": null,
+  "dcr_mcp": "https://cloud.digitalocean.com/v1/oauth/register",
+  "docs": [
+   "https://cloud.digitalocean.com/.well-known/oauth-authorization-server"
+  ]
+ },
+ "Discord Developer Portal": {
+  "domain": "discord.com",
+  "metadata_found": 7,
+  "dcr_api": null,
+  "dcr_mcp": null,
+  "docs": [
+   "https://discord.com/.well-known/oauth-authorization-server",
+   "https://discord.com/.well-known/openid-configuration",
+   "https://www.discord.com/.well-known/oauth-authorization-server",
+   "https://www.discord.com/.well-known/openid-configuration",
+   "https://discord.com/.well-known/oauth-authorization-server",
+   "https://discord.com/.well-known/oauth-authorization-server"
+  ]
+ },
+ "Disqus": {
+  "domain": "disqus.com",
+  "metadata_found": 0,
+  "dcr_api": null,
+  "dcr_mcp": null,
+  "docs": []
+ },
+ "DocuSign": {
+  "domain": "docusign.com",
+  "metadata_found": 2,
+  "dcr_api": null,
+  "dcr_mcp": null,
+  "docs": [
+   "https://mcp.docusign.com/.well-known/oauth-authorization-server",
+   "https://mcp.docusign.com/.well-known/oauth-authorization-server"
+  ]
+ },
+ "Dribbble": {
+  "domain": "dribbble.com",
+  "metadata_found": 0,
+  "dcr_api": null,
+  "dcr_mcp": null,
+  "docs": []
+ },
+ "Dropbox App Console": {
+  "domain": "dropbox.com",
+  "metadata_found": 5,
+  "dcr_api": "https://www.dropbox.com/oauth2/register",
+  "dcr_mcp": "https://www.dropbox.com/oauth2/register",
+  "docs": [
+   "https://dropbox.com/.well-known/oauth-authorization-server",
+   "https://dropbox.com/.well-known/openid-configuration",
+   "https://www.dropbox.com/.well-known/oauth-authorization-server",
+   "https://www.dropbox.com/.well-known/openid-configuration",
+   "https://www.dropbox.com/.well-known/oauth-authorization-server"
+  ]
+ },
+ "Dropbox Sign": {
+  "domain": "hellosign.com",
+  "metadata_found": 0,
+  "dcr_api": null,
+  "dcr_mcp": null,
+  "docs": []
+ },
+ "Dub": {
+  "domain": "dub.co",
+  "metadata_found": 0,
+  "dcr_api": null,
+  "dcr_mcp": null,
+  "docs": []
+ },
+ "Dynatrace": {
+  "domain": "dynatrace.com",
+  "metadata_found": 0,
+  "dcr_api": null,
+  "dcr_mcp": null,
+  "docs": []
+ },
+ "eBay": {
+  "domain": "ebay.com",
+  "metadata_found": 0,
+  "dcr_api": null,
+  "dcr_mcp": null,
+  "docs": []
+ },
+ "Egnyte": {
+  "domain": "egnyte.com",
+  "metadata_found": 0,
+  "dcr_api": null,
+  "dcr_mcp": null,
+  "docs": []
+ },
+ "Epic Games": {
+  "domain": "epicgames.com",
+  "metadata_found": 0,
+  "dcr_api": null,
+  "dcr_mcp": null,
+  "docs": []
+ },
+ "Eventbrite": {
+  "domain": "eventbrite.com",
+  "metadata_found": 0,
+  "dcr_api": null,
+  "dcr_mcp": null,
+  "docs": []
+ },
+ "Exist": {
+  "domain": "exist.io",
+  "metadata_found": 0,
+  "dcr_api": null,
+  "dcr_mcp": null,
+  "docs": []
+ },
+ "Meta for Developers": {
+  "domain": "facebook.com",
+  "metadata_found": 3,
+  "dcr_api": null,
+  "dcr_mcp": null,
+  "docs": [
+   "https://facebook.com/.well-known/openid-configuration",
+   "https://www.facebook.com/.well-known/openid-configuration",
+   "https://api.facebook.com/.well-known/openid-configuration"
+  ]
+ },
+ "Fathom": {
+  "domain": "fathom.video",
+  "metadata_found": 4,
+  "dcr_api": "https://fathom.video/mcp/oauth/register",
+  "dcr_mcp": null,
+  "docs": [
+   "https://fathom.video/.well-known/oauth-authorization-server",
+   "https://fathom.video/.well-known/openid-configuration",
+   "https://www.fathom.video/.well-known/oauth-authorization-server",
+   "https://www.fathom.video/.well-known/openid-configuration"
+  ]
+ },
+ "Figma": {
+  "domain": "figma.com",
+  "metadata_found": 9,
+  "dcr_api": "https://api.figma.com/v1/oauth/mcp/register",
+  "dcr_mcp": "https://api.figma.com/v1/oauth/mcp/register",
+  "docs": [
+   "https://figma.com/.well-known/oauth-authorization-server",
+   "https://figma.com/.well-known/openid-configuration",
+   "https://www.figma.com/.well-known/oauth-authorization-server",
+   "https://www.figma.com/.well-known/openid-configuration",
+   "https://api.figma.com/.well-known/oauth-authorization-server",
+   "https://mcp.figma.com/.well-known/oauth-authorization-server"
+  ]
+ },
+ "Follow Up Boss": {
+  "domain": "followupboss.com",
+  "metadata_found": 2,
+  "dcr_api": null,
+  "dcr_mcp": null,
+  "docs": [
+   "https://auth.followupboss.com/.well-known/openid-configuration",
+   "https://mcp.followupboss.com/.well-known/openid-configuration"
+  ]
+ },
+ "Frame.io V4": {
+  "domain": "frame.io",
+  "metadata_found": 1,
+  "dcr_api": null,
+  "dcr_mcp": "https://mcp.frame.io/register",
+  "docs": [
+   "https://mcp.frame.io/.well-known/oauth-authorization-server"
+  ]
+ },
+ "Freeagent": {
+  "domain": "freeagent.com",
+  "metadata_found": 1,
+  "dcr_api": null,
+  "dcr_mcp": null,
+  "docs": [
+   "https://api.freeagent.com/.well-known/oauth-authorization-server"
+  ]
+ },
+ "freee": {
+  "domain": "freee.co.jp",
+  "metadata_found": 2,
+  "dcr_api": null,
+  "dcr_mcp": "https://mcp.freee.co.jp/register",
+  "docs": [
+   "https://mcp.freee.co.jp/.well-known/oauth-authorization-server",
+   "https://mcp.freee.co.jp/.well-known/oauth-authorization-server"
+  ]
+ },
+ "FreshBooks": {
+  "domain": "freshbooks.com",
+  "metadata_found": 2,
+  "dcr_api": "https://auth.freshbooks.com/service/auth/oauth/registration",
+  "dcr_mcp": null,
+  "docs": [
+   "https://auth.freshbooks.com/.well-known/oauth-authorization-server",
+   "https://auth.freshbooks.com/.well-known/openid-configuration"
+  ]
+ },
+ "Freshsales": {
+  "domain": "freshworks.com",
+  "metadata_found": 0,
+  "dcr_api": null,
+  "dcr_mcp": null,
+  "docs": []
+ },
+ "Front": {
+  "domain": "frontapp.com",
+  "metadata_found": 4,
+  "dcr_api": null,
+  "dcr_mcp": null,
+  "docs": [
+   "https://frontapp.com/.well-known/oauth-authorization-server",
+   "https://auth.frontapp.com/.well-known/oauth-authorization-server",
+   "https://app.frontapp.com/.well-known/oauth-authorization-server",
+   "https://app.frontapp.com/.well-known/oauth-authorization-server"
+  ]
+ },
+ "Gagelist": {
+  "domain": "gagelist.com",
+  "metadata_found": 2,
+  "dcr_api": null,
+  "dcr_mcp": null,
+  "docs": [
+   "https://gagelist.com/.well-known/oauth-authorization-server",
+   "https://www.gagelist.com/.well-known/oauth-authorization-server"
+  ]
+ },
+ "GetResponse": {
+  "domain": "getresponse.com",
+  "metadata_found": 3,
+  "dcr_api": null,
+  "dcr_mcp": null,
+  "docs": [
+   "https://mcp.getresponse.com/.well-known/oauth-authorization-server",
+   "https://mcp.getresponse.com/.well-known/oauth-authorization-server",
+   "https://mcp.getresponse.com/.well-known/oauth-authorization-server"
+  ]
+ },
+ "GitHub": {
+  "domain": "github.com",
+  "metadata_found": 0,
+  "dcr_api": null,
+  "dcr_mcp": null,
+  "docs": []
+ },
+ "GitLab": {
+  "domain": "gitlab.com",
+  "metadata_found": 4,
+  "dcr_api": "https://gitlab.com/oauth/register",
+  "dcr_mcp": null,
+  "docs": [
+   "https://gitlab.com/.well-known/oauth-authorization-server",
+   "https://gitlab.com/.well-known/openid-configuration",
+   "https://www.gitlab.com/.well-known/oauth-authorization-server",
+   "https://www.gitlab.com/.well-known/openid-configuration"
+  ]
+ },
+ "Google Cloud (OAuth client)": {
+  "domain": "google.com",
+  "metadata_found": 2,
+  "dcr_api": null,
+  "dcr_mcp": null,
+  "docs": [
+   "https://accounts.google.com/.well-known/oauth-authorization-server",
+   "https://accounts.google.com/.well-known/openid-configuration"
+  ]
+ },
+ "GoTo Training": {
+  "domain": "goto.com",
+  "metadata_found": 1,
+  "dcr_api": null,
+  "dcr_mcp": null,
+  "docs": [
+   "https://identity.goto.com/.well-known/oauth-authorization-server"
+  ]
+ },
+ "Gong": {
+  "domain": "gong.io",
+  "metadata_found": 2,
+  "dcr_api": null,
+  "dcr_mcp": "https://app.gong.io/oauth2/register",
+  "docs": [
+   "https://mcp.gong.io/.well-known/oauth-authorization-server",
+   "https://mcp.gong.io/.well-known/oauth-authorization-server"
+  ]
+ },
+ "Gorgias": {
+  "domain": "gorgias.com",
+  "metadata_found": 2,
+  "dcr_api": null,
+  "dcr_mcp": "https://mcp.gorgias.com/register",
+  "docs": [
+   "https://mcp.gorgias.com/.well-known/oauth-authorization-server",
+   "https://mcp.gorgias.com/.well-known/oauth-authorization-server"
+  ]
+ },
+ "Greenhouse": {
+  "domain": "greenhouse.io",
+  "metadata_found": 6,
+  "dcr_api": "https://auth.greenhouse.io/register",
+  "dcr_mcp": "https://mcp.greenhouse.io/oauth/register",
+  "docs": [
+   "https://auth.greenhouse.io/.well-known/oauth-authorization-server",
+   "https://auth.greenhouse.io/.well-known/openid-configuration",
+   "https://mcp.greenhouse.io/.well-known/oauth-authorization-server",
+   "https://mcp.greenhouse.io/.well-known/openid-configuration",
+   "https://auth.greenhouse.io/.well-known/oauth-authorization-server",
+   "https://auth.greenhouse.io/.well-known/oauth-authorization-server"
+  ]
+ },
+ "Gumroad": {
+  "domain": "gumroad.com",
+  "metadata_found": 2,
+  "dcr_api": "https://gumroad.com/muse/v1/oauth2/register",
+  "dcr_mcp": null,
+  "docs": [
+   "https://gumroad.com/.well-known/oauth-authorization-server",
+   "https://www.gumroad.com/.well-known/oauth-authorization-server"
+  ]
+ },
+ "Gusto": {
+  "domain": "gusto.com",
+  "metadata_found": 2,
+  "dcr_api": null,
+  "dcr_mcp": null,
+  "docs": [
+   "https://api.gusto.com/.well-known/oauth-authorization-server",
+   "https://api.gusto.com/.well-known/openid-configuration"
+  ]
+ },
+ "HaloPSA": {
+  "domain": "halopsa.com",
+  "metadata_found": 3,
+  "dcr_api": null,
+  "dcr_mcp": null,
+  "docs": [
+   "https://api.halopsa.com/.well-known/oauth-authorization-server",
+   "https://auth.halopsa.com/.well-known/openid-configuration",
+   "https://mcp.halopsa.com/.well-known/oauth-authorization-server"
+  ]
+ },
+ "Harvest": {
+  "domain": "getharvest.com",
+  "metadata_found": 0,
+  "dcr_api": null,
+  "dcr_mcp": null,
+  "docs": []
+ },
+ "Help Scout": {
+  "domain": "helpscout.net",
+  "metadata_found": 3,
+  "dcr_api": null,
+  "dcr_mcp": "https://mcp.helpscout.net/oauth/register",
+  "docs": [
+   "https://mcp.helpscout.net/.well-known/oauth-authorization-server",
+   "https://mcp.helpscout.net/.well-known/oauth-authorization-server",
+   "https://mcp.helpscout.net/.well-known/oauth-authorization-server"
+  ]
+ },
+ "HighLevel Marketplace": {
+  "domain": "gohighlevel.com",
+  "metadata_found": 0,
+  "dcr_api": null,
+  "dcr_mcp": null,
+  "docs": []
+ },
+ "HubSpot": {
+  "domain": "hubspot.com",
+  "metadata_found": 5,
+  "dcr_api": null,
+  "dcr_mcp": null,
+  "docs": [
+   "https://api.hubspot.com/.well-known/oauth-authorization-server",
+   "https://mcp.hubspot.com/.well-known/oauth-authorization-server",
+   "https://mcp.hubspot.com/.well-known/oauth-authorization-server",
+   "https://mcp.hubspot.com/.well-known/oauth-authorization-server",
+   "https://mcp.hubspot.com/.well-known/oauth-authorization-server"
+  ]
+ },
+ "Hugging Face": {
+  "domain": "huggingface.co",
+  "metadata_found": 4,
+  "dcr_api": "https://huggingface.co/oauth/register",
+  "dcr_mcp": null,
+  "docs": [
+   "https://huggingface.co/.well-known/oauth-authorization-server",
+   "https://huggingface.co/.well-known/openid-configuration",
+   "https://www.huggingface.co/.well-known/oauth-authorization-server",
+   "https://www.huggingface.co/.well-known/openid-configuration"
+  ]
+ },
+ "Imply Polaris": {
+  "domain": "imply.io",
+  "metadata_found": 0,
+  "dcr_api": null,
+  "dcr_mcp": null,
+  "docs": []
+ },
+ "Infisical": {
+  "domain": "infisical.com",
+  "metadata_found": 0,
+  "dcr_api": null,
+  "dcr_mcp": null,
+  "docs": []
+ },
+ "Intercom": {
+  "domain": "intercom.com",
+  "metadata_found": 4,
+  "dcr_api": null,
+  "dcr_mcp": "https://mcp.intercom.com/register",
+  "docs": [
+   "https://mcp.intercom.com/.well-known/oauth-authorization-server",
+   "https://mcp.intercom.com/.well-known/oauth-authorization-server",
+   "https://mcp.intercom.com/.well-known/oauth-authorization-server",
+   "https://mcp.intercom.com/.well-known/oauth-authorization-server"
+  ]
+ },
+ "Ironclad": {
+  "domain": "ironcladapp.com",
+  "metadata_found": 2,
+  "dcr_api": null,
+  "dcr_mcp": null,
+  "docs": [
+   "https://ironcladapp.com/.well-known/oauth-authorization-server",
+   "https://www.ironcladapp.com/.well-known/oauth-authorization-server"
+  ]
+ },
+ "Jibble": {
+  "domain": "jibble.io",
+  "metadata_found": 4,
+  "dcr_api": null,
+  "dcr_mcp": "https://mcp.jibble.io/register",
+  "docs": [
+   "https://mcp.jibble.io/.well-known/oauth-authorization-server",
+   "https://mcp.jibble.io/.well-known/openid-configuration",
+   "https://mcp.jibble.io/.well-known/oauth-authorization-server",
+   "https://mcp.jibble.io/.well-known/oauth-authorization-server"
+  ]
+ },
+ "Jobber": {
+  "domain": "getjobber.com",
+  "metadata_found": 2,
+  "dcr_api": null,
+  "dcr_mcp": null,
+  "docs": [
+   "https://api.getjobber.com/.well-known/oauth-authorization-server",
+   "https://api.getjobber.com/.well-known/oauth-authorization-server"
+  ]
+ },
+ "Judge.me": {
+  "domain": "judge.me",
+  "metadata_found": 0,
+  "dcr_api": null,
+  "dcr_mcp": null,
+  "docs": []
+ },
+ "Kick": {
+  "domain": "kick.com",
+  "metadata_found": 0,
+  "dcr_api": null,
+  "dcr_mcp": null,
+  "docs": []
+ },
+ "Kintone REST": {
+  "domain": "kintone.com",
+  "metadata_found": 0,
+  "dcr_api": null,
+  "dcr_mcp": null,
+  "docs": []
+ },
+ "Kit": {
+  "domain": "kit.com",
+  "metadata_found": 1,
+  "dcr_api": "https://app.kit.com/oauth/register",
+  "dcr_mcp": null,
+  "docs": [
+   "https://api.kit.com/.well-known/oauth-authorization-server"
+  ]
+ },
+ "Klaviyo": {
+  "domain": "klaviyo.com",
+  "metadata_found": 4,
+  "dcr_api": null,
+  "dcr_mcp": "https://mcp.klaviyo.com/register",
+  "docs": [
+   "https://mcp.klaviyo.com/.well-known/oauth-authorization-server",
+   "https://mcp.klaviyo.com/.well-known/oauth-authorization-server",
+   "https://mcp.klaviyo.com/.well-known/oauth-authorization-server",
+   "https://mcp.klaviyo.com/.well-known/oauth-authorization-server"
+  ]
+ },
+ "Kommo": {
+  "domain": "kommo.com",
+  "metadata_found": 0,
+  "dcr_api": null,
+  "dcr_mcp": null,
+  "docs": []
+ },
+ "LaunchDarkly": {
+  "domain": "launchdarkly.com",
+  "metadata_found": 2,
+  "dcr_api": null,
+  "dcr_mcp": "https://app.launchdarkly.com/trust/oauth/register/dcr",
+  "docs": [
+   "https://app.launchdarkly.com/.well-known/oauth-authorization-server",
+   "https://app.launchdarkly.com/.well-known/oauth-authorization-server"
+  ]
+ },
+ "Lever": {
+  "domain": "lever.co",
+  "metadata_found": 3,
+  "dcr_api": null,
+  "dcr_mcp": null,
+  "docs": [
+   "https://auth.lever.co/.well-known/oauth-authorization-server",
+   "https://auth.lever.co/.well-known/openid-configuration",
+   "https://auth.lever.co/.well-known/oauth-authorization-server"
+  ]
+ },
+ "Lightspeed Retail X-Series": {
+  "domain": "lightspeedhq.com",
+  "metadata_found": 0,
+  "dcr_api": null,
+  "dcr_mcp": null,
+  "docs": []
+ },
+ "Linear": {
+  "domain": "linear.app",
+  "metadata_found": 6,
+  "dcr_api": null,
+  "dcr_mcp": "https://mcp.linear.app/register",
+  "docs": [
+   "https://api.linear.app/.well-known/oauth-authorization-server",
+   "https://mcp.linear.app/.well-known/oauth-authorization-server",
+   "https://mcp.linear.app/.well-known/openid-configuration",
+   "https://mcp.linear.app/.well-known/oauth-authorization-server",
+   "https://mcp.linear.app/.well-known/oauth-authorization-server",
+   "https://mcp.linear.app/.well-known/oauth-authorization-server"
+  ]
+ },
+ "LinkedIn Developers": {
+  "domain": "linkedin.com",
+  "metadata_found": 0,
+  "dcr_api": null,
+  "dcr_mcp": null,
+  "docs": []
+ },
+ "Linkhut": {
+  "domain": "ln.ht",
+  "metadata_found": 0,
+  "dcr_api": null,
+  "dcr_mcp": null,
+  "docs": []
+ },
+ "Linode": {
+  "domain": "linode.com",
+  "metadata_found": 0,
+  "dcr_api": null,
+  "dcr_mcp": null,
+  "docs": []
+ },
+ "LiveChat": {
+  "domain": "livechat.com",
+  "metadata_found": 0,
+  "dcr_api": null,
+  "dcr_mcp": null,
+  "docs": []
+ },
+ "Lodgify": {
+  "domain": "lodgify.com",
+  "metadata_found": 3,
+  "dcr_api": null,
+  "dcr_mcp": null,
+  "docs": [
+   "https://identityserver.lodgify.com/.well-known/oauth-authorization-server",
+   "https://identityserver.lodgify.com/.well-known/oauth-authorization-server",
+   "https://identityserver.lodgify.com/.well-known/oauth-authorization-server"
+  ]
+ },
+ "MailUp": {
+  "domain": "mailup.com",
+  "metadata_found": 0,
+  "dcr_api": null,
+  "dcr_mcp": null,
+  "docs": []
+ },
+ "Mailchimp": {
+  "domain": "mailchimp.com",
+  "metadata_found": 1,
+  "dcr_api": null,
+  "dcr_mcp": null,
+  "docs": [
+   "https://oauth2-svc.api.intuit.com/.well-known/oauth-authorization-server"
+  ]
+ },
+ "Matterport": {
+  "domain": "matterport.com",
+  "metadata_found": 0,
+  "dcr_api": null,
+  "dcr_mcp": null,
+  "docs": []
+ },
+ "Miro": {
+  "domain": "miro.com",
+  "metadata_found": 3,
+  "dcr_api": null,
+  "dcr_mcp": "https://mcp.miro.com/register",
+  "docs": [
+   "https://mcp.miro.com/.well-known/oauth-authorization-server",
+   "https://mcp.miro.com/.well-known/openid-configuration",
+   "https://mcp.miro.com/.well-known/oauth-authorization-server"
+  ]
+ },
+ "Monday": {
+  "domain": "monday.com",
+  "metadata_found": 8,
+  "dcr_api": "https://auth.monday.com/oauth_ms/oauth/register",
+  "dcr_mcp": "https://auth.monday.com/oauth_ms/oauth/register",
+  "docs": [
+   "https://monday.com/.well-known/oauth-authorization-server",
+   "https://monday.com/.well-known/openid-configuration",
+   "https://www.monday.com/.well-known/oauth-authorization-server",
+   "https://www.monday.com/.well-known/openid-configuration",
+   "https://auth.monday.com/.well-known/oauth-authorization-server",
+   "https://mcp.monday.com/.well-known/oauth-authorization-server"
+  ]
+ },
+ "Money Forward": {
+  "domain": "moneyforward.com",
+  "metadata_found": 1,
+  "dcr_api": null,
+  "dcr_mcp": null,
+  "docs": [
+   "https://moneyforward.com/.well-known/oauth-authorization-server"
+  ]
+ },
+ "Moneybird": {
+  "domain": "moneybird.com",
+  "metadata_found": 1,
+  "dcr_api": "https://moneybird.com/oauth/register",
+  "dcr_mcp": null,
+  "docs": [
+   "https://moneybird.com/.well-known/oauth-authorization-server"
+  ]
+ },
+ "MongoDB Atlas": {
+  "domain": "mongodb.com",
+  "metadata_found": 3,
+  "dcr_api": "https://auth.mongodb.com/oauth2/v1/clients",
+  "dcr_mcp": null,
+  "docs": [
+   "https://auth.mongodb.com/.well-known/oauth-authorization-server",
+   "https://auth.mongodb.com/.well-known/openid-configuration",
+   "https://authorize.mongodb.com/.well-known/oauth-authorization-server"
+  ]
+ },
+ "Mural": {
+  "domain": "mural.co",
+  "metadata_found": 1,
+  "dcr_api": null,
+  "dcr_mcp": null,
+  "docs": [
+   "https://api.mural.co/.well-known/oauth-authorization-server"
+  ]
+ },
+ "Navan": {
+  "domain": "navan.com",
+  "metadata_found": 2,
+  "dcr_api": null,
+  "dcr_mcp": "https://login.navan.com/oidc/register",
+  "docs": [
+   "https://login.navan.com/.well-known/oauth-authorization-server",
+   "https://login.navan.com/.well-known/oauth-authorization-server"
+  ]
+ },
+ "Neo4J": {
+  "domain": "neo4j.com",
+  "metadata_found": 0,
+  "dcr_api": null,
+  "dcr_mcp": null,
+  "docs": []
+ },
+ "Neon": {
+  "domain": "neon.tech",
+  "metadata_found": 4,
+  "dcr_api": null,
+  "dcr_mcp": "https://mcp.neon.tech/api/register",
+  "docs": [
+   "https://mcp.neon.tech/.well-known/oauth-authorization-server",
+   "https://mcp.neon.tech/.well-known/oauth-authorization-server",
+   "https://mcp.neon.tech/.well-known/oauth-authorization-server",
+   "https://mcp.neon.tech/.well-known/oauth-authorization-server"
+  ]
+ },
+ "Netsuite": {
+  "domain": "netsuite.com",
+  "metadata_found": 6,
+  "dcr_api": "https://6262239.suitetalk.api.netsuite.com/services/rest/auth/oauth2/v1/register",
+  "dcr_mcp": "https://mcp.netsuite.com/services/rest/auth/oauth2/v1/register",
+  "docs": [
+   "https://netsuite.com/.well-known/oauth-authorization-server",
+   "https://netsuite.com/.well-known/openid-configuration",
+   "https://www.netsuite.com/.well-known/oauth-authorization-server",
+   "https://www.netsuite.com/.well-known/openid-configuration",
+   "https://mcp.netsuite.com/.well-known/oauth-authorization-server",
+   "https://mcp.netsuite.com/.well-known/openid-configuration"
+  ]
+ },
+ "Notion": {
+  "domain": "notion.com",
+  "metadata_found": 4,
+  "dcr_api": null,
+  "dcr_mcp": "https://mcp.notion.com/register",
+  "docs": [
+   "https://mcp.notion.com/.well-known/oauth-authorization-server",
+   "https://mcp.notion.com/.well-known/oauth-authorization-server",
+   "https://mcp.notion.com/.well-known/oauth-authorization-server",
+   "https://mcp.notion.com/.well-known/oauth-authorization-server"
+  ]
+ },
+ "Omnisend": {
+  "domain": "omnisend.com",
+  "metadata_found": 2,
+  "dcr_api": null,
+  "dcr_mcp": "https://app.omnisend.com/oauth2/register",
+  "docs": [
+   "https://mcp.omnisend.com/.well-known/oauth-authorization-server",
+   "https://mcp.omnisend.com/.well-known/oauth-authorization-server"
+  ]
+ },
+ "PagerDuty": {
+  "domain": "pagerduty.com",
+  "metadata_found": 2,
+  "dcr_api": null,
+  "dcr_mcp": null,
+  "docs": [
+   "https://mcp.pagerduty.com/.well-known/oauth-authorization-server",
+   "https://app.pagerduty.com/.well-known/oauth-authorization-server/global/oauth/anonymous"
+  ]
+ },
+ "Parma": {
+  "domain": "parma.ai",
+  "metadata_found": 0,
+  "dcr_api": null,
+  "dcr_mcp": null,
+  "docs": []
+ },
+ "PayPal Developer": {
+  "domain": "paypal.com",
+  "metadata_found": 6,
+  "dcr_api": "https://api.paypal.com/v1/oauth2/applications",
+  "dcr_mcp": "https://mcp.paypal.com/register",
+  "docs": [
+   "https://paypal.com/.well-known/openid-configuration",
+   "https://www.paypal.com/.well-known/openid-configuration",
+   "https://mcp.paypal.com/.well-known/oauth-authorization-server",
+   "https://mcp.paypal.com/.well-known/oauth-authorization-server",
+   "https://mcp.paypal.com/.well-known/oauth-authorization-server",
+   "https://mcp.paypal.com/.well-known/oauth-authorization-server"
+  ]
+ },
+ "Personio": {
+  "domain": "personio.de",
+  "metadata_found": 4,
+  "dcr_api": null,
+  "dcr_mcp": null,
+  "docs": [
+   "https://auth.personio.de/.well-known/oauth-authorization-server",
+   "https://mcp.personio.de/.well-known/oauth-authorization-server",
+   "https://mcp.app.personio.com/.well-known/oauth-authorization-server",
+   "https://mcp.app.personio.com/.well-known/oauth-authorization-server"
+  ]
+ },
+ "Pinecone": {
+  "domain": "pinecone.io",
+  "metadata_found": 2,
+  "dcr_api": null,
+  "dcr_mcp": null,
+  "docs": [
+   "https://auth.pinecone.io/.well-known/oauth-authorization-server",
+   "https://auth.pinecone.io/.well-known/openid-configuration"
+  ]
+ },
+ "Pinterest Developers": {
+  "domain": "pinterest.com",
+  "metadata_found": 0,
+  "dcr_api": null,
+  "dcr_mcp": null,
+  "docs": []
+ },
+ "Pipedrive": {
+  "domain": "pipedrive.com",
+  "metadata_found": 0,
+  "dcr_api": null,
+  "dcr_mcp": null,
+  "docs": []
+ },
+ "PlanetScale": {
+  "domain": "planetscale.com",
+  "metadata_found": 4,
+  "dcr_api": "https://auth.planetscale.com/oauth/registration",
+  "dcr_mcp": null,
+  "docs": [
+   "https://api.planetscale.com/.well-known/oauth-authorization-server",
+   "https://api.planetscale.com/.well-known/openid-configuration",
+   "https://auth.planetscale.com/.well-known/oauth-authorization-server",
+   "https://auth.planetscale.com/.well-known/openid-configuration"
+  ]
+ },
+ "Podio": {
+  "domain": "podio.com",
+  "metadata_found": 3,
+  "dcr_api": null,
+  "dcr_mcp": "https://mcp.podio.com/oauth/register",
+  "docs": [
+   "https://mcp.podio.com/.well-known/oauth-authorization-server",
+   "https://mcp.podio.com/.well-known/oauth-authorization-server",
+   "https://mcp.podio.com/.well-known/oauth-authorization-server"
+  ]
+ },
+ "Polar": {
+  "domain": "polar.sh",
+  "metadata_found": 2,
+  "dcr_api": "https://api.polar.sh/v1/oauth2/register",
+  "dcr_mcp": null,
+  "docs": [
+   "https://api.polar.sh/.well-known/oauth-authorization-server",
+   "https://api.polar.sh/.well-known/openid-configuration"
+  ]
+ },
+ "Prisma": {
+  "domain": "prisma.io",
+  "metadata_found": 4,
+  "dcr_api": "https://auth.prisma.io/register",
+  "dcr_mcp": "https://auth.prisma.io/register",
+  "docs": [
+   "https://auth.prisma.io/.well-known/oauth-authorization-server",
+   "https://auth.prisma.io/.well-known/openid-configuration",
+   "https://mcp.prisma.io/.well-known/oauth-authorization-server",
+   "https://auth.prisma.io/.well-known/oauth-authorization-server"
+  ]
+ },
+ "Productboard": {
+  "domain": "productboard.com",
+  "metadata_found": 4,
+  "dcr_api": null,
+  "dcr_mcp": "https://mcp.productboard.com/oauth2/register",
+  "docs": [
+   "https://mcp.productboard.com/.well-known/oauth-authorization-server",
+   "https://mcp.productboard.com/.well-known/oauth-authorization-server",
+   "https://mcp.productboard.com/.well-known/oauth-authorization-server",
+   "https://mcp.productboard.com/.well-known/oauth-authorization-server"
+  ]
+ },
+ "Pushbullet": {
+  "domain": "pushbullet.com",
+  "metadata_found": 0,
+  "dcr_api": null,
+  "dcr_mcp": null,
+  "docs": []
+ },
+ "QuickBooks": {
+  "domain": "intuit.com",
+  "metadata_found": 0,
+  "dcr_api": null,
+  "dcr_mcp": null,
+  "docs": []
+ },
+ "Quire": {
+  "domain": "quire.io",
+  "metadata_found": 0,
+  "dcr_api": null,
+  "dcr_mcp": null,
+  "docs": []
+ },
+ "Railway": {
+  "domain": "railway.com",
+  "metadata_found": 3,
+  "dcr_api": null,
+  "dcr_mcp": "https://backboard.railway.com/oauth/register",
+  "docs": [
+   "https://mcp.railway.com/.well-known/oauth-authorization-server",
+   "https://backboard.railway.com/.well-known/oauth-authorization-server",
+   "https://backboard.railway.com/.well-known/oauth-authorization-server"
+  ]
+ },
+ "Ramp": {
+  "domain": "ramp.com",
+  "metadata_found": 4,
+  "dcr_api": null,
+  "dcr_mcp": "https://mcp.ramp.com/register",
+  "docs": [
+   "https://mcp.ramp.com/.well-known/oauth-authorization-server",
+   "https://mcp.ramp.com/.well-known/openid-configuration",
+   "https://mcp.ramp.com/.well-known/oauth-authorization-server",
+   "https://mcp.ramp.com/.well-known/oauth-authorization-server"
+  ]
+ },
+ "Razorpay": {
+  "domain": "razorpay.com",
+  "metadata_found": 5,
+  "dcr_api": "https://mcp.razorpay.com/register",
+  "dcr_mcp": "https://mcp.razorpay.com/register",
+  "docs": [
+   "https://razorpay.com/.well-known/oauth-authorization-server",
+   "https://www.razorpay.com/.well-known/oauth-authorization-server",
+   "https://mcp.razorpay.com/.well-known/oauth-authorization-server",
+   "https://mcp.razorpay.com/.well-known/oauth-authorization-server",
+   "https://mcp.razorpay.com/.well-known/oauth-authorization-server"
+  ]
+ },
+ "RD Station Marketing": {
+  "domain": "rdstation.com",
+  "metadata_found": 0,
+  "dcr_api": null,
+  "dcr_mcp": null,
+  "docs": []
+ },
+ "Rebrandly": {
+  "domain": "rebrandly.com",
+  "metadata_found": 1,
+  "dcr_api": null,
+  "dcr_mcp": "https://sensational-elixir-82.authkit.app/oauth2/register",
+  "docs": [
+   "https://sensational-elixir-82.authkit.app/.well-known/oauth-authorization-server"
+  ]
+ },
+ "Recruitee": {
+  "domain": "recruitee.com",
+  "metadata_found": 0,
+  "dcr_api": null,
+  "dcr_mcp": null,
+  "docs": []
+ },
+ "Reddit apps": {
+  "domain": "reddit.com",
+  "metadata_found": 3,
+  "dcr_api": null,
+  "dcr_mcp": null,
+  "docs": [
+   "https://reddit.com/.well-known/oauth-authorization-server",
+   "https://www.reddit.com/.well-known/oauth-authorization-server",
+   "https://auth.reddit.com/.well-known/oauth-authorization-server"
+  ]
+ },
+ "Reloadly": {
+  "domain": "reloadly.com",
+  "metadata_found": 0,
+  "dcr_api": null,
+  "dcr_mcp": null,
+  "docs": []
+ },
+ "Resend": {
+  "domain": "resend.com",
+  "metadata_found": 4,
+  "dcr_api": "https://api.resend.com/oauth/register",
+  "dcr_mcp": "https://api.resend.com/oauth/register",
+  "docs": [
+   "https://resend.com/.well-known/oauth-authorization-server",
+   "https://www.resend.com/.well-known/oauth-authorization-server",
+   "https://api.resend.com/.well-known/oauth-authorization-server",
+   "https://api.resend.com/.well-known/oauth-authorization-server"
+  ]
+ },
+ "Rillet": {
+  "domain": "rillet.com",
+  "metadata_found": 1,
+  "dcr_api": "https://api.rillet.com/oauth2/register",
+  "dcr_mcp": null,
+  "docs": [
+   "https://api.rillet.com/.well-known/oauth-authorization-server"
+  ]
+ },
+ "Rippling": {
+  "domain": "rippling.com",
+  "metadata_found": 1,
+  "dcr_api": "https://app.rippling.com/api/o/register/",
+  "dcr_mcp": null,
+  "docs": [
+   "https://api.rippling.com/.well-known/openid-configuration"
+  ]
+ },
+ "Roam": {
+  "domain": "ro.am",
+  "metadata_found": 3,
+  "dcr_api": "https://ro.am/oauth/register",
+  "dcr_mcp": null,
+  "docs": [
+   "https://ro.am/.well-known/oauth-authorization-server",
+   "https://www.ro.am/.well-known/oauth-authorization-server",
+   "https://api.ro.am/.well-known/oauth-authorization-server"
+  ]
+ },
+ "Sage Intacct": {
+  "domain": "sage.com",
+  "metadata_found": 0,
+  "dcr_api": null,
+  "dcr_mcp": null,
+  "docs": []
+ },
+ "Salesforce (Connected / External Client App)": {
+  "domain": "salesforce.com",
+  "metadata_found": 2,
+  "dcr_api": "https://login.salesforce.com/services/oauth2/register",
+  "dcr_mcp": null,
+  "docs": [
+   "https://api.salesforce.com/.well-known/oauth-authorization-server",
+   "https://login.salesforce.com/.well-known/openid-configuration"
+  ]
+ },
+ "Scheduleonce": {
+  "domain": "oncehub.com",
+  "metadata_found": 0,
+  "dcr_api": null,
+  "dcr_mcp": null,
+  "docs": []
+ },
+ "SendPulse": {
+  "domain": "sendpulse.com",
+  "metadata_found": 3,
+  "dcr_api": null,
+  "dcr_mcp": "https://mcp.sendpulse.com/oauth/register",
+  "docs": [
+   "https://mcp.sendpulse.com/.well-known/oauth-authorization-server",
+   "https://mcp.sendpulse.com/.well-known/oauth-authorization-server",
+   "https://mcp.sendpulse.com/.well-known/oauth-authorization-server"
+  ]
+ },
+ "Sendloop": {
+  "domain": "sendloop.com",
+  "metadata_found": 0,
+  "dcr_api": null,
+  "dcr_mcp": null,
+  "docs": []
+ },
+ "Sentry": {
+  "domain": "sentry.io",
+  "metadata_found": 5,
+  "dcr_api": null,
+  "dcr_mcp": "https://mcp.sentry.dev/oauth/register",
+  "docs": [
+   "https://sentry.io/.well-known/oauth-authorization-server",
+   "https://www.sentry.io/.well-known/oauth-authorization-server",
+   "https://mcp.sentry.dev/.well-known/oauth-authorization-server",
+   "https://mcp.sentry.dev/.well-known/oauth-authorization-server",
+   "https://mcp.sentry.dev/.well-known/oauth-authorization-server"
+  ]
+ },
+ "Servicem8": {
+  "domain": "servicem8.com",
+  "metadata_found": 3,
+  "dcr_api": "https://api.servicem8.com/oauth/register",
+  "dcr_mcp": null,
+  "docs": [
+   "https://servicem8.com/.well-known/oauth-authorization-server",
+   "https://www.servicem8.com/.well-known/oauth-authorization-server",
+   "https://api.servicem8.com/.well-known/oauth-authorization-server"
+  ]
+ },
+ "ServiceNow": {
+  "domain": "service-now.com",
+  "metadata_found": 0,
+  "dcr_api": null,
+  "dcr_mcp": null,
+  "docs": []
+ },
+ "ServiceTitan": {
+  "domain": "servicetitan.com",
+  "metadata_found": 0,
+  "dcr_api": null,
+  "dcr_mcp": null,
+  "docs": []
+ },
+ "Shippo": {
+  "domain": "goshippo.com",
+  "metadata_found": 2,
+  "dcr_api": "https://goshippo.com/oauth/clients",
+  "dcr_mcp": null,
+  "docs": [
+   "https://goshippo.com/.well-known/oauth-authorization-server",
+   "https://www.goshippo.com/.well-known/oauth-authorization-server"
+  ]
+ },
+ "Shopify": {
+  "domain": "shopify.com",
+  "metadata_found": 2,
+  "dcr_api": null,
+  "dcr_mcp": null,
+  "docs": [
+   "https://api.shopify.com/.well-known/oauth-authorization-server",
+   "https://setup.shopify.com/.well-known/oauth-authorization-server/auth"
+  ]
+ },
+ "SignNow": {
+  "domain": "signnow.com",
+  "metadata_found": 0,
+  "dcr_api": null,
+  "dcr_mcp": null,
+  "docs": []
+ },
+ "Slack apps": {
+  "domain": "slack.com",
+  "metadata_found": 6,
+  "dcr_api": null,
+  "dcr_mcp": null,
+  "docs": [
+   "https://slack.com/.well-known/openid-configuration",
+   "https://www.slack.com/.well-known/openid-configuration",
+   "https://api.slack.com/.well-known/openid-configuration",
+   "https://mcp.slack.com/.well-known/oauth-authorization-server",
+   "https://mcp.slack.com/.well-known/openid-configuration",
+   "https://mcp.slack.com/.well-known/oauth-authorization-server"
+  ]
+ },
+ "Smartsheet": {
+  "domain": "smartsheet.com",
+  "metadata_found": 2,
+  "dcr_api": null,
+  "dcr_mcp": null,
+  "docs": [
+   "https://mcp.smartsheet.com/.well-known/oauth-authorization-server",
+   "https://mcp.smartsheet.com/.well-known/oauth-authorization-server"
+  ]
+ },
+ "Smokeball": {
+  "domain": "smokeball.com",
+  "metadata_found": 0,
+  "dcr_api": null,
+  "dcr_mcp": null,
+  "docs": []
+ },
+ "Snapchat": {
+  "domain": "snapchat.com",
+  "metadata_found": 0,
+  "dcr_api": null,
+  "dcr_mcp": null,
+  "docs": []
+ },
+ "Snowflake": {
+  "domain": "snowflake.com",
+  "metadata_found": 4,
+  "dcr_api": null,
+  "dcr_mcp": null,
+  "docs": [
+   "https://snowflake.com/.well-known/oauth-authorization-server",
+   "https://www.snowflake.com/.well-known/oauth-authorization-server",
+   "https://auth.snowflake.com/.well-known/oauth-authorization-server",
+   "https://auth.snowflake.com/.well-known/openid-configuration"
+  ]
+ },
+ "Snyk": {
+  "domain": "snyk.io",
+  "metadata_found": 0,
+  "dcr_api": null,
+  "dcr_mcp": null,
+  "docs": []
+ },
+ "SoundCloud": {
+  "domain": "soundcloud.com",
+  "metadata_found": 0,
+  "dcr_api": null,
+  "dcr_mcp": null,
+  "docs": []
+ },
+ "Splitwise": {
+  "domain": "splitwise.com",
+  "metadata_found": 0,
+  "dcr_api": null,
+  "dcr_mcp": null,
+  "docs": []
+ },
+ "Spotify": {
+  "domain": "spotify.com",
+  "metadata_found": 0,
+  "dcr_api": null,
+  "dcr_mcp": null,
+  "docs": []
+ },
+ "Square": {
+  "domain": "squareup.com",
+  "metadata_found": 5,
+  "dcr_api": null,
+  "dcr_mcp": "https://mcp.squareup.com/register",
+  "docs": [
+   "https://mcp.squareup.com/.well-known/oauth-authorization-server",
+   "https://connect.squareup.com/.well-known/openid-configuration",
+   "https://mcp.squareup.com/.well-known/oauth-authorization-server",
+   "https://mcp.squareup.com/.well-known/oauth-authorization-server",
+   "https://mcp.squareup.com/.well-known/oauth-authorization-server"
+  ]
+ },
+ "Stack Exchange": {
+  "domain": "stackexchange.com",
+  "metadata_found": 0,
+  "dcr_api": null,
+  "dcr_mcp": null,
+  "docs": []
+ },
+ "Storyblok": {
+  "domain": "storyblok.com",
+  "metadata_found": 3,
+  "dcr_api": null,
+  "dcr_mcp": "https://mcp.storyblok.com/oauth/register",
+  "docs": [
+   "https://mcp.storyblok.com/.well-known/oauth-authorization-server",
+   "https://mcp.storyblok.com/.well-known/oauth-authorization-server",
+   "https://mcp.storyblok.com/.well-known/oauth-authorization-server"
+  ]
+ },
+ "Stripe": {
+  "domain": "stripe.com",
+  "metadata_found": 2,
+  "dcr_api": null,
+  "dcr_mcp": "https://access.stripe.com/mcp/oauth2/register",
+  "docs": [
+   "https://mcp.stripe.com/.well-known/oauth-authorization-server",
+   "https://access.stripe.com/.well-known/oauth-authorization-server/mcp"
+  ]
+ },
+ "Supabase": {
+  "domain": "supabase.com",
+  "metadata_found": 2,
+  "dcr_api": "https://api.supabase.com/platform/oauth/apps/register",
+  "dcr_mcp": "https://api.supabase.com/platform/oauth/apps/register",
+  "docs": [
+   "https://api.supabase.com/.well-known/oauth-authorization-server",
+   "https://api.supabase.com/.well-known/oauth-authorization-server"
+  ]
+ },
+ "SurveyMonkey": {
+  "domain": "surveymonkey.com",
+  "metadata_found": 2,
+  "dcr_api": null,
+  "dcr_mcp": "https://mcp.surveymonkey.com/register",
+  "docs": [
+   "https://mcp.surveymonkey.com/.well-known/oauth-authorization-server",
+   "https://mcp.surveymonkey.com/.well-known/oauth-authorization-server"
+  ]
+ },
+ "Tally": {
+  "domain": "tally.so",
+  "metadata_found": 4,
+  "dcr_api": "https://api.tally.so/oauth/register",
+  "dcr_mcp": "https://api.tally.so/oauth/register/mcp",
+  "docs": [
+   "https://api.tally.so/.well-known/oauth-authorization-server",
+   "https://mcp.tally.so/.well-known/oauth-authorization-server",
+   "https://api.tally.so/.well-known/oauth-authorization-server/mcp",
+   "https://api.tally.so/.well-known/oauth-authorization-server/mcp"
+  ]
+ },
+ "Teamleader Focus": {
+  "domain": "teamleader.eu",
+  "metadata_found": 0,
+  "dcr_api": null,
+  "dcr_mcp": null,
+  "docs": []
+ },
+ "Ticketmaster": {
+  "domain": "ticketmaster.com",
+  "metadata_found": 0,
+  "dcr_api": null,
+  "dcr_mcp": null,
+  "docs": []
+ },
+ "Ticktick": {
+  "domain": "ticktick.com",
+  "metadata_found": 4,
+  "dcr_api": "https://api.ticktick.com/oauth/register",
+  "dcr_mcp": "https://api.ticktick.com/oauth/register",
+  "docs": [
+   "https://ticktick.com/.well-known/oauth-authorization-server",
+   "https://www.ticktick.com/.well-known/oauth-authorization-server",
+   "https://mcp.ticktick.com/.well-known/oauth-authorization-server",
+   "https://ticktick.com/.well-known/oauth-authorization-server"
+  ]
+ },
+ "TikTok for Developers": {
+  "domain": "tiktok.com",
+  "metadata_found": 0,
+  "dcr_api": null,
+  "dcr_mcp": null,
+  "docs": []
+ },
+ "Timely": {
+  "domain": "timelyapp.com",
+  "metadata_found": 0,
+  "dcr_api": null,
+  "dcr_mcp": null,
+  "docs": []
+ },
+ "Tipalti": {
+  "domain": "tipalti.com",
+  "metadata_found": 3,
+  "dcr_api": null,
+  "dcr_mcp": null,
+  "docs": [
+   "https://mcp.tipalti.com/.well-known/oauth-authorization-server",
+   "https://mcp.tipalti.com/.well-known/oauth-authorization-server",
+   "https://mcp.tipalti.com/.well-known/oauth-authorization-server"
+  ]
+ },
+ "Todoist": {
+  "domain": "todoist.com",
+  "metadata_found": 4,
+  "dcr_api": "https://todoist.com/oauth/register",
+  "dcr_mcp": null,
+  "docs": [
+   "https://todoist.com/.well-known/oauth-authorization-server",
+   "https://todoist.com/.well-known/openid-configuration",
+   "https://api.todoist.com/.well-known/oauth-authorization-server",
+   "https://api.todoist.com/.well-known/openid-configuration"
+  ]
+ },
+ "Toneden": {
+  "domain": "toneden.io",
+  "metadata_found": 0,
+  "dcr_api": null,
+  "dcr_mcp": null,
+  "docs": []
+ },
+ "Trello": {
+  "domain": "trello.com",
+  "metadata_found": 0,
+  "dcr_api": null,
+  "dcr_mcp": null,
+  "docs": []
+ },
+ "Twilio": {
+  "domain": "twilio.com",
+  "metadata_found": 0,
+  "dcr_api": null,
+  "dcr_mcp": null,
+  "docs": []
+ },
+ "Twitch": {
+  "domain": "twitch.tv",
+  "metadata_found": 0,
+  "dcr_api": null,
+  "dcr_mcp": null,
+  "docs": []
+ },
+ "X Developer Portal": {
+  "domain": "x.com",
+  "metadata_found": 1,
+  "dcr_api": null,
+  "dcr_mcp": null,
+  "docs": [
+   "https://api.x.com/.well-known/oauth-authorization-server"
+  ]
+ },
+ "Typeform": {
+  "domain": "typeform.com",
+  "metadata_found": 4,
+  "dcr_api": "https://api.typeform.com/oauth/register",
+  "dcr_mcp": null,
+  "docs": [
+   "https://api.typeform.com/.well-known/oauth-authorization-server",
+   "https://api.typeform.com/.well-known/openid-configuration",
+   "https://auth.typeform.com/.well-known/oauth-authorization-server",
+   "https://auth.typeform.com/.well-known/openid-configuration"
+  ]
+ },
+ "Vercel": {
+  "domain": "vercel.com",
+  "metadata_found": 7,
+  "dcr_api": "https://api.vercel.com/login/oauth/register",
+  "dcr_mcp": "https://vercel.com/api/login/oauth/register",
+  "docs": [
+   "https://vercel.com/.well-known/oauth-authorization-server",
+   "https://vercel.com/.well-known/openid-configuration",
+   "https://www.vercel.com/.well-known/oauth-authorization-server",
+   "https://www.vercel.com/.well-known/openid-configuration",
+   "https://mcp.vercel.com/.well-known/oauth-authorization-server",
+   "https://vercel.com/.well-known/oauth-authorization-server"
+  ]
+ },
+ "Vibe": {
+  "domain": "vibe.us",
+  "metadata_found": 2,
+  "dcr_api": "https://api.vibe.us/v1/auth/oauth2/register",
+  "dcr_mcp": "https://api.vibe.us/v1/auth/oauth2/register",
+  "docs": [
+   "https://api.vibe.us/.well-known/oauth-authorization-server",
+   "https://api.vibe.us/.well-known/oauth-authorization-server"
+  ]
+ },
+ "Vimeo": {
+  "domain": "vimeo.com",
+  "metadata_found": 5,
+  "dcr_api": null,
+  "dcr_mcp": "https://mcp.vimeo.com/register",
+  "docs": [
+   "https://vimeo.com/.well-known/openid-configuration",
+   "https://www.vimeo.com/.well-known/openid-configuration",
+   "https://mcp.vimeo.com/.well-known/oauth-authorization-server",
+   "https://mcp.vimeo.com/.well-known/oauth-authorization-server",
+   "https://mcp.vimeo.com/.well-known/oauth-authorization-server"
+  ]
+ },
+ "WakaTime": {
+  "domain": "wakatime.com",
+  "metadata_found": 0,
+  "dcr_api": null,
+  "dcr_mcp": null,
+  "docs": []
+ },
+ "Webex": {
+  "domain": "webex.com",
+  "metadata_found": 0,
+  "dcr_api": null,
+  "dcr_mcp": null,
+  "docs": []
+ },
+ "Webflow": {
+  "domain": "webflow.com",
+  "metadata_found": 4,
+  "dcr_api": null,
+  "dcr_mcp": "https://mcp.webflow.com/oauth/register",
+  "docs": [
+   "https://mcp.webflow.com/.well-known/oauth-authorization-server",
+   "https://mcp.webflow.com/.well-known/oauth-authorization-server",
+   "https://mcp.webflow.com/.well-known/oauth-authorization-server",
+   "https://mcp.webflow.com/.well-known/oauth-authorization-server"
+  ]
+ },
+ "Whop": {
+  "domain": "whop.com",
+  "metadata_found": 5,
+  "dcr_api": null,
+  "dcr_mcp": "https://mcp.whop.com/register",
+  "docs": [
+   "https://api.whop.com/.well-known/openid-configuration",
+   "https://mcp.whop.com/.well-known/oauth-authorization-server",
+   "https://mcp.whop.com/.well-known/oauth-authorization-server",
+   "https://mcp.whop.com/.well-known/oauth-authorization-server",
+   "https://mcp.whop.com/.well-known/oauth-authorization-server"
+  ]
+ },
+ "WildApricot": {
+  "domain": "wildapricot.org",
+  "metadata_found": 0,
+  "dcr_api": null,
+  "dcr_mcp": null,
+  "docs": []
+ },
+ "Wix": {
+  "domain": "wix.com",
+  "metadata_found": 3,
+  "dcr_api": null,
+  "dcr_mcp": "https://mcp.wix.com/register",
+  "docs": [
+   "https://mcp.wix.com/.well-known/oauth-authorization-server",
+   "https://mcp.wix.com/.well-known/oauth-authorization-server",
+   "https://mcp.wix.com/.well-known/oauth-authorization-server"
+  ]
+ },
+ "WordPress.com": {
+  "domain": "wordpress.com",
+  "metadata_found": 0,
+  "dcr_api": null,
+  "dcr_mcp": null,
+  "docs": []
+ },
+ "Workable": {
+  "domain": "workable.com",
+  "metadata_found": 3,
+  "dcr_api": null,
+  "dcr_mcp": "https://mcp.workable.com/oauth/register",
+  "docs": [
+   "https://mcp.workable.com/.well-known/oauth-authorization-server",
+   "https://mcp.workable.com/.well-known/oauth-authorization-server",
+   "https://mcp.workable.com/.well-known/oauth-authorization-server"
+  ]
+ },
+ "Workday": {
+  "domain": "workday.com",
+  "metadata_found": 0,
+  "dcr_api": null,
+  "dcr_mcp": null,
+  "docs": []
+ },
+ "Wrike": {
+  "domain": "wrike.com",
+  "metadata_found": 0,
+  "dcr_api": null,
+  "dcr_mcp": null,
+  "docs": []
+ },
+ "Xero": {
+  "domain": "xero.com",
+  "metadata_found": 1,
+  "dcr_api": null,
+  "dcr_mcp": null,
+  "docs": [
+   "https://identity.xero.com/.well-known/oauth-authorization-server"
+  ]
+ },
+ "Yandex": {
+  "domain": "yandex.com",
+  "metadata_found": 0,
+  "dcr_api": null,
+  "dcr_mcp": null,
+  "docs": []
+ },
+ "YNAB": {
+  "domain": "ynab.com",
+  "metadata_found": 1,
+  "dcr_api": "https://app.ynab.com/oauth/register",
+  "dcr_mcp": null,
+  "docs": [
+   "https://api.ynab.com/.well-known/oauth-authorization-server"
+  ]
+ },
+ "Zelt": {
+  "domain": "zelt.app",
+  "metadata_found": 0,
+  "dcr_api": null,
+  "dcr_mcp": null,
+  "docs": []
+ },
+ "Zendesk": {
+  "domain": "zendesk.com",
+  "metadata_found": 1,
+  "dcr_api": null,
+  "dcr_mcp": null,
+  "docs": [
+   "https://mcp.zendesk.com/.well-known/oauth-authorization-server/mcp/oauth"
+  ]
+ },
+ "Zeplin": {
+  "domain": "zeplin.io",
+  "metadata_found": 0,
+  "dcr_api": null,
+  "dcr_mcp": null,
+  "docs": []
+ },
+ "Zoho API Console": {
+  "domain": "zoho.com",
+  "metadata_found": 1,
+  "dcr_api": null,
+  "dcr_mcp": null,
+  "docs": [
+   "https://accounts.zoho.com/.well-known/openid-configuration"
+  ]
+ },
+ "Zoom App Marketplace": {
+  "domain": "zoom.us",
+  "metadata_found": 8,
+  "dcr_api": null,
+  "dcr_mcp": null,
+  "docs": [
+   "https://zoom.us/.well-known/oauth-authorization-server",
+   "https://zoom.us/.well-known/openid-configuration",
+   "https://www.zoom.us/.well-known/oauth-authorization-server",
+   "https://www.zoom.us/.well-known/openid-configuration",
+   "https://api.zoom.us/.well-known/oauth-authorization-server",
+   "https://api.zoom.us/.well-known/openid-configuration"
+  ]
+ }
+}
