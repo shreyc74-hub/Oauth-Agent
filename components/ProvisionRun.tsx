@@ -183,7 +183,7 @@ export default function ProvisionRun({ id }: { id: string }) {
           return last ? (
             <div className="card err" role="alert">
               <p><b>{run.status === "failed" ? "The run stopped." : "Created, but not verified."}</b> {last.text.replace(/^Stopped: /, "")}</p>
-              {/Browserbase|browser minutes/i.test(last.text) ? <p className="small">Nothing was created at {run.app}. Start a new run once the browser account is sorted; the research is cached, so it takes seconds.</p> : null}
+              {/Browserbase|browser minutes/i.test(last.text) ? <p className="small">Nothing was created at {run.app}. Start a new run once the browser account is sorted. The guide is saved, so the new run only redoes the quick checks.</p> : null}
             </div>
           ) : null;
         })() : null}
