@@ -27,7 +27,7 @@ function scripted(answers: string[]): HostedAgent & { tasks: string[]; secrets: 
     async start({ task, secrets: s }) {
       tasks.push(task); n++; if (s?.length) secrets++;
       const id = `run-${n}`;
-      const auth = task.match(/authorization URL in the same browser: (\S+)/);
+      const auth = task.match(/authorization URL: (\S+)/);
       if (auth) {
         await attachCode(new URL(auth[1]).searchParams.get("state")!, "auth-code-xyz");
         results.set(id, JSON.stringify({ status: "done", notes: [] }));
@@ -175,4 +175,45 @@ test("Composio MCP replies: SSE or JSON, shortened previews, and account problem
   assert.throws(() => readMcpResult("X", 200, wrap([{ error: "The user's Composio wallet is out of credits, so Instant calls are paused." }])), (e: Error) => e.name === "ConfigError");
   assert.throws(() => readMcpResult("X", 200, wrap([{ response: { successful: false, error: "bad run id" } }])), /bad run id/);
   assert.throws(() => readMcpResult("X", 200, "not json"), /unreadable reply/);
+});
+
+// A vendor with open Dynamic Client Registration and no hand-written playbook: research brief only.
+const tdoIo = {
+  research: async () => ({
+    summary: "Free account for anyone.", relation: "same",
+    developerAccount: { name: "Tdo account", selfServe: "yes", quotes: [] }, sandbox: { name: "Tdo account", selfServe: "yes", quotes: [] },
+    oauthApp: { available: "self_serve", apiKeySelfServe: false, quotes: [] }, credentials: [{ type: "oauth2", selfServe: "yes" }],
+    resources: { website: "tdo.example", docs: [{ label: "OAuth", url: "https://tdo.example/docs/oauth" }], steps: [{ title: "Sign up", detail: "Free plan", owner: "agent" }],
+      oauth: { authorizeUrl: "https://tdo.example/oauth/authorize", tokenUrl: "https://tdo.example/oauth/token", identity: { url: "https://api.tdo.example/me", pick: "id" }, scopes: ["data:read"] } },
+  }),
+  pageText: async () => "", probe: async (u: string) => ({ url: u, signals: [], looks: "signup_form" as const }),
+};
+const tdoMeta = async (u: string) => (u === "https://tdo.example/.well-known/oauth-authorization-server"
+  ? { issuer: "https://tdo.example", authorization_endpoint: "https://tdo.example/oauth/authorize", token_endpoint: "https://tdo.example/oauth/token", registration_endpoint: "https://tdo.example/oauth/register" } : null);
+
+test("DCR vendor: no planning call; registered by API, then the hosted browser signs up and approves consent", async () => {
+  const agent = scripted([]);
+  const deps = { ...defaultDeps(), hosted: agent, sandboxIo: tdoIo as never, dcrFetch: tdoMeta };
+  const run = await createRun({ app: "Tdo", baseUrl: BASE, autoStart: true }, deps);
+  assert.equal(run.strategy, "dcr");
+  assert.ok(run.playbook.notes?.some((n) => /no model call/.test(n)));
+  assert.deepEqual(run.steps.map((s) => s.id).filter((id) => id !== "sandbox-check"), ["dcr-register", "identity", "verify"]);
+  const end = await drive(run.id, deps);
+  assert.equal(end.status, "verified", end.events.map((e) => e.text).join("\n"));
+  assert.ok(end.vault.client_secret);
+  assert.equal(agent.tasks.length, 1);
+  assert.match(agent.tasks[0], /There is no Tdo account yet: on the sign-in page choose sign up/);
+  assert.match(agent.tasks[0], /secret account_password/);
+});
+
+test("human in the loop on a brief-built plan: its steps are planned only when that mode is picked", async () => {
+  const { startRun } = await import("../lib/provision/engine");
+  const deps = { ...defaultDeps(), hosted: scripted([]), sandboxIo: tdoIo as never, dcrFetch: tdoMeta };
+  const run = await createRun({ app: "Tdo", baseUrl: BASE }, deps);
+  assert.equal(run.status, "ready");
+  assert.equal(run.playbook.humanPlanPending, true);
+  const started = await startRun(run.id, "human", deps);
+  assert.equal(started.playbook.humanPlanPending, false);
+  assert.ok(!started.steps.some((s) => s.id === "plan-later"));
+  assert.ok(started.steps.some((s) => s.kind === "verify"));
 });

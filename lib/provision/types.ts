@@ -91,6 +91,8 @@ export interface Playbook {
   /** What going live needs, from the guide's approval section. */
   goLive: { needed: boolean; summary: string; humanWork: string[] };
   notes?: string[];
+  /** Human-in-the-loop steps are written only when someone picks that mode (saves a planning call). */
+  humanPlanPending?: boolean;
 }
 
 export type RunStatus =

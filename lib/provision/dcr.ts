@@ -21,6 +21,8 @@ export interface DcrResult {
   tokenEndpoint?: string;
   scopesSupported?: string[];
   authMethods?: string[];
+  /** OAuth endpoints from the vendor's own metadata, even without a registration endpoint: free and exact. */
+  endpoints?: { authorizationEndpoint?: string; tokenEndpoint?: string; issuer?: string };
   /** Every document that was found, for the run page. */
   found: { url: string; kind: "api" | "mcp"; registration: boolean }[];
   checked: number;
@@ -99,6 +101,8 @@ export async function probeDcr(p: Pick<Playbook, "oauth"> | undefined, website?:
     available: Boolean(best), found: found.map((f) => ({ url: f.url, kind: f.kind, registration: Boolean(f.registration) })),
     checked: unique.length + mcp.length, checkedOn: today,
   };
+  const main = found.find((f) => f.kind === "api" && f.meta.authorization_endpoint && f.meta.token_endpoint);
+  if (main) out.endpoints = { authorizationEndpoint: main.meta.authorization_endpoint, tokenEndpoint: main.meta.token_endpoint, issuer: main.meta.issuer };
   if (best) {
     Object.assign(out, {
       kind: best.kind, registrationEndpoint: best.registration, issuer: best.meta.issuer, metadataUrl: best.url,

@@ -116,6 +116,19 @@ Human in the loop keeps the Browserbase live browser. `PROVISION_BROWSER_AGENT=s
 
 **What is tested:** Browser Use was run by hand through Composio on 2026-11-15 for Zoom (OAuth app; two emailed codes), Linear (OAuth app; Cloudflare passed on its own) and the Anthropic Console (API key; emailed sign-in link). Each created the account and the app or key with no person, on Composio's free shared Browser Use account (gpt-5.6-luna). The secrets were deliberately not returned in those tests, so none of them was verified end to end. This app's own Composio client was then run live with a Composio consumer key (`ck_…`) through Composio's MCP endpoint (`connect.composio.dev/mcp`): reading runs, starting a run with a bound secret (the free account accepts them), reading the result and finding the live view, all at $0.00. A full provisioning run from the app (email resume, vault, verification through the hosted browser) is tested offline only.
 
+## Lean research (cost)
+
+Research cost is driven by context size, not call count: every fetched page stays in the conversation and is re-read on each step. So:
+
+1. **No planning call where nobody needs click-by-click steps.** For Dynamic Client Registration, and for full automation through the hosted browser agent, the plan is built from the research brief in code (`briefPlaybook`). Human-in-the-loop steps are planned only if someone picks that mode.
+2. **One research call, small budget:** at most 3 searches and 3 fetches, pages cut to 6,000 tokens (was 6, 8 and 30,000). `PROVISION_RESEARCH=full` restores the old budget.
+3. **Knowledge first:** the model answers from what it knows and searches only to confirm URLs, quotes, endpoints and scopes.
+4. **Free checks in code:** OAuth authorize and token URLs come from the vendor's own metadata when the brief lacks them; quotes are still checked against the pages by code.
+
+With DCR and full automation, verification signs up (or signs in) in the hosted browser and approves consent there.
+
+Not measured yet: token and search counts per run aren't recorded, so the saving is an estimate.
+
 ## Three kinds of credentials, and where each goes
 
 1. **Developer account login** (email, password, TOTP seed). Only in full automation. Generated straight into the vault.

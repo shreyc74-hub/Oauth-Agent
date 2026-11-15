@@ -9,9 +9,9 @@ export const MODEL = process.env.GUIDE_MODEL || "claude-haiku-5-5";
 export const RESOLVE_MODEL = process.env.RESOLVE_MODEL || MODEL;
 
 // web_fetch cannot render JavaScript pages; research.ts adds a render_page client tool for those.
-export const webTools = (searches: number, fetches: number) => [
+export const webTools = (searches: number, fetches: number, maxContentTokens = 30000) => [
   { type: "web_search_20260318", name: "web_search", max_uses: searches },
-  ...(fetches > 0 ? [{ type: "web_fetch_20260318", name: "web_fetch", max_uses: fetches, max_content_tokens: 30000 }] : []),
+  ...(fetches > 0 ? [{ type: "web_fetch_20260318", name: "web_fetch", max_uses: fetches, max_content_tokens: maxContentTokens }] : []),
 ];
 
 /** The dynamic-filtering web tools only run on Opus, Sonnet and Fable models; Haiku takes the basic

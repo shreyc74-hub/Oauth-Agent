@@ -20,7 +20,7 @@ import { putSecret, getSecret, hasSecret, vaultName, redact, recordReveal } from
 import { saveRun, getRun } from "./runs";
 import { browserUseViaComposio, hostedConfigured, agentTask, continueTask, consentTask, parseAgentResult, vendorDomains, type HostedAgent, type AgentResult } from "./hosted";
 import { authorizeUrl, codeFromUrl, exchangeCode, newState, refreshTokens, whoami, type Http } from "./verify";
-import { PLAYBOOKS, planFromGuide, mockPlanFromGuide, validatePlaybook, guideFromBrief, type PlanTarget } from "./planner";
+import { PLAYBOOKS, planFromGuide, mockPlanFromGuide, validatePlaybook, guideFromBrief, briefPlaybook, type PlanTarget } from "./planner";
 import { slackManifest } from "./playbooks/slack";
 import { upsertRow, sheetConfigured } from "./sheets";
 import { mockBrowser, mockInbox, mockHttp, mockEnabled } from "./mock";
@@ -186,9 +186,16 @@ export async function createRun(input: { app: string; mode?: Mode; baseUrl: stri
 
   // 4. The plan, for that credential and route.
   const target: PlanTarget = { credential: chosen, dcr: route.method === "Dynamic Client Registration", keyWhere: sandbox?.offered?.find((o) => o.type === "api_key")?.where };
-  let playbook = await stage("plan", "Planning the steps", known ? "hand-written playbook" : deps.mock ? "demo plan from the guide" : "Claude writes the plan from the guide, then code checks it",
-    () => planFor(input.app, deps, input.guideSlug, sandbox, progress, target, fromBrief ? guide || undefined : undefined),
-    (p) => `${p.strategy} strategy; ${p.steps.human.length} steps with a person, ${p.steps.auto.length} fully automated; evidence ${p.evidence}`);
+  // DCR and the hosted browser agent need no step-by-step browser plan: build it from the brief, no model call.
+  const brief = sandbox?.resources;
+  const noPlanCall = !known && brief && (target.dcr || (deps.hosted && route.method === "Browser automation" && input.mode !== "human"));
+  let playbook = noPlanCall
+    ? await stage("plan", "Planning the steps", "from the research brief, no model call (nobody needs click-by-click steps on this route)",
+      async () => briefPlaybook({ name: guide?.name || input.app, slug: guide?.slug || slugify(input.app) }, brief!, target, dcr?.endpoints),
+      (p) => `${p.strategy} strategy; ${p.steps.auto.length} fully automated steps; human-in-the-loop steps are planned only if that mode is chosen`)
+    : await stage("plan", "Planning the steps", known ? "hand-written playbook" : deps.mock ? "demo plan from the guide" : "Claude writes the plan from the guide, then code checks it",
+      () => planFor(input.app, deps, input.guideSlug, sandbox, progress, target, fromBrief ? guide || undefined : undefined),
+      (p) => `${p.strategy} strategy; ${p.steps.human.length} steps with a person, ${p.steps.auto.length} fully automated; evidence ${p.evidence}`);
   if (target.dcr && dcr?.authorizationEndpoint && dcr.tokenEndpoint) {
     // Clients registered there authorize against that server's own endpoints.
     playbook = { ...playbook, strategy: "dcr", oauth: { ...playbook.oauth, authorizeUrl: dcr.authorizationEndpoint, tokenUrl: dcr.tokenEndpoint } };
@@ -257,6 +264,7 @@ export async function createRun(input: { app: string; mode?: Mode; baseUrl: stri
   if (dcr) log(run, "info", `Dynamic Client Registration: ${describeDcr(dcr)}`);
   if (scopePlan) log(run, "info", `Scopes for "${useCase}": ${scopePlan.scopes.join(", ")}.${scopePlan.testCall ? ` Verification will also call ${scopePlan.testCall.label}.` : " No test call chosen; verification uses the identity call only."}${scopePlan.notes.length ? ` Notes: ${scopePlan.notes.join(" ")}` : ""}`);
   log(run, "info", `Plan: ${playbook.name}, ${playbook.strategy} strategy, evidence ${playbook.evidence}. Sandbox: ${playbook.sandbox.kind}. Recommended: ${rec.recommendedMode === "auto" ? "full automation" : "human in the loop"} (${rec.recommendWhy})`);
+  if (input.mode === "human") await planHumanSteps(run, deps);
   if (input.mode) beginMode(run, input.mode);
   else if (input.autoStart && rec.modes.auto.available) {
     // Zero-touch: research done, full automation starts by itself.
@@ -281,6 +289,17 @@ function beginMode(run: Run, mode: Mode) {
   log(run, "info", `Started: ${mode === "auto" ? "full automation" : "human in the loop"}, ${run.steps.length} steps.${run.assessment && mode !== run.assessment.recommendedMode ? " (Not the recommended mode.)" : ""}`);
 }
 
+/** Human-in-the-loop steps for a plan built from the brief: written only when someone picks that mode. */
+async function planHumanSteps(run: Run, deps: Deps) {
+  if (!run.playbook.humanPlanPending) return;
+  const brief = run.sandbox?.resources;
+  const guide = brief ? guideFromBrief({ name: run.app, slug: run.slug }, brief, run.sandbox?.summary) : undefined;
+  const target: PlanTarget = { credential: run.playbook.credential === "api_key" ? "api_key" : "oauth", dcr: run.playbook.strategy === "dcr" };
+  const full = await planFor(run.app, deps, undefined, run.sandbox, noProgress, target, guide);
+  run.playbook = { ...run.playbook, steps: { ...run.playbook.steps, human: full.steps.human }, humanPlanPending: false };
+  log(run, "info", `Planned the human-in-the-loop steps (${full.steps.human.length}).`);
+}
+
 /** The person's choice after reading the assessment: run it with a person, or fully automated. */
 export async function startRun(id: string, mode: Mode, deps = defaultDeps()): Promise<Run> {
   const run = await getRun(id);
@@ -288,6 +307,7 @@ export async function startRun(id: string, mode: Mode, deps = defaultDeps()): Pr
   if (run.status !== "ready") throw new Error(`This run has already started (${run.status}).`);
   const missing = missingSetup(mode, deps);
   if (missing.length) throw new ConfigError(`Not set up for ${mode === "auto" ? "full automation" : "human-in-the-loop"} runs yet. Missing: ${missing.join(", ")}.`);
+  if (mode === "human") await planHumanSteps(run, deps);
   beginMode(run, mode);
   await saveRun(run);
   await syncSheet(run);
@@ -640,7 +660,13 @@ async function hostedStep(ctx: Ctx, s: Extract<Step, { kind: "agent" }>): Promis
   return hostedResult(ctx, s, parseAgentResult(r.result), base);
 }
 
-/** Verification consent in the hosted browser, which is already signed in. The callback route catches the code. */
+/** The consent task: in the job's browser when there is one, else with the account details to sign in or sign up. */
+function consentFor(run: Run, url: string): string {
+  const account = run.hosted?.sessionId ? undefined : { email: run.identity?.email || "", exists: run.vars.account_exists === "1", passwordAlias: run.vault.password && run.vars.hosted_no_secrets !== "1" ? "account_password" : undefined, first_name: run.vars.first_name, last_name: run.vars.last_name, company: run.vars.company };
+  return consentTask(run.app, url, run.vars.redirect_uri, account);
+}
+
+/** Verification consent in the hosted browser. The callback route catches the code. */
 async function hostedConsent(ctx: Ctx, s: Step, url: string): Promise<Outcome | "code"> {
   const { run } = ctx;
   const h = (run.hosted ??= { runs: 0 });
@@ -649,7 +675,7 @@ async function hostedConsent(ctx: Ctx, s: Step, url: string): Promise<Outcome | 
   if (!h.consent) {
     h.consent = true;
     await saveRun(run); // the state must be stored before the browser can reach the callback
-    return startHosted(ctx, { kind: "agent", id: s.id, title: s.title, credential: "oauth", hints: [], docs: [] }, consentTask(run.app, url, run.vars.redirect_uri), "approve the OAuth consent screen");
+    return startHosted(ctx, { kind: "agent", id: s.id, title: s.title, credential: "oauth", hints: [], docs: [] }, consentFor(run, url), h.sessionId ? "approve the OAuth consent screen" : "sign in (or sign up) and approve the OAuth consent screen");
   }
   if (h.runId) {
     const r = await pollHosted(ctx, h.runId);
@@ -660,12 +686,15 @@ async function hostedConsent(ctx: Ctx, s: Step, url: string): Promise<Outcome | 
     const a = parseAgentResult(r.result);
     if (a.status === "waiting_for_email") { run.vars.hosted_expects = a.expects || "code"; }
     else {
-      pause(run, { kind: "human", step: s.id, reason: `The hosted agent couldn't complete the consent screen${a.notes.length ? ` (${a.notes.join("; ").slice(0, 200)})` : ""}. Approve it in the live view, then press Continue.` }, "handoff");
+      const why = a.status === "wall" ? `it stopped at a mandatory check: ${a.wall || "unknown"}` : `it couldn't complete the consent screen${a.notes.length ? ` (${a.notes.join("; ").slice(0, 200)})` : ""}`;
+      pause(run, { kind: "human", step: s.id, reason: `The hosted agent didn't finish the OAuth consent: ${why}. Do it in the live view, then press Continue.` }, "handoff");
       return "pause";
     }
   }
-  if (run.vars.hosted_expects) return hostedMail(ctx, { kind: "agent", id: s.id, title: s.title, credential: "oauth", hints: [], docs: [] }, consentTask(run.app, url, run.vars.redirect_uri));
-  return "wait";
+  const fake: Extract<Step, { kind: "agent" }> = { kind: "agent", id: s.id, title: s.title, credential: "oauth", hints: [], docs: [] };
+  if (run.vars.hosted_expects) return hostedMail(ctx, fake, consentFor(run, url));
+  // A person pressed Continue but no code arrived: try the consent screen once more in the same browser.
+  return startHosted(ctx, fake, consentFor(run, url), "try the consent screen again");
 }
 
 async function runStep(ctx: Ctx, s: Step): Promise<Outcome> {
@@ -908,7 +937,7 @@ async function verifyStep(ctx: Ctx, s: Step): Promise<Outcome> {
     await browser(ctx);
     return "pause";
   }
-  if (run.hosted?.sessionId && ctx.deps.hosted) {
+  if (ctx.deps.hosted && run.mode === "auto") {
     // The hosted agent's browser is signed in already: it approves consent; the callback route catches the code.
     if (!run.verify) { run.verify = { state: newState(), verifier: "" }; run.public.authorizeUrl = authorizeUrl(o, clientId, run.vars.redirect_uri, run.verify.state); }
     const c = await hostedConsent(ctx, s, run.public.authorizeUrl || authorizeUrl(o, clientId, run.vars.redirect_uri, run.verify.state));

@@ -171,9 +171,23 @@ export function cleanBrief(r: Found["resources"]): ProvisionBrief | undefined {
 
 const CRED_TYPES = new Set(["oauth2", "oauth1", "client_credentials", "api_key", "jwt", "service_account", "basic", "bearer"]);
 
+/**
+ * Lean by default: start from what the model already knows and only search or fetch to confirm, with
+ * small page extracts. Every fetched page stays in context and is re-read on each step, so page size and
+ * count, not the number of calls, drive the cost. PROVISION_RESEARCH=full restores the wide budget.
+ */
+export const researchBudget = () => process.env.PROVISION_RESEARCH === "full"
+  ? { searches: 6, fetches: 8, pageTokens: 30000, lean: false }
+  : { searches: 3, fetches: 3, pageTokens: 6000, lean: true };
+
+const LEAN = `Work fast and cheap. Start from what you already know about this vendor. Use web_search or web_fetch only to confirm what you are unsure of: exact URLs, the quotes (they must be copied word for word from a page), endpoints and scope names. At most 3 searches and 3 fetches; stop as soon as you can answer. Prefer one official page that answers several questions.
+
+`;
+
 export async function researchSandbox(app: { name: string; website?: string }, onTool: (name: string, input: Record<string, unknown>) => void = () => undefined): Promise<Found> {
+  const b = researchBudget();
   const text = await runClaude({
-    model: RESOLVE_MODEL, system: SYSTEM, maxTokens: 7000, tools: webTools(6, 8),
+    model: RESOLVE_MODEL, system: b.lean ? LEAN + SYSTEM : SYSTEM, maxTokens: 6000, tools: webTools(b.searches, b.fetches, b.pageTokens),
     messages: [{ role: "user", content: `Vendor: ${app.name}${app.website ? ` (${app.website})` : ""}` }],
   }, { onToolUse: onTool });
   return jsonFromModel<Found>(text);

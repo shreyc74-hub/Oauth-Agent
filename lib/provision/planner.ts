@@ -30,6 +30,7 @@ export function validatePlaybook(p: Playbook): string[] {
     if (!p.oauth?.scopes?.length) errs.push("no scopes");
   }
   for (const mode of ["human", "auto"] as Mode[]) {
+    if (mode === "human" && p.humanPlanPending) continue;
     const steps = p.steps?.[mode] || [];
     const ids = new Set<string>();
     for (const s of steps) {
@@ -104,6 +105,47 @@ export function guideFromBrief(app: { name: string; slug: string }, brief: Provi
 
 /** What the research decided the plan must provision, and how. */
 export interface PlanTarget { credential: "oauth" | "api_key"; dcr?: boolean; keyWhere?: string }
+
+/**
+ * A plan straight from the research brief, with no model call: for routes where nobody needs
+ * step-by-step browser instructions (Dynamic Client Registration, or the hosted browser agent, which
+ * gets the goal plus the brief's steps as hints). Human-in-the-loop steps are left to be planned when
+ * someone picks that mode. OAuth endpoints come from the brief, else from the vendor's own metadata.
+ */
+export function briefPlaybook(app: { name: string; slug: string }, brief: ProvisionBrief, target: PlanTarget, metadata?: { authorizationEndpoint?: string; tokenEndpoint?: string }): Playbook {
+  const site = brief.website || "";
+  const o = brief.oauth;
+  const authorizeUrl = o?.authorizeUrl || metadata?.authorizationEndpoint || "";
+  const tokenUrl = o?.tokenUrl || metadata?.tokenEndpoint || "";
+  const identity = o?.identity || { url: brief.apiKey?.testUrl || (site ? `https://api.${site}/me` : ""), method: "GET" as const, pick: "id" };
+  const key = target.credential === "api_key";
+  const auto: Step[] = key || !target.dcr
+    // The hosted browser agent replaces these with identity, agent, verify (withHostedSteps).
+    ? [{ kind: "identity", id: "identity", title: "Create the agent's inbox and password" }, key
+      ? { kind: "capture", id: "api-key", title: "Read the API key into the vault", find: "the new API key", into: "api_key", secret: true }
+      : { kind: "capture", id: "client-id", title: "Read the client ID", find: "the client ID", into: "client_id", secret: false },
+      ...(key ? [] : [{ kind: "capture", id: "client-secret", title: "Read the client secret into the vault", find: "the client secret", into: "client_secret", secret: true } as Step]),
+      { kind: "verify", id: "verify", title: key ? "Verify the API key" : "Verify the credentials" }]
+    : [
+      { kind: "api", id: "dcr-register", title: "Register the OAuth app (Dynamic Client Registration)", handler: "dcrRegister", write: true },
+      { kind: "identity", id: "identity", title: "Agent identity (for the consent sign-in)" },
+      { kind: "verify", id: "verify", title: "Verify: OAuth sign-in, token and refresh" },
+    ];
+  const goLive = !brief.goLive || /^none\b|not needed|no review/i.test(brief.goLive) ? [] : [{ kind: "golive", id: "golive", title: "Check what going live needs" } as Step];
+  return {
+    slug: app.slug, name: app.name, strategy: !key && target.dcr ? "dcr" : "browser", evidence: "docs",
+    ...(key ? { credential: "api_key" as const, apiKey: brief.apiKey ? { ...brief.apiKey } : { header: "Authorization", prefix: "Bearer", testUrl: identity.url, pick: "id" } } : {}),
+    sandbox: { kind: "Test account", note: "From the research brief." },
+    oauth: {
+      authorizeUrl, tokenUrl, whoami: { url: identity.url, method: identity.method, pick: identity.pick },
+      scopes: o?.scopes?.length ? o.scopes : ["read"], clientAuth: o?.clientAuth, consentInstruction: "Click Allow or Authorize.", refresh: "if-enabled",
+    },
+    steps: { human: [{ kind: "human", id: "plan-later", title: "Planned when human in the loop is chosen", reason: "", noBrowser: true }, { kind: "verify", id: "verify", title: "Verify" }], auto: [...auto, ...goLive] },
+    goLive: { needed: Boolean(goLive.length), summary: brief.goLive || "", humanWork: [] },
+    notes: ["Planned from the research brief with no model call."],
+    humanPlanPending: true,
+  };
+}
 
 export async function planFromGuide(guide: Guide, setup?: SandboxCheck, progress: Progress = () => undefined, target: PlanTarget = { credential: "oauth" }): Promise<Playbook> {
   const brief = {
