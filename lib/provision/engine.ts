@@ -91,13 +91,13 @@ export async function sandboxFor(app: string, deps: Deps, guideSlug?: string, pr
   const guide = await findGuide(app, guideSlug);
   const slug = guide?.slug || slugify(app);
   if (PLAYBOOKS[slug]) return fromPlaybook(PLAYBOOKS[slug]);
-  if (!guide) return undefined; // planFor reports the missing guide
+  // Runs before any guide exists: a vendor with no self-serve sandbox shouldn't cost a guide first.
   const cached = await cachedSandbox(slug);
   if (cached) { progress({ id: "sandbox:cache", label: "Sandbox check: using the saved result", state: "done", detail: `${cached.verdict.replace(/_/g, " ")} (${cached.source === "run" ? "proven by a verified run" : `researched ${cached.checkedOn}`})` }); return cached; }
   if (deps.mock && !deps.sandboxIo) return { verdict: "self_serve", reason: "Demo mode: the sandbox check is skipped.", quotes: [], source: "research", checkedOn: new Date().toISOString().slice(0, 10) };
   let check: SandboxCheck;
   try {
-    check = await checkSandbox({ name: guide.name, slug, website: guide.website }, deps.sandboxIo, progress);
+    check = await checkSandbox({ name: guide?.name || app, slug, website: guide?.website }, deps.sandboxIo, progress);
   } catch (e) {
     progress({ id: "sandbox:research", label: "Claude researches the developer side, sandbox and OAuth availability", state: "fail", detail: (e as Error).message.slice(0, 160) });
     // Research failing is not evidence of a gate: ask the person instead of guessing.
@@ -140,16 +140,17 @@ export async function createRun(input: { app: string; mode?: Mode; baseUrl: stri
   progress({ id: "setup", label: "Checking this deployment's setup", state: "done", detail: missing.auto.length ? `human in the loop ready; full automation missing ${missing.auto.join(", ")}` : "both modes ready" });
 
   const guide = await stage("guide", "Finding the readiness guide", input.app, () => findGuide(input.app, input.guideSlug),
-    (g) => (g ? `${g.name}: ${g.evidenceLevel === "generated" ? "agent-generated guide" : "researched library guide"}${PLAYBOOKS[g.slug] ? ", plus a hand-written playbook" : ""}` : "no guide yet: it gets researched first"));
-  // No guide and no hand-written playbook: nothing to check or plan from yet. The start page researches one.
-  if (!guide && !PLAYBOOKS[slugify(input.app)]) throw new NoGuideError(input.app);
+    (g) => (g ? `${g.name}: ${g.evidenceLevel === "generated" ? "agent-generated guide" : "researched library guide"}${PLAYBOOKS[g.slug] ? ", plus a hand-written playbook" : ""}` : "no guide yet: checking the sandbox first, so a gated vendor costs no guide"));
   const known = PLAYBOOKS[guide?.slug || slugify(input.app)];
 
   // 1. Is a self-serve test setup possible, and are the sandbox and developer accounts the same?
   const sandbox = await stage("sandbox", "Is a self-serve sandbox possible?", "developer side, sandbox and OAuth app, each on its own evidence",
     () => sandboxFor(input.app, deps, input.guideSlug, progress),
-    (c) => (c ? `${c.verdict.replace(/_/g, " ")}${c.relation ? `; sandbox is ${c.relation === "same" ? "the same account as the developer side" : c.relation === "separate" ? "a separate account" : "not confirmed as same or separate"}` : ""}` : "skipped (no guide)"));
+    (c) => (c ? `${c.summary ? `${c.summary} ` : ""}${c.verdict.replace(/_/g, " ")}${c.relation ? `; sandbox is ${c.relation === "same" ? "the same account as the developer side" : c.relation === "separate" ? "a separate account" : "not confirmed as same or separate"}` : ""}` : "skipped (no guide)"));
   if (sandbox?.verdict === "gated") throw new SandboxGatedError(input.app, sandbox);
+  // A test setup is possible (or not ruled out): now the guide is worth writing. The start page researches
+  // it and calls again; the sandbox verdict is cached, so it isn't researched twice.
+  if (!guide && !known) throw new NoGuideError(input.app);
 
   // 2. Which credentials does the vendor offer, and which one gets provisioned?
   const { offered, chosen, why } = await stage("credentials", "Which credentials does the vendor offer?", "from the vendor's own pages (quotes checked), the guide and any hand-written playbook",

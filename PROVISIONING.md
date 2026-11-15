@@ -4,8 +4,8 @@ Composio's toolkit factory can research an app and generate a production-ready t
 
 You type an app name. The agent does all the research first, with no browser and nothing for you to decide:
 
-1. **Guide.** It finds the app's readiness guide (the first assignment's output), or researches one.
-2. **Sandbox.** Can a stranger get a working test setup without sales or a partner programme? If not, it stops here with the reason, the quotes and what a person would have to do.
+1. **Sandbox.** Can a stranger get a working test setup without sales or a partner programme? If not, it stops here with the reason, the quotes and what a person would have to do. This comes first, before any guide exists, so a gated vendor costs one quick check instead of a full guide.
+2. **Guide.** Only if a test setup is possible (or not ruled out): it finds the app's readiness guide (the first assignment's output), or researches one. The sandbox verdict is cached, so it is not researched twice.
 3. **Accounts.** Is the sandbox the same account as the developer side (Linear, BambooHR) or a separate one (Slack, HubSpot, Zoho)?
 4. **Credentials.** Which credential types the vendor offers (OAuth 2, OAuth 1, client credentials, API key, JWT, service account, basic), each backed by a quote from the vendor's own pages.
 5. **What to provision.** An OAuth app when OAuth is self-serve, otherwise an API key.

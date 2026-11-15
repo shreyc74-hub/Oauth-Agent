@@ -184,3 +184,24 @@ test("no use case: verified, but labelled sign-in only in the log and the sheet 
   assert.equal(withUse.status, "verified");
   assert.ok(!signInOnly(withUse));
 });
+
+test("the sandbox check runs before any guide: a gated vendor stops without a guide being needed", async () => {
+  const { NoGuideError } = await import("../lib/provision/engine");
+  const { getGuide } = await import("../lib/store");
+  const deps = { ...defaultDeps(), sandboxIo: io({ relation: "same", developerAccount: { name: "Gated portal", quotes: [{ quote: "Sandboxes are available to customers and certified partners only", url: "https://gated.example/dev", says: "no" }] }, oauthApp: { available: "partner_only" } }, { "https://gated.example/dev": "Sandboxes are available to customers and certified partners only." }) };
+  await assert.rejects(createRun({ app: "GatedCo", baseUrl: BASE }, deps), (e: unknown) => e instanceof SandboxGatedError && !(e instanceof NoGuideError));
+  assert.equal(await getGuide("gatedco"), null, "no guide was needed to say no");
+});
+
+test("a self-serve vendor without a guide: sandbox checked once, then the guide, then the cached verdict is reused", async () => {
+  const { NoGuideError } = await import("../lib/provision/engine");
+  let researched = 0;
+  const base = io({ relation: "same", developerAccount: { name: "Open portal", signupUrl: "https://open.example/signup", quotes: [{ quote: "Create a free developer account in a minute", url: "https://open.example/dev", says: "yes" }] }, oauthApp: { available: "self_serve", quotes: [{ quote: "Any developer can register an OAuth app", url: "https://open.example/dev", says: "yes" }] } }, { "https://open.example/dev": "Create a free developer account in a minute. Any developer can register an OAuth app." }, { "https://open.example/signup": "signup_form" });
+  const deps = { ...defaultDeps(), sandboxIo: { ...base, research: async (a: { name: string }) => { researched++; return base.research(a); } } };
+  await assert.rejects(createRun({ app: "OpenCo", baseUrl: BASE }, deps), NoGuideError);
+  assert.equal(researched, 1);
+  await guideFor("openco", "OpenCo");
+  const run = await createRun({ app: "OpenCo", baseUrl: BASE }, deps);
+  assert.equal(researched, 1, "the verdict from before the guide was reused");
+  assert.ok(["self_serve", "likely_self_serve"].includes(String(run.sandbox?.verdict)));
+});
