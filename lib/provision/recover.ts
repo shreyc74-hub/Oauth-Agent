@@ -44,6 +44,8 @@ export interface RecoveryEnv {
   resolveVars: (text: string, extra: Record<string, string>) => Promise<Record<string, string>>;
   storeValue: (label: string, value: string) => Promise<void>;
   readInboxCode: () => Promise<string | null>;
+  /** The sign-in or verification link from the latest email. Opened by code; the model never sees it. */
+  readInboxLink?: () => Promise<string | null>;
   redact: (text: string) => string;
   trace: (text: string) => void;
   maxActions?: number;
@@ -73,7 +75,7 @@ How to work:
 - When the goal is met, call done with a one-line summary and, if the console differs from the step's instruction, a playbook_fix: the instruction that would have worked.
 - If you are stuck after a few tries, call ask_human with what a person should do.`;
 
-export function toolsFor(env: Pick<RecoveryEnv, "captureLabels" | "hasInbox">): Tool[] {
+export function toolsFor(env: Pick<RecoveryEnv, "captureLabels" | "hasInbox" | "readInboxLink">): Tool[] {
   const tools: Tool[] = [
     { name: "look", description: "Describe the current page: URL, title and the visible headings, buttons, links and fields.", input_schema: { type: "object", properties: {} } },
     { name: "act", description: "Do one browser action described in plain English (click, type, choose, scroll). Optionally open a URL first. Use %placeholders% for values.", input_schema: { type: "object", properties: { instruction: { type: "string" }, url: { type: "string", description: "Optional URL to open before acting. Must be on the provider's sites." }, is_write: { type: "boolean", description: "True if this creates, submits, saves, installs, accepts or consents." } }, required: ["instruction", "is_write"] } },
@@ -82,6 +84,7 @@ export function toolsFor(env: Pick<RecoveryEnv, "captureLabels" | "hasInbox">): 
     { name: "done", description: "The goal is met. Summarise, and suggest a playbook fix if the console differs from the instruction.", input_schema: { type: "object", properties: { summary: { type: "string" }, playbook_fix: { type: "string" } }, required: ["summary"] } },
   ];
   if (env.hasInbox) tools.splice(3, 0, { name: "read_inbox_code", description: "Get the latest code from the agent's email inbox. It becomes %code% for act; you won't see it.", input_schema: { type: "object", properties: {} } });
+  if (env.hasInbox && env.readInboxLink) tools.splice(4, 0, { name: "open_inbox_link", description: "Open the sign-in or verification link from the latest email in the agent's inbox, in this browser. You won't see the link itself.", input_schema: { type: "object", properties: {} } });
   return tools;
 }
 
@@ -174,6 +177,15 @@ export async function recover(env: RecoveryEnv): Promise<RecoveryResult> {
             extra.code = code;
             env.trace("read_inbox_code: code saved as %code%");
             out = "Code saved. Use %code% in act.";
+            break;
+          }
+          case "open_inbox_link": {
+            const link = env.readInboxLink ? await env.readInboxLink() : null;
+            if (!link) { out = "No sign-in link in the latest email."; isError = true; break; }
+            if (!hostAllowed(link, env.allowedHosts)) { out = "The email's link is not on the provider's sites, so it was not opened."; isError = true; break; }
+            await env.driver.goto(link);
+            env.trace("open_inbox_link: opened the link from the email");
+            out = `Opened the link from the email. Now on ${env.redact(env.driver.url().split("?")[0])}.`;
             break;
           }
           case "ask_human":

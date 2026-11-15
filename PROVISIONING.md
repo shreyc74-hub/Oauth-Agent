@@ -141,7 +141,7 @@ The model makes decisions in four places:
 | Wall check | Whether a captcha, phone check or similar is showing | What happens next: a handoff |
 | **Recovery agent** | How to reach a failed step's goal another way | Tools, budget, allowed sites, approvals, secrets |
 
-**The recovery agent.** When a browser or capture step fails (the console changed, a button moved, a dialog got in the way), the step's goal goes to a short agent loop before a person is asked. It has six tools: look, act, capture (page to vault), read inbox code, ask a human, and done. Code decides what it is allowed to do:
+**The recovery agent.** When a browser or capture step fails (the console changed, a button moved, a dialog got in the way), the step's goal goes to a short agent loop before a person is asked. It has seven tools: look, act, capture (page to vault), read inbox code, open the email's sign-in link, ask a human, and done. Codes and links are used by code: the model is told only that the code is available as %code% or that the link was opened. Email steps get it too: when the emailed code can't be read or entering it doesn't finish the sign-in, the recovery agent looks at the page and chooses between "enter the code" and the link. Code decides what it is allowed to do:
 
 - It never receives a secret. Values go page to vault through capture, it is told only "stored", and anything it reads from the page is redacted against every secret the run holds.
 - In human-in-the-loop mode, any create, submit or consent action it attempts stops for approval. The person approves that exact action; the step runs again and the agent may do it.

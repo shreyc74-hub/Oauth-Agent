@@ -596,6 +596,9 @@ async function runStep(ctx: Ctx, s: Step): Promise<Outcome> {
         if (s.then) {
           const r = await d.act(s.then, await variablesFor(run, s.then, { code }));
           if (!r.ok) throw new Error(`could not enter the code (${r.message.slice(0, 120)})`);
+          // One act() is one action: the code field may need "Enter code manually" first. Ask the page.
+          const g = d.goalCheck ? await d.goalCheck(`Sign in with the emailed code: ${s.then}`).catch(() => ({ done: true, missing: "" })) : { done: true, missing: "" };
+          if (!g.done) throw new Error(`entering the emailed code isn't finished yet: ${g.missing.slice(0, 160)}`);
         }
         log(run, "step", `${s.title}: code read from "${mail.subject.slice(0, 80)}" and entered.`, s.id);
       }
@@ -796,7 +799,7 @@ export function allowedHosts(run: Run): string[] {
  */
 async function tryRecovery(ctx: Ctx, s: Step, error: string): Promise<{ out: Outcome } | { note: string } | null> {
   const { run, deps } = ctx;
-  if (s.kind !== "browser" && s.kind !== "capture") return null;
+  if (s.kind !== "browser" && s.kind !== "capture" && s.kind !== "email") return null;
   if (process.env.PROVISION_RECOVERY === "0") return null;
   ctx.recovered ??= new Set();
   if (ctx.recovered.has(s.id) || Date.now() + 15_000 > ctx.deadline) return null;
@@ -808,6 +811,7 @@ async function tryRecovery(ctx: Ctx, s: Step, error: string): Promise<{ out: Out
   const names = new Set([...(("instruction" in s && s.instruction) || "").matchAll(/%([a-z_]+)%/g)].map((m) => m[1]));
   for (const n of ["app_name", "dev_name", "dev_url", "redirect_uri", "workspace_name"]) names.add(n);
   if (run.identity?.email) { names.add("email"); names.add("password"); }
+  if (s.kind === "email") names.add("code");
   const approved = JSON.parse(run.vars[`recovery-approved:${s.id}`] || "[]") as string[];
   log(run, "agent", `Step failed (${error}). Recovery agent takes over with the step's goal.`, s.id, ctx.seen);
 
@@ -815,7 +819,10 @@ async function tryRecovery(ctx: Ctx, s: Step, error: string): Promise<{ out: Out
     driver, brain: deps.brain, mode: run.mode, app: run.app,
     step: s.kind === "capture"
       ? { id: s.id, title: s.title, kind: "capture", find: s.find, into: s.into }
-      : { id: s.id, title: s.title, kind: "browser", instruction: s.instruction, url: s.url },
+      : s.kind === "email"
+        // Same goal as the email step, in the browser: the page decides between link and code.
+        ? { id: s.id, title: s.title, kind: "browser", instruction: `Finish signing in with the email ${run.app} sent to ${run.identity?.email || "the agent's inbox"}. Look at the page: if it offers to enter a code (for example an "Enter code manually" button), click that, use read_inbox_code and type %code%, then submit. Otherwise use open_inbox_link to open the sign-in link from the email.` }
+        : { id: s.id, title: s.title, kind: "browser", instruction: s.instruction, url: s.url },
     error,
     allowedHosts: allowedHosts(run),
     captureLabels: s.kind === "capture" ? [s.into] : [],
@@ -833,6 +840,13 @@ async function tryRecovery(ctx: Ctx, s: Step, error: string): Promise<{ out: Out
       const code = mail ? findCode(mail) : null;
       if (code) ctx.seen.add(code);
       return code;
+    },
+    readInboxLink: async () => {
+      if (!run.identity?.inboxId) return null;
+      const mail = await waitForMail(deps.inbox, run.identity.inboxId, { since: Date.now() - 10 * 60_000, timeoutMs: deps.mock ? 10 : 20_000, pollMs: deps.mock ? 1 : 4000 });
+      const link = mail ? findLink(mail, s.kind === "email" ? s.from : undefined) : null;
+      if (link) ctx.seen.add(link);
+      return link;
     },
     redact: (t) => redact(t, [...ctx.seen]),
     trace: (t) => log(run, "agent", t, s.id, ctx.seen),

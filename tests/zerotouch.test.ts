@@ -132,3 +132,40 @@ test("after a person clears a captcha the step continues from that page; it is n
     assert.equal(done.status, "verified");
   } finally { delete process.env.PROVISION_MOCK_BLOCKER; }
 });
+
+const linearMail = (text: string) => ({
+  async create(u: string) { return { inboxId: `${u}@agentmail.to`, email: `${u}@agentmail.to` }; },
+  async get(id: string) { return { inboxId: id, email: id }; },
+  async list() { return [{ id: "m1", from: "Linear <noreply@linear.app>", subject: "Login for Linear", text, html: "", at: new Date().toISOString() }]; },
+});
+
+test("Linear's real login email: the 10-character code is found, typed, and the run verifies hands-off", async () => {
+  const deps = { ...defaultDeps(), inbox: linearMail("Click the link to log in: https://linear.app/auth/abc. If you can't click on the link, you can also copy the verification code into your browser: Q7KD2MX9PA") };
+  const run = await createRun({ app: "Linear", baseUrl: BASE, autoStart: true }, deps);
+  const done = await hands_off(run.id, deps);
+  assert.ok(done.events.some((e) => /code read from "Login for Linear" and entered/.test(e.text)));
+  assert.ok(!JSON.stringify(done.events).includes("Q7KD2MX9PA"), "the code never appears in the log");
+  assert.equal(done.status, "verified");
+});
+
+test("an email with a sign-in link but no readable code: the agent opens the link instead of handing over", async () => {
+  const deps = { ...defaultDeps(), inbox: linearMail("Click the link to log in: https://linear.app/auth/magic-token-123") };
+  const done = await hands_off((await createRun({ app: "Linear", baseUrl: BASE, autoStart: true }, deps)).id, deps);
+  assert.ok(done.events.some((e) => /opened the sign-in link/.test(e.text)));
+  assert.equal(done.status, "verified");
+});
+
+test("an email the step can't use goes to the recovery agent, which looks at the page and chooses", async () => {
+  const deps = { ...defaultDeps(), inbox: linearMail("Welcome to Linear! We're glad you're here.") };
+  const done = await hands_off((await createRun({ app: "Linear", baseUrl: BASE, autoStart: true }, deps)).id, deps);
+  assert.ok(done.events.some((e) => e.step === "login-code" && /Recovery agent takes over/.test(e.text)));
+  assert.ok(done.steps.find((s) => s.id === "login-code")?.recovered);
+  assert.equal(done.status, "verified");
+});
+
+test("the recovery agent can open the email's sign-in link when there is an inbox", async () => {
+  const { toolsFor } = await import("../lib/provision/recover");
+  const names = toolsFor({ captureLabels: [], hasInbox: true, readInboxLink: async () => null }).map((t) => t.name);
+  assert.ok(names.includes("read_inbox_code") && names.includes("open_inbox_link"));
+  assert.ok(!toolsFor({ captureLabels: [], hasInbox: false }).map((t) => t.name).includes("open_inbox_link"));
+});
