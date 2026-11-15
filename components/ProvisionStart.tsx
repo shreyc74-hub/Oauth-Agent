@@ -6,7 +6,7 @@ import { applyEvent, initialStages, type RunState } from "./ResearchView";
 import type { SandboxCheck } from "@/lib/provision/types";
 import { SetupParts } from "./ProvisionRun";
 
-type Row = { id: string; app: string; mode: "human" | "auto"; status: string; strategy: string; createdAt: string; who?: string };
+type Row = { id: string; app: string; mode: "human" | "auto"; status: string; strategy: string; createdAt: string; who?: string; signInOnly?: boolean };
 
 export const codeHeader = (): Record<string, string> => {
   try { const c = sessionStorage.getItem("provision-code"); return c ? { "x-access-code": c } : {}; } catch { return {}; }
@@ -148,7 +148,7 @@ export default function ProvisionStart({ mock }: { mock: boolean }) {
             <a key={r.id} href={`/provision/${r.id}`} className="runrow">
               <b>{r.app}</b>
               <span className="muted">{r.mode === "auto" ? "Full automation" : "Human in the loop"} · {r.strategy}</span>
-              <span className={`badge s-${r.status}`}>{r.status.replace("_", " ")}</span>
+              <span className={`badge s-${r.status}`}>{r.signInOnly ? "verified, sign-in only" : r.status.replace("_", " ")}</span>
               <span className="small">{new Date(r.createdAt).toLocaleString()}</span>
             </a>
           ))}

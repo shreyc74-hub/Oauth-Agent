@@ -10,6 +10,7 @@ import { randomBytes } from "node:crypto";
 import type { Mode, Playbook, Run, RunEvent, SandboxCheck, Step } from "./types";
 import { checkSandbox, cachedSandbox, saveSandbox, fromPlaybook, type SandboxIo } from "./sandbox";
 import { planScopes } from "./scopes";
+import { SIGN_IN_ONLY, SIGN_IN_ONLY_WHY } from "./labels";
 import type { Driver } from "./browser";
 import { openBrowser, browserConfigured, createContext, releaseSession } from "./browser";
 import { agentMail, findCode, findLink, waitForMail, type Inbox } from "./inbox";
@@ -615,7 +616,7 @@ export async function advance(id: string, deps = defaultDeps(), budgetMs = 240_0
         await saveSandbox(run.slug, { verdict: "self_serve", reason: `A run on ${new Date().toISOString().slice(0, 10)} created a working test account and verified credentials.`, quotes: run.sandbox?.quotes || [], signupUrl: run.sandbox?.signupUrl, source: "run", checkedOn: new Date().toISOString().slice(0, 10) }).catch(() => undefined);
       }
       log(run, "done", run.status === "verified"
-        ? `Done. ${run.app} credentials verified against the sandbox and stored in the vault.`
+        ? `Done. ${run.app} credentials verified against the sandbox and stored in the vault.${run.scopePlan ? "" : ` ${SIGN_IN_ONLY}: ${SIGN_IN_ONLY_WHY}`}`
         : `Finished, but the credentials are not verified${run.vars.verify_error ? `: ${run.vars.verify_error}` : run.verify?.useCaseOk === false ? `: sign-in works, but the use-case call failed (${run.verify.useCase}), so the scopes may not cover the use case` : ""}.`, undefined, ctx.seen);
       if (run.browser?.sessionId && !deps.mock) await releaseSession(run.browser.sessionId);
     }

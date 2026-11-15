@@ -65,7 +65,9 @@ For generated plans, the planner gets this map. When the sandbox is a separate a
 
 ## Scopes from the use case
 
-The start page asks what the app will do ("read invoices and create customers"). The agent maps that to the vendor's exact scope strings, using the guide's scope table, picks the smallest set that covers it, and picks one read-only API call from the use case. Code keeps that call only if it is a GET to the vendor's own domain, so the new token can't be sent anywhere else. Verification makes the call; if it fails, the run ends as needs review ("sign-in works, but the use-case call failed"). Without a use case, the guide's minimal scopes are used.
+The start page asks what the app will do ("read invoices and create customers"). The agent maps that to the vendor's exact scope strings, using the guide's scope table, picks the smallest set that covers it, and picks one read-only API call from the use case. Code keeps that call only if it is a GET to the vendor's own domain, so the new token can't be sent anywhere else. Verification makes the call; if it fails, the run ends as needs review ("sign-in works, but the use-case call failed"). Without a use case, the plan's scopes are used: fixed ones for the hand-written playbooks, and the smallest of the guide's minimal sets for generated plans. Such a run can still be verified, but it is labelled **verified for sign-in only** on the run page, in the runs list, in the log and in the tracker sheet: the credentials work, and the scopes were not checked against what the app will do.
+
+In production, nobody should have to type the use case. The toolkit factory already knows it: the toolkit's list of actions and the endpoints they call. Passing that list in as the use case would give every app the scopes its toolkit needs and a test call from a real action.
 
 ## Two modes
 
@@ -173,6 +175,7 @@ Otherwise the run ends as **needs review** with the reason.
 - **Realistic sandboxes.** An empty account isn't enough to test a toolkit. Seed data, the right plan tier and admin roles are often the hard part.
 - **Holding credentials is a liability.** A vault full of developer logins and client secrets is a target. That's a security review decision, not just a build.
 - **Ops for the human-only tail.** For apps where a person is unavoidable, a small queue with SLAs where the agent does the prep may be cheaper than more automation.
+- **Where the use case comes from.** Today it is an optional text box, and runs without it are verified for sign-in only. The factory's toolkit spec (actions and endpoints) is the right input; that needs a decision on how a toolkit spec is handed to this stage.
 - **Order of work.** Sort the factory's backlog by strategy (API, browser, human) and start where automation pays off.
 
 ## Files

@@ -1,5 +1,6 @@
 // The tracker: one Google Sheet row per run. Status, sandbox, masked client ID and vault names,
 // never a secret. Uses a Google service account (share the sheet with its email as Editor).
+import { signInOnly } from "./labels";
 import "../env";
 import { createSign } from "node:crypto";
 import type { Run } from "./types";
@@ -46,7 +47,7 @@ export function rowFor(run: Run, baseUrl: string): string[] {
     run.app,
     run.mode === "auto" ? "Full automation" : "Human in the loop",
     run.strategy,
-    run.status,
+    signInOnly(run) ? "verified (sign-in only, scopes not checked)" : run.status,
     run.public.sandboxUrl || "",
     run.public.clientId ? `${run.public.clientId.slice(0, 6)}…${run.public.clientId.slice(-4)}` : "",
     Object.values(run.vault).filter((n) => !n.includes("/shared/")).join("\n"),

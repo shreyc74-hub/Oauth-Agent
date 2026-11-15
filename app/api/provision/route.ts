@@ -2,6 +2,7 @@ import { createRun, NoGuideError, SandboxGatedError } from "@/lib/provision/engi
 import { listRuns } from "@/lib/provision/runs";
 import { gate, baseUrl, publicRun } from "@/lib/provision/http";
 import { limited } from "@/lib/ratelimit";
+import { signInOnly } from "@/lib/provision/labels";
 
 export const runtime = "nodejs";
 export const maxDuration = 300; // the sandbox check and planning can each take a minute
@@ -27,5 +28,5 @@ export async function POST(req: Request) {
 
 export async function GET() {
   const runs = await listRuns(30);
-  return Response.json(runs.map((r) => ({ id: r.id, app: r.app, mode: r.mode, status: r.status, strategy: r.strategy, createdAt: r.createdAt, who: r.verify?.who })));
+  return Response.json(runs.map((r) => ({ id: r.id, app: r.app, mode: r.mode, status: r.status, strategy: r.strategy, createdAt: r.createdAt, who: r.verify?.who, signInOnly: signInOnly(r) })));
 }

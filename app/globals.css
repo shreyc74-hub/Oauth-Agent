@@ -413,3 +413,4 @@ ol.rsteps { list-style: none; padding: 0; margin: 16px 0 0; }
 .badge.sb-unknown { background: var(--wait-soft); color: var(--wait); }
 .parts { display: flex; flex-direction: column; gap: 12px; margin-top: 10px; }
 .part { border-left: 2px solid var(--line); padding-left: 12px; display: flex; flex-direction: column; gap: 4px; }
+.wait-text { color: var(--wait); }

@@ -1,5 +1,6 @@
 "use client";
 import type { SandboxCheck } from "@/lib/provision/types";
+import { signInOnly, SIGN_IN_ONLY, SIGN_IN_ONLY_WHY } from "@/lib/provision/labels";
 // One provisioning run: steps on the left, the current handoff or approval, the live browser, the
 // credential card and the audit log. The page drives the run: while it is running and nobody else
 // holds the lease, it calls /advance; each call runs steps until a pause or the time budget.
@@ -101,7 +102,7 @@ export default function ProvisionRun({ id }: { id: string }) {
       <aside className="rside">
         <div className="eyebrow">{run.mode === "auto" ? "Full automation" : "Human in the loop"} · {run.strategy} strategy</div>
         <h1 className="ptitle">{run.app}</h1>
-        <span className={`badge s-${run.status}`}>{run.status === "running" || run.busy ? <span className="spin" /> : null} {STATUS[run.status]}</span>
+        <span className={`badge s-${run.status}`}>{run.status === "running" || run.busy ? <span className="spin" /> : null} {signInOnly(run) ? SIGN_IN_ONLY : STATUS[run.status]}</span>
         <ol className="rsteps" aria-label="Steps">
           {run.steps.map((s, i) => (
             <li key={s.id} className={`rstep ${s.state === "done" ? "done" : s.state === "skipped" ? "skipped" : i === run.cursor && !done ? "active" : ""} ${s.state === "blocked" ? "blocked" : ""}`}>
@@ -115,7 +116,7 @@ export default function ProvisionRun({ id }: { id: string }) {
       </aside>
 
       <section className="rmain">
-        <div className="mhead"><h1 className="ptitle">{run.app}</h1><span className={`badge s-${run.status}`}>{STATUS[run.status]}</span> <span className="small">step {Math.min(run.cursor + 1, run.steps.length)} of {run.steps.length}</span></div>
+        <div className="mhead"><h1 className="ptitle">{run.app}</h1><span className={`badge s-${run.status}`}>{signInOnly(run) ? SIGN_IN_ONLY : STATUS[run.status]}</span> <span className="small">step {Math.min(run.cursor + 1, run.steps.length)} of {run.steps.length}</span></div>
         {run.mock ? <div className="notice">Demo mode: the browser, inbox and provider APIs are simulated. Every step, pause and vault write runs for real.</div> : null}
         {err ? <div className="card err" role="alert"><p>{err}</p></div> : null}
 
@@ -179,6 +180,7 @@ export default function ProvisionRun({ id }: { id: string }) {
             <dt>Redirect URI</dt><dd><code>{run.vars.redirect_uri}</code></dd>
             <dt>Verified as</dt><dd>{run.verify?.who ? <span className="ok-text">{run.verify.who}</span> : run.vars.verify_error ? <span className="bad-text">{run.vars.verify_error}</span> : "not yet"}</dd>
             <dt>Refresh token</dt><dd>{run.verify?.refresh || "not yet"}</dd>
+            {!run.scopePlan ? <><dt>Scopes checked</dt><dd>{signInOnly(run) ? <span className="wait-text">{SIGN_IN_ONLY_WHY}</span> : <span className="muted">no use case given; scopes from the plan ({run.playbook.oauth.scopes.join(", ")})</span>}</dd></> : null}
             {run.scopePlan ? <><dt>Use-case call</dt><dd>{run.verify?.useCase ? <span className={run.verify.useCaseOk ? "ok-text" : "bad-text"}>{run.verify.useCase}</span> : run.scopePlan.testCall ? `not yet (${run.scopePlan.testCall.label})` : "none chosen"}</dd></> : null}
           </dl>
           {Object.keys(run.vault).length ? (

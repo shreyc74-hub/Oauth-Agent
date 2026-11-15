@@ -161,3 +161,24 @@ test("use case: scopes and the test call land on the run, and a failing test cal
   assert.equal(done.verify?.useCaseOk, false);
   assert.equal(done.status, "needs_review");
 });
+
+test("no use case: verified, but labelled sign-in only in the log and the sheet row", async () => {
+  const { signInOnly } = await import("../lib/provision/labels");
+  const { rowFor } = await import("../lib/provision/sheets");
+  const drive = async (id: string) => {
+    let r = (await getRun(id))!;
+    for (let i = 0; i < 60 && !["verified", "needs_review", "failed", "cancelled"].includes(r.status); i++) {
+      r = await advance(id, defaultDeps(), 30_000);
+      if (r.status === "waiting_human" || r.status === "waiting_approval") r = await respond(id, r.status === "waiting_approval" ? "approve" : "continue");
+    }
+    return (await getRun(id))!;
+  };
+  const plain = await drive((await createRun({ app: "Linear", mode: "auto", baseUrl: BASE })).id);
+  assert.equal(plain.status, "verified");
+  assert.ok(signInOnly(plain));
+  assert.ok(plain.events.some((e) => /Verified for sign-in only/.test(e.text)));
+  assert.ok(rowFor(plain, BASE).includes("verified (sign-in only, scopes not checked)"));
+  const withUse = await drive((await createRun({ app: "Linear", mode: "auto", baseUrl: BASE, useCase: "read issues" })).id);
+  assert.equal(withUse.status, "verified");
+  assert.ok(!signInOnly(withUse));
+});
