@@ -365,6 +365,20 @@ test("Slack: its first run's browser part (sign-up, code boxes, captcha) goes to
   assert.ok(!again.steps.some((s) => s.kind === "agent"));
 });
 
+test("DCR refuses our redirect domain (Typeform): the reason is logged and the hosted agent creates the app in the console", async () => {
+  const { mockHttp } = await import("../lib/provision/mock");
+  const http = async (url: string, init?: RequestInit) => (/\/oauth\/register$/.test(url) && init?.method === "POST"
+    ? new Response(JSON.stringify({ code: "invalid_client_metadata", description: "redirect_uri domain not allowed: https://example.test/api/oauth/callback" }), { status: 400, headers: { "content-type": "application/json" } })
+    : mockHttp(url, init));
+  const agent = scripted([done()]);
+  const deps = { ...defaultDeps(), http, hosted: agent, sandboxIo: tdoIo as never, dcrFetch: tdoMeta };
+  const run = await createRun({ app: "Tdo", baseUrl: BASE, autoStart: true }, deps);
+  const end = await drive(run.id, deps);
+  assert.equal(end.status, "verified", end.events.map((e) => e.text).join("\n"));
+  assert.equal(end.strategy, "browser");
+  assert.ok(end.events.some((e) => /redirect_uri domain not allowed/.test(e.text) && /Switched to the hosted browser agent/.test(e.text)));
+});
+
 test("API-key-only vendor (Tavily): a guide saying 'no OAuth' doesn't stop it; the hosted agent creates the key, a test call verifies it", async () => {
   const { saveGuide } = await import("../lib/store");
   const { libraryGuides } = await import("../lib/library");

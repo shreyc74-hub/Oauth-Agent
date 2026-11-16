@@ -1036,7 +1036,9 @@ async function runStep(ctx: Ctx, s: Step): Promise<Outcome> {
           insertDcrTokenStep(run, (e as Error).message);
           return "wait";
         }
-        if (s.handler === "dcrRegister" && run.mode === "auto" && deps.hosted && /initial access token|public client/i.test((e as Error).message)) {
+        // Any other refusal (Typeform: "redirect_uri domain not allowed", DCR kept for MCP clients): the
+        // console route still works, so the hosted agent creates the app there.
+        if (s.handler === "dcrRegister" && run.mode === "auto" && deps.hosted && /initial access token|public client|registration failed/i.test((e as Error).message)) {
           switchToHosted(run, (e as Error).message);
           return "wait";
         }
@@ -1193,7 +1195,8 @@ const HANDLERS: Record<string, (ctx: Ctx) => Promise<void>> = {
     const res = await deps.http(endpoint, { method: "POST", headers, body: JSON.stringify(body) });
     const j = (await res.json().catch(() => ({}))) as Record<string, unknown>;
     if (res.status === 401 || res.status === 403) throw new Error(`the registration endpoint wants an initial access token (${res.status}${j.error ? ` ${j.error}` : ""}); use the browser route for ${run.app}`);
-    if (!res.ok || !j.client_id) throw new Error(`registration failed: ${res.status} ${String(j.error_description || j.error || "").slice(0, 120)}`);
+    // Vendors put the reason in different fields (Typeform: code + description).
+    if (!res.ok || !j.client_id) throw new Error(`registration failed: ${res.status} ${[j.error || j.code, j.error_description || j.description || j.message].filter(Boolean).map(String).join(": ").slice(0, 200)}`);
     if (!j.client_secret) throw new Error("the vendor registered a public client with no secret; this agent provisions confidential clients, so use the browser route");
     await store(ctx, "client_id", String(j.client_id), false);
     await store(ctx, "client_secret", String(j.client_secret), true);
