@@ -18,6 +18,7 @@ import { openBrowser, browserConfigured, createContext, releaseSession } from ".
 import { agentMail, findCode, findLink, waitForMail, type Inbox } from "./inbox";
 import { putSecret, getSecret, hasSecret, vaultName, redact, recordReveal } from "./vault";
 import { saveRun, getRun } from "./runs";
+import { seedFrom, totp } from "./totp";
 import { browserUseViaComposio, hostedConfigured, agentTask, continueTask, consentTask, parseAgentResult, vendorDomains, type HostedAgent, type AgentResult } from "./hosted";
 import { authorizeUrl, codeFromUrl, exchangeCode, newState, refreshTokens, whoami, type Http } from "./verify";
 import { PLAYBOOKS, planFromGuide, mockPlanFromGuide, validatePlaybook, guideFromBrief, briefPlaybook, type PlanTarget } from "./planner";
@@ -635,16 +636,50 @@ async function hostedMail(ctx: Ctx, s: Extract<Step, { kind: "agent" }>, base: s
   return startHosted(ctx, s, continueTask(base, code ? { code } : { link: link! }), code ? "enter the emailed code and continue" : "open the emailed link and continue");
 }
 
+/** Pure: authenticator codes for the next few 30-second windows, with their UTC times, so a code is still valid when the agent types it. */
+export function totpWindows(seed: string, now = Date.now(), count = 8): { from: string; to: string; code: string }[] {
+  const start = Math.floor(now / 30_000) * 30_000;
+  const hms = (t: number) => new Date(t).toISOString().slice(11, 19);
+  return Array.from({ length: count }, (_, i) => { const t = start + i * 30_000; return { from: hms(t), to: hms(t + 30_000), code: totp(seed, t) }; });
+}
+
+/** The agent set up or needs two-step verification: keep the setup key (shared per vendor) and hand it codes. */
+async function hostedTotp(ctx: Ctx, s: Extract<Step, { kind: "agent" }>, a: AgentResult, base: string): Promise<Outcome> {
+  const { run } = ctx;
+  if (a.totpSecret) {
+    const seed = seedFrom(a.totpSecret);
+    ctx.seen.add(a.totpSecret); ctx.seen.add(seed);
+    await store(ctx, "shared:totp_seed", seed, true);
+  }
+  const name = run.vault.totp_seed || vaultName(run.slug, run.id, "shared:totp_seed");
+  const seed = await getSecret(name);
+  if (!seed) {
+    run.vars[`retry:${s.id}`] = "1";
+    run.vars.hosted_wall = "an authenticator code, with no setup key on file";
+    pause(run, { kind: "human", step: s.id, reason: `${run.app} asks for an authenticator code, but no setup key was captured for this account. Enter the code in the live view, then press Continue.` }, "handoff");
+    return "pause";
+  }
+  run.vault.totp_seed = name;
+  ctx.seen.add(seed);
+  const codes = totpWindows(seed);
+  for (const c of codes) ctx.seen.add(c.code);
+  log(run, "step", `${s.title}: ${a.totpSecret ? "authenticator set up; the setup key went straight to the vault, so later runs can sign in too. " : ""}Codes generated from the stored key and passed to the hosted agent.`, s.id, ctx.seen);
+  return startHosted(ctx, s, continueTask(base, { totp: codes }), "enter the authenticator code and continue");
+}
+
 /** What the agent reported: store secrets, resume for email, hand walls to a person, or finish. */
 async function hostedResult(ctx: Ctx, s: Extract<Step, { kind: "agent" }>, a: AgentResult, base: string): Promise<Outcome> {
   const { run } = ctx;
   if (a.clientSecret) ctx.seen.add(a.clientSecret);
   if (a.apiKey) ctx.seen.add(a.apiKey);
+  if (a.totpSecret) { ctx.seen.add(a.totpSecret); ctx.seen.add(seedFrom(a.totpSecret)); }
+  if (a.totpSecret && a.status === "done") await store(ctx, "shared:totp_seed", seedFrom(a.totpSecret), true);
   if (a.clientId) await store(ctx, "client_id", a.clientId, false);
   if (a.clientSecret) await store(ctx, "client_secret", a.clientSecret, true);
   if (a.apiKey) await store(ctx, "api_key", a.apiKey, true);
   if (a.appUrl) run.public.sandboxUrl = a.appUrl;
   const notes = a.notes.length ? ` Notes: ${a.notes.join("; ").slice(0, 300)}` : "";
+  if (a.status === "needs_totp" || (a.totpSecret && a.status !== "done")) return hostedTotp(ctx, s, a, base);
   if (a.status === "waiting_for_email") {
     run.vars.hosted_expects = a.expects || "code";
     log(run, "agent", `The hosted agent is waiting for an email ${a.expects === "link" ? "link" : "code"} from ${run.app}.${notes}`, s.id, ctx.seen);
@@ -713,6 +748,7 @@ async function hostedConsent(ctx: Ctx, s: Step, url: string): Promise<Outcome | 
     await saveRun(run); // picks up a code the callback stored meanwhile
     if (run.verify?.code) return "code";
     const a = parseAgentResult(r.result);
+    if (a.status === "needs_totp") return hostedTotp(ctx, { kind: "agent", id: s.id, title: s.title, credential: "oauth", hints: [], docs: [] }, a, consentFor(run, url));
     if (a.status === "waiting_for_email") { run.vars.hosted_expects = a.expects || "code"; }
     else {
       const why = a.status === "wall" ? `it stopped at a mandatory check: ${a.wall || "unknown"}` : `it couldn't complete the consent screen${a.notes.length ? ` (${a.notes.join("; ").slice(0, 200)})` : ""}`;

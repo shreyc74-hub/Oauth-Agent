@@ -149,7 +149,10 @@ function wallRule(): string {
     : `Stop with status "wall" only when a step is MANDATORY and needs a phone number, payment details, a captcha or a bot check that does not pass on its own within a few seconds; say exactly which screen in "wall". Never invent a phone number, never enter payment details, never try to solve or bypass a captcha.`;
 }
 
-export const RESULT_SHAPE = `{"status":"done"|"waiting_for_email"|"wall"|"failed","expects":"code"|"link"|null,"wall":string|null,"client_id":string|null,"client_secret":string|null,"api_key":string|null,"app_url":string|null,"notes":[string]}`;
+export const RESULT_SHAPE = `{"status":"done"|"waiting_for_email"|"needs_totp"|"wall"|"failed","expects":"code"|"link"|null,"wall":string|null,"client_id":string|null,"client_secret":string|null,"api_key":string|null,"totp_secret":string|null,"app_url":string|null,"notes":[string]}`;
+
+/** Two-step verification: email when offered, else an authenticator app set up with a manual key we keep. */
+export const MFA_RULE = `Two-step verification: if you must choose a verification method, choose email when it is offered. Otherwise choose an authenticator app ("Google Authenticator" or "other authenticator app"; not a push app such as Okta Verify, not SMS or a phone call). On the QR-code screen click "Can't scan?", "Enter key manually" or similar to show the text setup key, and STOP with status "needs_totp" with that key in "totp_secret" (keep the browser open; the next message gives you the codes). If you are later asked for an authenticator code, STOP with status "needs_totp" and totp_secret null. A code by text message or a mandatory push app is a wall.`;
 
 /** Pure: the task for the first run of a job. Rules learned from the live tests are built in. */
 export function agentTask(t: TaskInput): string {
@@ -167,7 +170,8 @@ export function agentTask(t: TaskInput): string {
     `3. Open the page that shows the ${t.credential === "api_key" ? "API key" : "client ID and client secret"} (click reveal, show or copy if the secret is hidden; if it can only be regenerated, regenerate it once).`,
     t.hints.length ? `Hints from ${t.app}'s docs (may be out of date; trust the screen over these):\n${t.hints.slice(0, 10).map((h) => `- ${h}`).join("\n")}` : "",
     t.docs.length ? `Official pages: ${t.docs.slice(0, 5).join(" , ")}` : "",
-    `Email: if ${t.app} sends a code or a sign-in link by email, STOP and answer with status "waiting_for_email" and expects "code" or "link". Keep the browser open; the next message gives you the code or link. A code from an authenticator app (Okta Verify, Google Authenticator) or a text message is NOT an email: if one is mandatory, stop with status "wall" and say so.`,
+    `Email: if ${t.app} sends a code or a sign-in link by email, STOP and answer with status "waiting_for_email" and expects "code" or "link". Keep the browser open; the next message gives you the code or link. A code from an authenticator app or a text message is NOT an email.`,
+    MFA_RULE,
     `Rules: optional prompts with a Skip, Later or close button may be skipped (for example "add your phone number"). You may accept terms of service for this test account. ${wallRule()}`,
     `Secrets: put the ${t.credential === "api_key" ? "API key" : "client secret"} ONLY in its field of the final answer and never repeat it anywhere else (not in notes, not in your messages).`,
     `Final answer: JSON only, exactly this shape: ${RESULT_SHAPE}`,
@@ -175,8 +179,9 @@ export function agentTask(t: TaskInput): string {
 }
 
 /** Pure: the task for the next run in the same session, after our app handled what the agent stopped for. */
-export function continueTask(base: string, why: { code?: string; link?: string; personHandled?: string }): string {
-  const first = why.code ? `The code from the email is ${why.code}. Enter it on the screen that is open (it may be split over several boxes), then continue.`
+export function continueTask(base: string, why: { code?: string; link?: string; personHandled?: string; totp?: { from: string; to: string; code: string }[] }): string {
+  const first = why.totp?.length ? `Authenticator codes, one per 30-second window (UTC): ${why.totp.map((c) => `${c.from}-${c.to} ${c.code}`).join("; ")}. Check the current UTC time (for example with \`date -u\`), enter the code for the current window on the screen that is open, and confirm. If it is rejected, wait for the next window and use the next code. Then continue.`
+    : why.code ? `The code from the email is ${why.code}. Enter it on the screen that is open (it may be split over several boxes), then continue.`
     : why.link ? `Open this one-time link from the email in the same browser, then continue: ${why.link}`
     : `A person dealt with the screen you stopped at (${why.personHandled || "a wall"}). Continue from the page that is open now.`;
   return `${first}\n\nThe original task, for reference (skip what is already done):\n\n${base}`;
@@ -191,14 +196,16 @@ export function consentTask(app: string, url: string, redirectUri: string, accou
       : `There is no ${app} account yet: on the sign-in page choose sign up, and create a free account with ${account.email}${account.passwordAlias ? ` and the password from the secret ${account.passwordAlias}` : " and a strong password you generate"} (name ${account.first_name} ${account.last_name}, company ${account.company}; skip optional prompts and onboarding). Never use Google or other single sign-on. Then come back to the authorization URL above if the sign-up does not return to it.`;
   return [
     `Open this ${app} authorization URL: ${url}`,
-    `${signIn} If an email code or link is needed, STOP with status "waiting_for_email". If a workspace or organization must be chosen, choose the one you created. Approve / allow / authorize access for the app. ${wallRule()}`,
+    `${signIn} If an email code or link is needed, STOP with status "waiting_for_email". ${MFA_RULE} If a workspace or organization must be chosen, choose the one you created. Approve / allow / authorize access for the app. ${wallRule()}`,
     `Stop as soon as the browser reaches ${redirectUri} (that page may say "Authorization received"). Do not copy the code from the address bar into your answer.`,
     `Final answer: JSON only, exactly this shape: ${RESULT_SHAPE}`,
   ].join("\n\n");
 }
 
 export interface AgentResult {
-  status: "done" | "waiting_for_email" | "wall" | "failed";
+  status: "done" | "waiting_for_email" | "needs_totp" | "wall" | "failed";
+  /** Authenticator setup key (base32 or an otpauth:// URI), when the agent set up two-step verification. */
+  totpSecret?: string;
   expects?: "code" | "link";
   wall?: string;
   clientId?: string;
@@ -224,11 +231,11 @@ export function parseAgentResult(text: string | null | undefined): AgentResult {
   const notes = (Array.isArray(j.notes) ? j.notes : Array.isArray(j.stuck) ? j.stuck : []).map(String).slice(0, 8);
   const clientId = str(j.client_id), clientSecret = str(j.client_secret), apiKey = str(j.api_key);
   let status = String(j.status || "") as AgentResult["status"];
-  if (!["done", "waiting_for_email", "wall", "failed"].includes(status)) {
+  if (!["done", "waiting_for_email", "needs_totp", "wall", "failed"].includes(status)) {
     status = j.waiting_for_email === true || j.on_code_screen === true ? "waiting_for_email" : clientId || apiKey || j.app_created === true || j.key_created === true ? "done" : str(j.wall) ? "wall" : "failed";
   }
   const expects = j.expects === "link" ? "link" : j.expects === "code" ? "code" : undefined;
-  return { status, expects, wall: str(j.wall), clientId, clientSecret, apiKey, appUrl: str(j.app_url) || str(j.credentials_url), notes };
+  return { status, expects, wall: str(j.wall), clientId, clientSecret, apiKey, totpSecret: str(j.totp_secret), appUrl: str(j.app_url) || str(j.credentials_url), notes };
 }
 
 /** The vendor hosts a credential may be typed on: the base domains of the plan's URLs. */

@@ -115,7 +115,7 @@ test("hosted steps pass the plan checks; API-key plans too", () => {
 test("parseAgentResult reads the agent's JSON and never guesses", () => {
   assert.equal(parseAgentResult(done()).status, "done");
   assert.equal(parseAgentResult(done()).clientSecret, SECRET);
-  assert.deepEqual(parseAgentResult('Here you go: {"status":"waiting_for_email","expects":"link"}'), { status: "waiting_for_email", expects: "link", wall: undefined, clientId: undefined, clientSecret: undefined, apiKey: undefined, appUrl: undefined, notes: [] });
+  assert.deepEqual(parseAgentResult('Here you go: {"status":"waiting_for_email","expects":"link"}'), { status: "waiting_for_email", expects: "link", wall: undefined, clientId: undefined, clientSecret: undefined, apiKey: undefined, totpSecret: undefined, appUrl: undefined, notes: [] });
   assert.equal(parseAgentResult('{"status":"wall","wall":"captcha"}').wall, "captcha");
   assert.equal(parseAgentResult("I could not do it").status, "failed");
   assert.equal(parseAgentResult(null).status, "failed");
@@ -281,4 +281,50 @@ test("shared mailbox: a run only takes its own vendor's mail (Okta must not take
   assert.equal(mailFromVendor({ from: "Todoist <no-reply@notify.todoist.com>", subject: "Verify your email address" }, ["todoist"], ["todoist.com"]), true);
   // A word only counts as a whole word: "zoom" is not in "zoomed-out newsletter" senders by accident.
   assert.equal(mailFromVendor({ from: "news@zoomedout.example", subject: "Hi" }, ["zoom"], ["zoom.us"]), false);
+});
+
+// RFC 6238 test seed ("12345678901234567890" in base32).
+const SEED = "GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ";
+
+test("TOTP windows: one code per 30 seconds from the current window, matching RFC 6238", async () => {
+  const { totpWindows } = await import("../lib/provision/engine");
+  const { totp } = await import("../lib/provision/totp");
+  const w = totpWindows(SEED, Date.parse("2026-11-16T05:40:17Z"), 3);
+  assert.deepEqual(w.map((x) => [x.from, x.to]), [["05:40:00", "05:40:30"], ["05:40:30", "05:41:00"], ["05:41:00", "05:41:30"]]);
+  assert.equal(w[0].code, totp(SEED, Date.parse("2026-11-16T05:40:00Z")));
+  assert.equal(totp(SEED, 59_000, 30, 8), "94287082"); // RFC 6238 appendix B, SHA-1, T=59
+});
+
+test("two-step verification: the agent sets up an authenticator, our app keeps the key and hands it codes; a later run reuses the key", async () => {
+  const agent = scripted([
+    JSON.stringify({ status: "needs_totp", totp_secret: `otpauth://totp/Tdo:agent?secret=${SEED}&issuer=Tdo`, notes: [] }),
+    done(),
+  ]);
+  const deps = { ...defaultDeps(), hosted: agent };
+  const run = await createRun({ app: "Linear", baseUrl: BASE, autoStart: true }, deps);
+  const end = await drive(run.id, deps);
+  assert.equal(end.status, "verified", end.events.map((e) => e.text).join("\n"));
+  assert.match(agent.tasks[0], /choose email when it is offered/);
+  assert.match(agent.tasks[0], /status "needs_totp" with that key in "totp_secret"/);
+  assert.match(agent.tasks[1], /^Authenticator codes, one per 30-second window \(UTC\): \d\d:\d\d:\d\d-\d\d:\d\d:\d\d \d{6}/);
+  assert.equal(await getSecret(end.vault.totp_seed), SEED);
+  assert.ok(!end.events.some((e) => e.text.includes(SEED)), "the setup key never reaches the log");
+  assert.ok(end.events.some((e) => /setup key went straight to the vault/.test(e.text)));
+
+  // A second run for the same vendor: asked for a code at sign-in, it gets codes from the stored key.
+  const agent2 = scripted([JSON.stringify({ status: "needs_totp", totp_secret: null, notes: [] }), done()]);
+  const deps2 = { ...defaultDeps(), hosted: agent2 };
+  const run2 = await createRun({ app: "Linear", baseUrl: BASE, autoStart: true }, deps2);
+  const end2 = await drive(run2.id, deps2);
+  assert.equal(end2.status, "verified");
+  assert.match(agent2.tasks[1], /^Authenticator codes/);
+});
+
+test("asked for an authenticator code with no key on file: a person enters it", async () => {
+  const agent = scripted([JSON.stringify({ status: "needs_totp", totp_secret: null, notes: [] }), done()]);
+  const deps = { ...defaultDeps(), hosted: agent };
+  const run = await createRun({ app: "Linear", baseUrl: BASE, autoStart: true }, deps);
+  const paused = await drive(run.id, deps, true);
+  assert.equal(paused.status, "waiting_human");
+  assert.match(paused.pending!.reason, /no setup key was captured/);
 });
