@@ -53,7 +53,9 @@ export type Step =
    * A hosted browser agent (Browser Use via Composio) does the sign-up and creates the app or key from
    * a goal plus research hints. Our app handles email codes, walls, the vault and verification between its runs.
    */
-  | (Base & { kind: "agent"; credential: "oauth" | "api_key"; startUrl?: string; hints: string[]; docs: string[] })
+  | (Base & { kind: "agent"; credential: "oauth" | "api_key"; startUrl?: string; hints: string[]; docs: string[];
+      /** Fetch a token for an API or DCR call instead of creating the app: code makes the call with it. */
+      token?: { into: string; refreshInto?: string; what: string; where?: string } })
   /** Run the OAuth flow against the sandbox, call an identity endpoint, test the refresh token. */
   | (Base & { kind: "verify" })
   /** Mark what production approval needs. Never automated. */

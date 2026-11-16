@@ -223,12 +223,35 @@ test("human in the loop on a brief-built plan: its steps are planned only when t
   assert.ok(started.steps.some((s) => s.kind === "verify"));
 });
 
-test("DCR refused (Okta: initial access token needed): full automation switches to the hosted agent, nobody is asked", async () => {
+test("DCR wants a token (Okta): the hosted agent fetches one, registration runs again with it, no console", async () => {
+  const { mockHttp } = await import("../lib/provision/mock");
+  const auths: (string | null)[] = [];
+  const http = async (url: string, init?: RequestInit) => {
+    if (/\/oauth\/register$/.test(url) && init?.method === "POST") {
+      const auth = new Headers(init.headers).get("authorization");
+      auths.push(auth);
+      if (auth !== "SSWS iat_123") return new Response(JSON.stringify({ errorSummary: "You do not have permission" }), { status: 403, headers: { "content-type": "application/json" } });
+    }
+    return mockHttp(url, init);
+  };
+  const agent = scripted([JSON.stringify({ status: "done", token: "iat_123", token_scheme: "SSWS", notes: [] })]);
+  const deps = { ...defaultDeps(), http, hosted: agent, sandboxIo: tdoIo as never, dcrFetch: tdoMeta };
+  const run = await createRun({ app: "Tdo", baseUrl: BASE, autoStart: true }, deps);
+  const end = await drive(run.id, deps);
+  assert.equal(end.status, "verified", end.events.map((e) => e.text).join("\n"));
+  assert.equal(end.strategy, "dcr");
+  assert.deepEqual(auths, [null, "SSWS iat_123"]);
+  assert.deepEqual(end.steps.map((s) => s.id).filter((id) => id !== "sandbox-check"), ["identity", "dcr-token", "dcr-register", "verify"]);
+  assert.match(agent.tasks[0], /Do NOT create an app yourself/);
+  assert.ok(!end.events.some((e) => e.text.includes("iat_123")));
+});
+
+test("DCR still refused with the token: the hosted agent creates the app in the console, nobody is asked", async () => {
   const { mockHttp } = await import("../lib/provision/mock");
   const http = async (url: string, init?: RequestInit) => (/\/oauth\/register$/.test(url) && init?.method === "POST"
     ? new Response(JSON.stringify({ errorCode: "E0000006", errorSummary: "You do not have permission" }), { status: 403, headers: { "content-type": "application/json" } })
     : mockHttp(url, init));
-  const agent = scripted([done()]);
+  const agent = scripted([JSON.stringify({ status: "done", token: "iat_bad", notes: [] }), done()]);
   const deps = { ...defaultDeps(), http, hosted: agent, sandboxIo: tdoIo as never, dcrFetch: tdoMeta };
   const run = await createRun({ app: "Tdo", baseUrl: BASE, autoStart: true }, deps);
   assert.equal(run.strategy, "dcr");
@@ -236,8 +259,8 @@ test("DCR refused (Okta: initial access token needed): full automation switches 
   assert.equal(end.status, "verified", end.events.map((e) => e.text).join("\n"));
   assert.equal(end.strategy, "browser");
   assert.ok(end.events.some((e) => /Switched to the hosted browser agent/.test(e.text)));
-  assert.deepEqual(end.steps.map((s) => s.id).filter((id) => id !== "sandbox-check"), ["identity", "hosted-agent", "verify"]);
-  assert.match(agent.tasks[0], /Create an OAuth app named/);
+  assert.ok(end.steps.some((s) => s.id === "hosted-agent"));
+  assert.match(agent.tasks[agent.tasks.length - 2], /Create an OAuth app named/);
 });
 
 test("identity: the planned field, else a common one, else a successful call is enough", async () => {
@@ -322,15 +345,19 @@ test("two-step verification: the agent sets up an authenticator, our app keeps t
 
 test("Slack: its first run's browser part (sign-up, code boxes, captcha) goes to the hosted agent; with a config token on file the API route stays", async () => {
   const { putSecret } = await import("../lib/provision/vault");
-  const agent = scripted([JSON.stringify({ status: "waiting_for_email", expects: "code", notes: [] }), done({ client_id: "1234.5678" })]);
+  const agent = scripted([JSON.stringify({ status: "waiting_for_email", expects: "code", notes: [] }), JSON.stringify({ status: "done", token: "xoxe.xoxp-cfg", refresh_token: "xoxe-1-refresh", notes: [] })]);
   const deps = { ...defaultDeps(), hosted: agent };
   const run = await createRun({ app: "Slack", baseUrl: BASE, autoStart: true }, deps);
-  assert.deepEqual(run.steps.map((s) => s.kind), ["identity", "agent", "verify", "golive"]);
-  assert.equal(run.assessment?.route.method, "Hosted browser agent");
+  // Browser Use only for the token; Slack's own API creates the app.
+  assert.deepEqual(run.steps.map((s) => s.kind), ["identity", "agent", "api", "verify", "golive"]);
+  assert.equal(run.assessment?.route.method, "Hosted browser agent for the token, then the API");
   const end = await drive(run.id, deps);
   assert.equal(end.status, "verified", end.events.map((e) => e.text).join("\n"));
   assert.match(agent.tasks[0], /slack\.com/);
+  assert.match(agent.tasks[0], /Do NOT create an app yourself/);
   assert.match(agent.tasks[1], /The code from the email is 482913/);
+  assert.ok(end.events.some((e) => /created through Slack's API/.test(e.text)));
+  assert.ok(end.vault.config_refresh_token, "the refresh token is kept for later runs");
 
   await putSecret("slack/shared/config_refresh_token", "xoxe-1-mock-refresh");
   const again = await createRun({ app: "Slack", baseUrl: BASE, autoStart: true }, deps);

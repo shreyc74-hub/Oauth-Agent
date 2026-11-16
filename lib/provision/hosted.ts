@@ -133,6 +133,8 @@ export interface TaskInput {
   docs: string[];
   values: { first_name: string; last_name: string; company: string; app_name: string; workspace_name: string; redirect_uri: string; dev_url: string };
   scopes: string[];
+  /** Fetch a token for API or DCR calls instead of creating the app (our code creates it with the token). */
+  token?: { what: string; where?: string };
 }
 
 /**
@@ -149,13 +151,14 @@ function wallRule(): string {
     : `Stop with status "wall" only when a step is MANDATORY and needs a phone number, payment details, a captcha or a bot check that does not pass on its own within a few seconds; say exactly which screen in "wall". Never invent a phone number, never enter payment details, never try to solve or bypass a captcha.`;
 }
 
-export const RESULT_SHAPE = `{"status":"done"|"waiting_for_email"|"needs_totp"|"wall"|"failed","expects":"code"|"link"|null,"wall":string|null,"client_id":string|null,"client_secret":string|null,"api_key":string|null,"totp_secret":string|null,"app_url":string|null,"notes":[string]}`;
+export const RESULT_SHAPE = `{"status":"done"|"waiting_for_email"|"needs_totp"|"wall"|"failed","expects":"code"|"link"|null,"wall":string|null,"client_id":string|null,"client_secret":string|null,"api_key":string|null,"token":string|null,"refresh_token":string|null,"token_scheme":string|null,"totp_secret":string|null,"app_url":string|null,"notes":[string]}`;
 
 /** Two-step verification: email when offered, else an authenticator app set up with a manual key we keep. */
 export const MFA_RULE = `Two-step verification: if you must choose a verification method, choose email when it is offered. Otherwise choose an authenticator app ("Google Authenticator" or "other authenticator app"; not a push app such as Okta Verify, not SMS or a phone call). On the QR-code screen click "Can't scan?", "Enter key manually" or similar to show the text setup key, and STOP with status "needs_totp" with that key in "totp_secret" (keep the browser open; the next message gives you the codes). If you are later asked for an authenticator code, STOP with status "needs_totp" and totp_secret null. A code by text message or a mandatory push app is a wall.`;
 
 /** Pure: the task for the first run of a job. Rules learned from the live tests are built in. */
 export function agentTask(t: TaskInput): string {
+  if (t.token) return tokenTask(t, t.token);
   const what = t.credential === "api_key" ? "an API key" : "an OAuth app (client ID and client secret)";
   const account = t.accountExists
     ? `An account for ${t.email} already exists: sign in (do not sign up).${t.passwordAlias ? ` Its password is the secret ${t.passwordAlias}.` : " If a password is asked for, use the email code or sign-in link option instead."}`
@@ -174,6 +177,30 @@ export function agentTask(t: TaskInput): string {
     MFA_RULE,
     `Rules: optional prompts with a Skip, Later or close button may be skipped (for example "add your phone number"). You may accept terms of service for this test account. ${wallRule()}`,
     `Secrets: put the ${t.credential === "api_key" ? "API key" : "client secret"} ONLY in its field of the final answer and never repeat it anywhere else (not in notes, not in your messages).`,
+    `Final answer: JSON only, exactly this shape: ${RESULT_SHAPE}`,
+  ].filter(Boolean).join("\n\n");
+}
+
+/**
+ * Pure: the browser part of an API or DCR route. The agent only gets the token the API needs (Slack's app
+ * configuration token, a DCR initial access token); our code then creates the app with it, and later runs
+ * reuse the stored token with no browser.
+ */
+export function tokenTask(t: TaskInput, token: { what: string; where?: string }): string {
+  const account = t.accountExists
+    ? `An account for ${t.email} already exists: sign in (do not sign up).${t.passwordAlias ? ` Its password is the secret ${t.passwordAlias}.` : " If a password is asked for, use the email code or sign-in link option instead."}`
+    : `Sign up for a free account with the email ${t.email}${t.passwordAlias ? ` and the password from the secret ${t.passwordAlias}` : " and a strong password you generate"}. Name: ${t.values.first_name} ${t.values.last_name}. Company or organization: ${t.values.company}. If asked for an age or birth date, give an adult one. If a workspace or organization must be created, name it ${t.values.workspace_name}.`;
+  return [
+    `Goal: get a token that ${t.app}'s API accepts, so our code can create an app through the API. Do NOT create an app yourself.`,
+    `1. ${account}${t.startUrl ? ` Start at ${t.startUrl}.` : ""} Never use Google, Microsoft or other single sign-on.`,
+    `2. Generate ${token.what}${token.where ? `. Where: ${token.where}` : ""}. If several workspaces or organizations are offered, use the one you created.`,
+    `3. Return the token in "token". If a refresh token is shown with it, return it in "refresh_token". If the API expects a word before the token other than "Bearer" (for example "SSWS"), put that word in "token_scheme". Then answer with status "done".`,
+    t.hints.length ? `Hints from ${t.app}'s docs (may be out of date; trust the screen over these):\n${t.hints.slice(0, 10).map((h) => `- ${h}`).join("\n")}` : "",
+    t.docs.length ? `Official pages: ${t.docs.slice(0, 5).join(" , ")}` : "",
+    `Email: if ${t.app} sends a code or a sign-in link by email, STOP and answer with status "waiting_for_email" and expects "code" or "link". Keep the browser open; the next message gives you the code or link. A code from an authenticator app or a text message is NOT an email.`,
+    MFA_RULE,
+    `Rules: optional prompts with a Skip, Later or close button may be skipped (for example "add your phone number"). You may accept terms of service for this test account. ${wallRule()}`,
+    `Secrets: put the token and refresh token ONLY in their fields of the final answer and never repeat them anywhere else (not in notes, not in your messages).`,
     `Final answer: JSON only, exactly this shape: ${RESULT_SHAPE}`,
   ].filter(Boolean).join("\n\n");
 }
@@ -206,6 +233,10 @@ export interface AgentResult {
   status: "done" | "waiting_for_email" | "needs_totp" | "wall" | "failed";
   /** Authenticator setup key (base32 or an otpauth:// URI), when the agent set up two-step verification. */
   totpSecret?: string;
+  /** A token for API or DCR calls (token tasks), its refresh token, and the word before it if not "Bearer". */
+  token?: string;
+  refreshToken?: string;
+  tokenScheme?: string;
   expects?: "code" | "link";
   wall?: string;
   clientId?: string;
@@ -235,7 +266,10 @@ export function parseAgentResult(text: string | null | undefined): AgentResult {
     status = j.waiting_for_email === true || j.on_code_screen === true ? "waiting_for_email" : clientId || apiKey || j.app_created === true || j.key_created === true ? "done" : str(j.wall) ? "wall" : "failed";
   }
   const expects = j.expects === "link" ? "link" : j.expects === "code" ? "code" : undefined;
-  return { status, expects, wall: str(j.wall), clientId, clientSecret, apiKey, totpSecret: str(j.totp_secret), appUrl: str(j.app_url) || str(j.credentials_url), notes };
+  const token = str(j.token), refreshToken = str(j.refresh_token), tokenScheme = str(j.token_scheme);
+  if (status === "failed" && token) status = "done";
+  return { status, expects, wall: str(j.wall), clientId, clientSecret, apiKey, totpSecret: str(j.totp_secret), appUrl: str(j.app_url) || str(j.credentials_url), notes,
+    ...(token ? { token } : {}), ...(refreshToken ? { refreshToken } : {}), ...(tokenScheme && /^[A-Za-z-]{2,20}$/.test(tokenScheme) ? { tokenScheme } : {}) };
 }
 
 /** The vendor hosts a credential may be typed on: the base domains of the plan's URLs. */

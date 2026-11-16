@@ -217,10 +217,14 @@ export async function createRun(input: { app: string; mode?: Mode; baseUrl: stri
       reason: `Couldn't confirm a self-serve test account for ${playbook.name}. ${sandbox.summary ? `${sandbox.summary} ` : ""}${sandbox.humanPath ? `If it turns out to be gated: ${sandbox.humanPath} ` : ""}The evidence is under "Sandbox check" below. Press Continue to try anyway, or Cancel.` };
     playbook = { ...playbook, steps: { human: [check, ...playbook.steps.human], auto: [check, ...playbook.steps.auto] } };
   }
-  if (deps.hosted && (playbook.strategy === "browser" || await stillNeedsBrowser(playbook))) {
+  if (deps.hosted && await stillNeedsBrowser(playbook)) {
+    // An API playbook whose first run needs a browser for a token (Slack's app configuration token): the
+    // hosted agent gets only the token, the playbook's API step creates the app, later runs skip the browser.
+    playbook = withHostedBootstrap(playbook);
+    route = { ...route, method: "Hosted browser agent for the token, then the API", detail: `Browser Use signs up and generates the token ${playbook.name}'s API needs; this app stores it and creates the app through the API. Later runs reuse the token with no browser.`, executable: true };
+    progress({ id: "route", label: "Browser route", state: "info", detail: "Browser Use fetches the API token once; the app is created through the API" });
+  } else if (deps.hosted && playbook.strategy === "browser") {
     // Full automation hands the browser part to the hosted agent; human in the loop keeps our live browser.
-    // That includes hand-written API playbooks whose first run needs a browser (Slack signs up and makes a
-    // configuration token before its manifest API works): the hosted agent creates the app in the console.
     playbook = withHostedSteps(playbook, sandbox);
     route = { ...route, method: "Hosted browser agent", detail: `Browser Use (through Composio) signs up and creates the ${chosen === "oauth" ? "OAuth app" : "API key"} from the research. This app reads email codes for it, stores the secret in the vault and verifies it.`, executable: true };
     progress({ id: "route", label: "Browser route", state: "info", detail: "full automation uses the hosted browser agent (Browser Use via Composio)" });
@@ -488,6 +492,45 @@ async function stillNeedsBrowser(p: Playbook): Promise<boolean> {
   return true;
 }
 
+/**
+ * An API playbook's browser bootstrap (sign-up, email code, generate a token, capture it) becomes one
+ * hosted token step; the playbook's API and verify steps stay. The token goes where the captures put it.
+ */
+export function withHostedBootstrap(p: Playbook): Playbook {
+  const auto = p.steps.auto;
+  const browserish = new Set(["browser", "email", "capture", "totp"]);
+  const captures = auto.filter((s): s is Extract<Step, { kind: "capture" }> => s.kind === "capture");
+  const clean = (t: string) => t.replace(/%([a-z_]+)%/gi, "<$1>").replace(/\s+/g, " ").trim().slice(0, 300);
+  const browsers = auto.filter((s): s is Extract<Step, { kind: "browser" }> => s.kind === "browser");
+  const genIdx = auto.findIndex((s) => s.kind === "capture");
+  const gen = [...auto.slice(0, genIdx < 0 ? auto.length : genIdx)].reverse().find((s): s is Extract<Step, { kind: "browser" }> => s.kind === "browser");
+  const token: Step = {
+    kind: "agent", id: "hosted-token", credential: p.credential === "api_key" ? "api_key" : "oauth",
+    title: `Sign up and get the API token (hosted browser agent)`,
+    startUrl: browsers.find((s) => s.url)?.url, hints: browsers.filter((s) => s.instruction).map((s) => clean(`${s.title}: ${s.instruction}`)).slice(0, 10), docs: [],
+    token: { into: captures[0]?.into || "shared:api_token", refreshInto: captures[1]?.into, what: captures.length ? captures.map((c) => c.find).join(", and ") : "an API token", where: gen?.instruction ? clean(gen.instruction) : gen?.url },
+  };
+  const rest = auto.filter((s) => !browserish.has(s.kind) && s.kind !== "identity");
+  return { ...p, steps: { ...p.steps, auto: [{ kind: "identity", id: "identity", title: "Agent identity (shared inbox and password)" }, token, ...rest] } };
+}
+
+/** DCR wants an initial access token: the hosted agent signs up and fetches one, then registration runs again. */
+function insertDcrTokenStep(run: Run, why: string) {
+  run.vars.dcr_token_tried = "1";
+  const endpoint = run.dcr?.registrationEndpoint || "its client registration endpoint";
+  const token: Step = {
+    kind: "agent", id: "dcr-token", credential: "oauth", title: "Get a registration token (hosted browser agent)",
+    startUrl: run.sandbox?.signupUrl, hints: (run.sandbox?.resources?.steps || []).map((x) => `${x.title}: ${x.detail}`.slice(0, 300)).slice(0, 8), docs: (run.sandbox?.resources?.docs || []).map((d) => d.url).slice(0, 5),
+    token: { into: "shared:dcr_token", what: `an API token (or "initial access token") that ${run.app}'s client registration endpoint ${endpoint} accepts, created in the admin console or the developer / API settings` },
+  };
+  const done = run.playbook.steps.auto.slice(0, run.cursor);
+  const rest = run.playbook.steps.auto.slice(run.cursor).filter((st) => st.id !== "identity");
+  const steps: Step[] = [...done, { kind: "identity", id: "identity", title: "Agent identity (shared inbox and password)" }, token, ...rest];
+  run.playbook = { ...run.playbook, steps: { ...run.playbook.steps, auto: steps } };
+  run.steps = [...run.steps.slice(0, run.cursor), ...steps.slice(run.cursor).map((st) => ({ id: st.id, title: st.title, kind: st.kind, state: "todo" as const }))];
+  log(run, "info", `Dynamic Client Registration at ${run.app} wants a token (${why.slice(0, 120)}). The hosted browser agent signs up and fetches one, then registration runs again with it; if that fails too, the agent creates the app in the console.`);
+}
+
 /** DCR didn't work for this vendor: replace the remaining steps with the hosted browser route. */
 function switchToHosted(run: Run, why: string) {
   const brief = run.sandbox?.resources;
@@ -533,15 +576,17 @@ function hostedAgent(ctx: Ctx): HostedAgent {
 
 async function hostedTask(ctx: Ctx, s: Extract<Step, { kind: "agent" }>): Promise<string> {
   const { run } = ctx;
-  if (run.hosted?.task) return run.hosted.task;
+  // One task per agent step: a token step and a later app or consent step each get their own.
+  if (run.hosted?.task && run.vars.hosted_task_step === s.id) return run.hosted.task;
   const sharePassword = Boolean(run.vault.password) && run.vars.hosted_no_secrets !== "1";
   const task = agentTask({
     app: run.app, credential: s.credential, email: run.identity?.email || "", accountExists: run.vars.account_exists === "1",
     passwordAlias: sharePassword ? "account_password" : undefined, startUrl: s.startUrl, hints: s.hints, docs: s.docs,
     values: { first_name: run.vars.first_name, last_name: run.vars.last_name, company: run.vars.company, app_name: run.vars.app_name, workspace_name: run.vars.workspace_name, redirect_uri: run.vars.redirect_uri, dev_url: run.vars.dev_url },
-    scopes: run.playbook.oauth.scopes,
+    scopes: run.playbook.oauth.scopes, token: s.token ? { what: s.token.what, where: s.token.where } : undefined,
   });
   run.hosted = { runs: 0, ...run.hosted, task };
+  run.vars.hosted_task_step = s.id;
   return task;
 }
 
@@ -705,6 +750,19 @@ async function hostedResult(ctx: Ctx, s: Extract<Step, { kind: "agent" }>, a: Ag
     run.vars[`retry:${s.id}`] = "1";
     pause(run, { kind: "human", step: s.id, reason: `The hosted agent stopped at a mandatory check it must not solve: ${run.vars.hosted_wall}. Do that step in the live view${run.browser?.liveUrl ? "" : " (Browser Use's live view)"}, then press Continue; the agent carries on in the same browser.`, blocker: run.vars.hosted_wall }, "handoff");
     return "pause";
+  }
+  if (s.token && a.status === "done") {
+    // A token step: store the token for the API or DCR call that comes next, and for later runs.
+    if (!a.token) {
+      pause(run, { kind: "human", step: s.id, reason: `The hosted agent finished but didn't return ${s.token.what}. Generate it in the live view and paste it below. It goes straight to the vault.${notes}`, field: { into: s.token.into, secret: true, label: s.token.what } }, "handoff");
+      return "pause";
+    }
+    ctx.seen.add(a.token); if (a.refreshToken) ctx.seen.add(a.refreshToken);
+    await store(ctx, s.token.into, a.token, true);
+    if (a.refreshToken && s.token.refreshInto) await store(ctx, s.token.refreshInto, a.refreshToken, true);
+    if (a.tokenScheme) run.vars.token_scheme = a.tokenScheme;
+    log(run, "step", `${s.title}: done in ${run.hosted?.runs || 1} hosted run(s). The token went straight to the vault; the next step creates the app through the API with it${s.token.into.startsWith("shared:") ? ", and later runs reuse it with no browser" : ""}.${notes}`, s.id, ctx.seen);
+    return "done";
   }
   const need = s.credential === "api_key" ? (a.apiKey ? [] : ["API key"]) : [a.clientId ? "" : "client ID", a.clientSecret ? "" : "client secret"].filter(Boolean);
   if (a.status === "done" && !need.length) {
@@ -971,6 +1029,11 @@ async function runStep(ctx: Ctx, s: Step): Promise<Outcome> {
       catch (e) {
         // DCR that needs an initial access token, or issues only public clients: in full automation the
         // hosted browser agent creates the app in the console instead. No person needed for the switch.
+        if (s.handler === "dcrRegister" && run.mode === "auto" && deps.hosted && /initial access token/i.test((e as Error).message) && !run.vars.dcr_token_tried) {
+          // First, the hosted agent fetches a token the registration endpoint accepts; then this step runs again.
+          insertDcrTokenStep(run, (e as Error).message);
+          return "wait";
+        }
         if (s.handler === "dcrRegister" && run.mode === "auto" && deps.hosted && /initial access token|public client/i.test((e as Error).message)) {
           switchToHosted(run, (e as Error).message);
           return "wait";
@@ -1120,7 +1183,12 @@ const HANDLERS: Record<string, (ctx: Ctx) => Promise<void>> = {
       token_endpoint_auth_method: run.playbook.oauth.clientAuth === "basic" ? "client_secret_basic" : "client_secret_post",
       scope: run.playbook.oauth.scopes.join(" "), client_uri: run.vars.dev_url,
     };
-    const res = await deps.http(endpoint, { method: "POST", headers: { "content-type": "application/json", accept: "application/json" }, body: JSON.stringify(body) });
+    // A token the hosted agent fetched for this endpoint (shared per vendor), with its scheme if not Bearer.
+    const iat = await getSecret(vaultName(run.slug, run.id, "shared:dcr_token"));
+    if (iat) ctx.seen.add(iat);
+    const headers: Record<string, string> = { "content-type": "application/json", accept: "application/json" };
+    if (iat) headers.authorization = `${run.vars.token_scheme || "Bearer"} ${iat}`;
+    const res = await deps.http(endpoint, { method: "POST", headers, body: JSON.stringify(body) });
     const j = (await res.json().catch(() => ({}))) as Record<string, unknown>;
     if (res.status === 401 || res.status === 403) throw new Error(`the registration endpoint wants an initial access token (${res.status}${j.error ? ` ${j.error}` : ""}); use the browser route for ${run.app}`);
     if (!res.ok || !j.client_id) throw new Error(`registration failed: ${res.status} ${String(j.error_description || j.error || "").slice(0, 120)}`);
