@@ -222,3 +222,20 @@ test("human in the loop on a brief-built plan: its steps are planned only when t
   assert.ok(!started.steps.some((s) => s.id === "plan-later"));
   assert.ok(started.steps.some((s) => s.kind === "verify"));
 });
+
+test("DCR refused (Okta: initial access token needed): full automation switches to the hosted agent, nobody is asked", async () => {
+  const { mockHttp } = await import("../lib/provision/mock");
+  const http = async (url: string, init?: RequestInit) => (/\/oauth\/register$/.test(url) && init?.method === "POST"
+    ? new Response(JSON.stringify({ errorCode: "E0000006", errorSummary: "You do not have permission" }), { status: 403, headers: { "content-type": "application/json" } })
+    : mockHttp(url, init));
+  const agent = scripted([done()]);
+  const deps = { ...defaultDeps(), http, hosted: agent, sandboxIo: tdoIo as never, dcrFetch: tdoMeta };
+  const run = await createRun({ app: "Tdo", baseUrl: BASE, autoStart: true }, deps);
+  assert.equal(run.strategy, "dcr");
+  const end = await drive(run.id, deps);
+  assert.equal(end.status, "verified", end.events.map((e) => e.text).join("\n"));
+  assert.equal(end.strategy, "browser");
+  assert.ok(end.events.some((e) => /Switched to the hosted browser agent/.test(e.text)));
+  assert.deepEqual(end.steps.map((s) => s.id).filter((id) => id !== "sandbox-check"), ["identity", "hosted-agent", "verify"]);
+  assert.match(agent.tasks[0], /Create an OAuth app named/);
+});

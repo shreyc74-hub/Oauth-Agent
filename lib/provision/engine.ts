@@ -472,6 +472,21 @@ function wallPause(ctx: Ctx, s: Step, b: { kind: string; detail: string }): Outc
 const HOSTED_MAX_RUNS = 8;
 const HOSTED_RUN_MS = 20 * 60_000;
 
+/** DCR didn't work for this vendor: replace the remaining steps with the hosted browser route. */
+function switchToHosted(run: Run, why: string) {
+  const brief = run.sandbox?.resources;
+  const base: Playbook = brief
+    ? { ...briefPlaybook({ name: run.app, slug: run.slug }, brief, { credential: "oauth" }, run.dcr?.endpoints), oauth: run.playbook.oauth }
+    : { ...run.playbook, strategy: "browser" };
+  const hosted = withHostedSteps(base, run.sandbox).steps.auto.filter((st) => st.id !== "sandbox-check");
+  const done = run.playbook.steps.auto.slice(0, run.cursor);
+  run.playbook = { ...run.playbook, strategy: "browser", steps: { ...run.playbook.steps, auto: [...done, ...hosted] } };
+  run.strategy = "browser";
+  run.steps = [...run.steps.slice(0, run.cursor), ...hosted.map((st) => ({ id: st.id, title: st.title, kind: st.kind, state: "todo" as const }))];
+  if (run.assessment) run.assessment = { ...run.assessment, route: { method: "Hosted browser agent", detail: `Dynamic Client Registration was refused (${why.slice(0, 120)}), so the hosted browser agent creates the app in the console.`, executable: true } };
+  log(run, "info", `Dynamic Client Registration didn't work for ${run.app}: ${why}. Switched to the hosted browser agent: it signs up and creates the OAuth app in the console. No person needed.`);
+}
+
 /** Full automation's steps when the hosted agent does the browser work: identity, agent, verify. */
 export function withHostedSteps(p: Playbook, sandbox?: SandboxCheck): Playbook {
   const auto = p.steps.auto;
@@ -887,7 +902,16 @@ async function runStep(ctx: Ctx, s: Step): Promise<Outcome> {
       }
       const h = HANDLERS[s.handler];
       if (!h) throw new Error(`unknown handler ${s.handler}`);
-      await h(ctx);
+      try { await h(ctx); }
+      catch (e) {
+        // DCR that needs an initial access token, or issues only public clients: in full automation the
+        // hosted browser agent creates the app in the console instead. No person needed for the switch.
+        if (s.handler === "dcrRegister" && run.mode === "auto" && deps.hosted && /initial access token|public client/i.test((e as Error).message)) {
+          switchToHosted(run, (e as Error).message);
+          return "wait";
+        }
+        throw e;
+      }
       return "done";
     }
     case "agent": return hostedStep(ctx, s);
