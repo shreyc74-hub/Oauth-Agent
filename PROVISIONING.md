@@ -20,21 +20,24 @@ A tracker row per run goes to a Google Sheet: status, sandbox, masked client ID,
 
 **Scope decision.** This covers test credentials. Production approval (Google's verification with demo videos and documents, Slack's marketplace review, HubSpot's listing) is flagged per app with what a person has to submit. Automating those would mean an agent filling legal and security forms on a company's behalf, which it shouldn't.
 
+**Status at a glance (2026-11-16).** 39 runs on the deployed app. Full automation through the hosted browser agent verified 7 apps end to end with nobody involved (Deepgram, Typeform, Zoom, Slack twice, ClickUp, Mailchimp), in 2 to 17 minutes each, and created the app or key in 6 more. Human in the loop is built and tested offline but has not completed a live run. Most remaining failures come from the agent's identity (a shared public email domain, bot checks), not from screens it can't handle. Details: [Live results](#live-results).
+
 ## Try it
 
 - **Demo mode** (no accounts): `PROVISION_MOCK=1 npm run dev`, open `/provision`. The browser, inbox and provider APIs are simulated; the plans, state machine, pauses, approvals, vault writes, reveal logging and sheet rows are the real code.
 - **Real runs:** set the keys in [Setup](#setup), then use `/provision` or the terminal: `npm run provision -- linear` (add `--auto` for full automation).
-- **Tests:** `npm test` (155 tests, all offline, including the sandbox check and use-case scopes).
+- **Tests:** `npm test` (194 tests, all offline, including the sandbox check, use-case scopes and the hosted browser route).
 
-## How an app gets its OAuth app: three strategies
+## How an app gets its OAuth app: four routes
 
 Browser automation is the fallback, not the strategy.
 
 | Strategy | When | Example in this build |
 |---|---|---|
-| **API** | The provider lets you create apps through an API | Slack: `apps.manifest.create` returns the client ID and secret in the response. The only browser work is a one-time bootstrap of an app configuration token, kept fresh with `tooling.tokens.rotate` and reused by every later run. |
-| **Browser** | No API, but a stable console | Linear: no API for OAuth apps, so the agent fills the console form. Tested by hand on Oct 28 (see `attempts/linear.md`). |
-| **Human** | The step needs a person by policy or law | Captchas, phone checks, payment, signing an acceptable-use policy, production review. |
+| **DCR** | The vendor's OAuth server accepts self-registration (RFC 7591) | One POST creates the app. If the endpoint wants a token, the hosted browser agent fetches one first; if it still refuses (Typeform only accepts trusted redirect domains), the run falls back to the console automatically. |
+| **API** | The provider lets you create apps through an API | Slack: `apps.manifest.create` returns the client ID and secret in the response. The only browser work is a one-time bootstrap of an app configuration token, done by the hosted browser agent, kept fresh with `tooling.tokens.rotate` and reused by every later run, which then needs no browser to create the app. |
+| **Browser** | No API, but a self-serve console | The hosted browser agent (Browser Use) signs up and creates the app in the console from the research. Verified live: Zoom, ClickUp, Mailchimp, Typeform. |
+| **Human** | The step needs a person by policy or law | Phone checks, payment, push-app MFA, bot checks the solver can't pass, production review. |
 
 **Choosing the mode last.** Picking human in the loop or full automation before the agent knows the vendor would decide how a person gets involved without knowing what the job is. So a run is created research-first and stops at "Ready to start" with the findings. The agent recommends a mode: full automation when the plan is tested or from the vendor's docs and the agent's inbox is configured, a person when the plan is generated and unverified or a sandbox wasn't confirmed. The person picks and starts.
 
@@ -50,7 +53,7 @@ Browser automation is the fallback, not the strategy.
 
 HubSpot sits in between: on the 2025.2+ developer platform apps are projects deployed with the CLI (`hs project upload`). A worker running the CLI with a personal access key is the API path; the browser path in this build is the fallback, and it hands over if HubSpot insists on the CLI. HubSpot is also the one demo provider with a real sandbox: developer test accounts.
 
-Apps without a hand-written playbook are planned by Claude from their guide, checked by code (`validatePlaybook`: https endpoints, secrets only through variables, client ID and secret captured, a verify step, no agent identity in human mode) and marked **unverified** until a run succeeds. No guide, no plan: when an app has no guide, the provision page runs the research agent first, saves the guide, then plans from it.
+Apps without a hand-written playbook get their plan from the research brief. On the DCR and hosted-browser routes that plan is built in code with no model call; human-in-the-loop steps (click-by-click) are planned by Claude only when someone picks that mode. Every plan is checked by code (`validatePlaybook`: https endpoints, secrets only through variables, credentials produced, a verify step, no agent identity in human mode) and marked unverified until a run succeeds. When the research brief misses the OAuth endpoints and the vendor publishes no metadata (Figma), one small follow-up call looks up just those.
 
 ## Step one: is a self-serve test setup possible?
 
@@ -88,13 +91,15 @@ In production, nobody should have to type the use case. The toolkit factory alre
 
 | | Human in the loop | Full automation |
 |---|---|---|
-| Developer account | You sign in, in the live browser | Agent signs up with its own inbox (AgentMail) and a generated password |
-| Email codes and magic links | You | Agent reads its inbox with code (not the model) |
-| Authenticator 2FA | You | Agent keeps the TOTP seed in the vault and makes its own codes |
+| Browser | Our Browserbase browser (Stagehand), live view in the page | Browser Use through Composio (hosted browser agent), live view linked from the page |
+| Developer account | You sign in, in the live browser | Agent signs up with the shared inbox (AgentMail) and a password from the vault |
+| Email codes and magic links | You | Code reads the inbox and resumes the same browser with the code or link |
+| Authenticator 2FA | You | Agent picks email or an authenticator app; the setup key goes to the vault and code generates the codes |
 | Creates, submits, consent | Agent, after you approve each one | Agent |
-| Captcha, phone/SMS, device approval, payment | You | You (the run pauses with a live-browser link) |
+| Captchas | You (solving is off in our browser) | Browser Use's solver, allowed for test accounts; a person if it still blocks |
+| Phone/SMS, push-app MFA, payment | You | You (the run pauses with the live view) |
 
-The only difference between the modes is who handles identity and approvals. Walls stay with a person in both. Browserbase's automatic captcha solving is switched off on purpose.
+**Status:** full automation is verified live on 7 apps. Human in the loop has been tested offline only: its live attempts all predate the switch to the hosted browser agent, and none reached verified.
 
 ## Full automation's browser route: a hosted browser agent
 
@@ -118,7 +123,7 @@ Human in the loop keeps the Browserbase live browser. `PROVISION_BROWSER_AGENT=s
 
 **What this costs in trust:** the client secret or API key passes through Browser Use's run result (and so Browser Use's records) on its way to our vault. Attaching our own code to Browser Use's browser to read the secret directly would avoid that; it was not reachable in testing and is a follow-up.
 
-**What is tested:** Browser Use was run by hand through Composio on 2026-11-15 for Zoom (OAuth app; two emailed codes), Linear (OAuth app; Cloudflare passed on its own) and the Anthropic Console (API key; emailed sign-in link). Each created the account and the app or key with no person, on Composio's free shared Browser Use account (gpt-5.6-luna). The secrets were deliberately not returned in those tests, so none of them was verified end to end. This app's own Composio client was then run live with a Composio consumer key (`ck_…`) through Composio's MCP endpoint (`connect.composio.dev/mcp`): reading runs, starting a run with a bound secret (the free account accepts them), reading the result and finding the live view, all at $0.00. A full provisioning run from the app (email resume, vault, verification through the hosted browser) is tested offline only.
+**How the app reaches Browser Use:** with a Composio consumer key (`ck_…`) through Composio's MCP endpoint (`connect.composio.dev/mcp`), the same route Composio's own MCP clients use. It reaches Composio's free shared Browser Use account (model `gpt-5.6-luna`, $5 cap per run, bound secrets accepted, Browser Use's built-in mailbox not available). Every call in the live tests was charged $0.00 under a limited-time offer. Live results are under [Live results](#live-results).
 
 ## Lean research (cost)
 
@@ -169,11 +174,13 @@ A run is a state machine stored in Supabase after every step, so it survives ser
 
 The backbone is a workflow, on purpose. Code decides the order of steps, keeps the run state, stores secrets, stops for approvals and runs verification. That is what makes the vault boundary, the approvals and the audit log dependable.
 
-The model makes decisions in four places:
+The model makes decisions in these places:
 
 | Where | What the model decides | What code still controls |
 |---|---|---|
-| Planner | The playbook for an app with no hand-written one | Structural checks; plan marked unverified |
+| Research | Sandbox, credential types, endpoints and steps from the vendor's pages | Quotes checked against the pages, sign-up page probed, DCR metadata read |
+| Hosted browser agent (Browser Use) | Every click of sign-up, app creation and consent in full automation | The task, the rules, email codes and links, walls, the vault, verification |
+| Planner | The human-in-the-loop playbook for an app with no hand-written one | Structural checks; plan marked unverified |
 | Each browser step | What to click and type on the page (Stagehand) | The step's goal, order and approval point |
 | Wall check | Whether a captcha, phone check or similar is showing | What happens next: a handoff |
 | **Recovery agent** | How to reach a failed step's goal another way | Tools, budget, allowed sites, approvals, secrets |
@@ -196,12 +203,9 @@ Runs used to move forward only while their page was open (the page calls `/advan
 
 ## Verification
 
-When the identity call's reply lacks the planned field, a common identity field (login, email, name, account name, id) names the account; a successful identity call counts even without one. When the identity call itself fails (for example a POST-only endpoint), a working use-case call proves the token instead. Client IDs are public and stay readable in the log.
-
-
 A run is **verified** only if all of this works against the sandbox:
 
-1. Open the authorize URL with a random `state`, approve consent in the hosted browser.
+1. Open the authorize URL with a random `state` and a PKCE S256 challenge (Airtable requires PKCE; servers that don't use it must ignore it), approve consent in the hosted browser, choosing the workspace the app belongs to.
 2. Read the code from the browser's address bar (checking `state`), or from the callback route as a backup.
 3. Exchange the code at the token endpoint. Slack's `ok:false` answers are treated as failures.
 4. Call an identity endpoint (Linear `viewer`, Slack `auth.test`, HubSpot account details).
@@ -210,6 +214,8 @@ A run is **verified** only if all of this works against the sandbox:
 
 Otherwise the run ends as **needs review** with the reason.
 
+When the identity call's reply lacks the planned field, a common identity field (login, email, name, account name, id) names the account; a successful identity call counts even without one. When the identity call itself fails (for example a POST-only endpoint), a working use-case call proves the token instead. Client IDs are public and stay readable in the log.
+
 ## Setup
 
 | What | Why | Env |
@@ -217,16 +223,69 @@ Otherwise the run ends as **needs review** with the reason.
 | Supabase | Runs and the vault. Run `supabase/schema.sql`, then `supabase/provision.sql`. | `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` |
 | Browserbase | Hosted browser with live view | `BROWSERBASE_API_KEY`, `BROWSERBASE_PROJECT_ID` |
 | Anthropic | Stagehand's model and planning | `ANTHROPIC_API_KEY` (optional `STAGEHAND_MODEL`) |
-| AgentMail | Agent inboxes, full automation only | `AGENTMAIL_API_KEY` |
+| AgentMail | Agent inboxes, full automation only; one shared inbox for every run | `AGENTMAIL_API_KEY`, `PROVISION_INBOX_ID` |
+| Background driver | Vercel cron advancing runs every minute (`vercel.json`) | optional `CRON_SECRET` |
+| Policy switches | Captchas on test accounts (`allow_test` or `handover`), developer terms, research budget | `PROVISION_CAPTCHA`, `PROVISION_ACCEPT_TERMS`, `PROVISION_RESEARCH` |
 | Composio (Browser Use) | Hosted browser agent for full automation. Connect Browser Use in Composio for the user below. | `COMPOSIO_API_KEY`, optional `COMPOSIO_USER_ID`, `COMPOSIO_CONNECTED_ACCOUNT_ID`, `BROWSER_USE_MODEL` |
 | Google service account | Tracker sheet (share the sheet with its email as Editor) | `GOOGLE_SERVICE_ACCOUNT_JSON`, `GOOGLE_SHEET_ID` |
 | Access (optional) | Lock runs and reveals behind a code; open when unset | `PROVISION_ACCESS_CODE`, `PROVISION_ADMIN_TOKEN` |
 | Redirect URI | `<this>/api/oauth/callback` on every app | `PUBLIC_BASE_URL` |
 
+## Live results
+
+39 runs on the deployed app, 2026-11-15 and 2026-11-16, all with the shared inbox `shrey-4990@agentmail.to`. "Old engine" is our own step-by-step browser (Browserbase and Stagehand), used before the hosted browser agent existed.
+
+| | Runs | Verified | App or key created, not verified | Stopped before creating anything |
+|---|---|---|---|---|
+| Old engine | 13 | 0 | 0 | 13 |
+| Hosted browser agent (Browser Use through Composio) | 26 | 7 | 6 | 13 |
+| Total | 39 | 7 | 6 | 26 |
+
+### Verified (full automation, nobody involved)
+
+| App | Route | Time from start | Notes |
+|---|---|---|---|
+| Deepgram | API key | 2.1 min | One emailed code; key checked with its `Token` prefix |
+| Typeform | DCR, then console | 5.5 min | DCR refused our redirect domain; the run switched to the console by itself. Use-case call ok |
+| Zoom | Console | 8.1 min | Two emailed codes (sign-up, then an "unusual sign-in" code) |
+| Slack | API with a token from the hosted agent | 8.2 min | App created by `apps.manifest.create` 4 seconds after the token arrived. Use-case call and refresh ok |
+| ClickUp | Console | 8.9 min | Vendor has no scopes. Use-case call ok |
+| Mailchimp | Console | 9.9 min | |
+| Slack | Console (before the token route) | 16.5 min | Use-case call ok |
+
+On a second Slack run the app was created through the API in 42 seconds with no browser at all; its consent then failed on the workspace bug below.
+
+### Why the others stopped
+
+| Category | Runs | Apps | State |
+|---|---|---|---|
+| Old engine couldn't handle the screen (one action per step, six-box codes, menus, captcha solving off) | 9 | Linear (3), HubSpot, DocuSign (2), Zoom, Slack, Workday | Replaced by the hosted browser agent |
+| Email identity: the `agentmail.to` domain was refused, or no email arrived | 6 | Notion, Miro, Zoho, Asana, Spotify, Cohere | Open: needs an inbox on a domain Composio owns |
+| Bot checks the solver couldn't pass | 5 | DocuSign (Arkose Labs), Salesforce (reCAPTCHA scoring), Tavily, Exa, Figma | Open: a person signs up once, or a less suspicious identity |
+| Our verification bugs after the app was created | 5 | Mailchimp (identity field), Airtable (PKCE), Slack (wrong workspace), Todoist (2) | Fixed, except Todoist: its API refuses tokens from DCR clients (403), cause not confirmed |
+| Our routing and setup bugs | 4 | Okta (no DCR fallback), Typeform (blank DCR error), Slack (old sign-up steps planned again), Spotify (Browserbase out of minutes) | Fixed (the last one was billing) |
+| Credential type not supported | 1 | Firecrawl (OAuth issues only public clients, no secret) | Open: prefer the API key in that case |
+| Forced device MFA | 1 | Okta (Okta Verify push app only, no authenticator-app option) | A person once |
+| Vendor errors | 1 | AssemblyAI ("password expired", then HTTP 500 at sign-in) | |
+
+Patterns: developer and productivity tools with self-serve consoles work (Slack, ClickUp, Zoom, Typeform, Mailchimp). AI APIs that give free credits guard sign-up hard (Tavily, Exa, AssemblyAI, Cohere); of those only Deepgram got through. Every bug found live was fixed in a way that applies to all vendors.
+
+**Hand-driven tests through Browser Use** (from a chat, before the hosted route was built): account and app or key created for Zoom, Linear and the Anthropic Console; Salesforce (twice) stopped at its bot check; a fresh Okta account stopped at Okta Verify.
+
 ## What is tested and what isn't
 
-- **Tested offline (23 tests):** recovery of a failed browser step and of a failed capture with a fix suggested; no secret in the agent's transcript even when the page shows one; the agent's own writes stopping for approval; walls, budget and give-up ending in a handoff; staying on the provider's sites; both modes end to end for Linear, Slack and HubSpot plans; approvals before every write in human mode and none in auto; captcha handoff and retry of the same step; Slack bootstrap skipped on the second run; pasting a value straight into the vault; cancel; callback state matching; plan checks; secrets absent from run records and sheet rows; TOTP against the RFC 6238 vector; email code and link parsing; access and reveal rules.
-- **Not yet run against the live providers.** The Linear and Slack console flows were walked by hand in the first assignment; the HubSpot playbook is from docs. The first live runs will correct instructions the way the first assignment's setup attempts corrected the guides.
+- **Live:** full automation on the hosted browser route, as above. The Composio client (MCP endpoint, bound secrets, live view), the background driver, email resume, PKCE (Airtable, before and after), the DCR fallback and the API-token route (Slack) all ran on the deployed app.
+- **Offline only (194 tests):** human in the loop end to end; the old engine's recovery agent; TOTP setup and reuse (live, Okta offered no authenticator-app option, and the agent correctly stopped); DCR with a fetched initial access token; scopes for vendors with none (ClickUp ran live afterwards); the pasted-value handover.
+- **Not measured:** cost per run (tokens, searches, Browser Use). Research was cut to one small call; the saving is an estimate.
+
+## Known limits
+
+- **Email identity.** One public-domain inbox is refused or ignored by about a quarter of vendors, and on Asana it would have joined an existing organization for that domain. An inbox on a domain Composio owns is the main fix.
+- **Secrets pass through Browser Use.** The client secret, API key or authenticator setup key travels in Browser Use's run result on its way to the vault, so it sits in Browser Use's records. Reading the value off the page with our own code would avoid that; the hosted browser wasn't reachable for that in testing.
+- **Captchas.** Browser Use solves them for test accounts by decision; vendor terms and account bans are the risk.
+- **Free tier.** Composio's free shared Browser Use account is a limited-time offer and allows two models.
+- **Cancel race.** A step already running when a run is cancelled can save over the cancellation.
+- **Restricted DCR.** Some "DCR on the main server" vendors accept only trusted (MCP) clients or redirect domains (Typeform, likely Todoist); the run falls back to the console, but the survey counts them as DCR.
 
 ## What I'd want to decide with the team before production
 
@@ -243,7 +302,10 @@ Otherwise the run ends as **needs review** with the reason.
 - `lib/provision/types.ts` playbook, step and run shapes
 - `lib/provision/playbooks/` Linear (browser), Slack (API), HubSpot (browser, sandbox)
 - `lib/provision/planner.ts` playbook lookup, Claude planner for other apps, plan checks
-- `lib/provision/engine.ts` the state machine, handoffs, approvals, verification, Slack handler
+- `lib/provision/engine.ts` the state machine, handoffs, approvals, verification, DCR and Slack handlers, hosted-agent steps
+- `lib/provision/hosted.ts` the hosted browser agent: Composio client (MCP or REST), task writing, result parsing
+- `lib/provision/sandbox.ts`, `assess.ts`, `dcr.ts`, `scopes.ts` research, credential and route choice, DCR probe, use-case scopes
+- `app/api/cron/advance` the background driver
 - `lib/provision/recover.ts` the recovery agent: tools, guardrails, Claude and scripted brains
 - `lib/provision/browser.ts` Browserbase + Stagehand driver (variables, masked capture, wall detection)
 - `lib/provision/vault.ts` Supabase Vault (memory fallback for local dev), redaction
