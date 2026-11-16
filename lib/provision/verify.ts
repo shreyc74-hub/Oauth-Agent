@@ -1,19 +1,28 @@
 // Proof that the credentials work: a real authorization against the sandbox, a token exchange,
 // one identity call, and a refresh. A run is only "verified" if all of that succeeds.
-import { randomBytes } from "node:crypto";
+import { createHash, randomBytes } from "node:crypto";
 import type { OAuthSpec } from "./types";
 
 export type Http = (url: string, init?: RequestInit) => Promise<Response>;
 
 export function newState(): string { return randomBytes(18).toString("base64url"); }
 
-export function authorizeUrl(o: OAuthSpec, clientId: string, redirectUri: string, state: string): string {
+/** PKCE (RFC 7636) code verifier: 43 characters. */
+export function newVerifier(): string { return randomBytes(32).toString("base64url"); }
+export const challengeFor = (verifier: string) => createHash("sha256").update(verifier).digest("base64url");
+
+/**
+ * The consent URL. With a verifier it carries a PKCE S256 challenge: some vendors require it (Airtable),
+ * and servers must ignore parameters they don't use (RFC 6749 3.1), so it is safe to send everywhere.
+ */
+export function authorizeUrl(o: OAuthSpec, clientId: string, redirectUri: string, state: string, verifier?: string): string {
   const u = new URL(o.authorizeUrl);
   u.searchParams.set("client_id", clientId);
   u.searchParams.set("redirect_uri", redirectUri);
   u.searchParams.set("response_type", "code");
   u.searchParams.set("scope", o.scopes.join(o.scopeSeparator ?? " "));
   u.searchParams.set("state", state);
+  if (verifier) { u.searchParams.set("code_challenge", challengeFor(verifier)); u.searchParams.set("code_challenge_method", "S256"); }
   for (const [k, v] of Object.entries(o.extraAuthorizeParams || {})) u.searchParams.set(k, v);
   return u.toString();
 }
@@ -43,8 +52,8 @@ async function tokenCall(http: Http, o: OAuthSpec, params: Record<string, string
   return { access, refresh: j.refresh_token ? String(j.refresh_token) : undefined, raw: j };
 }
 
-export const exchangeCode = (http: Http, o: OAuthSpec, code: string, redirectUri: string, clientId: string, secret: string) =>
-  tokenCall(http, o, { grant_type: "authorization_code", code, redirect_uri: redirectUri }, clientId, secret);
+export const exchangeCode = (http: Http, o: OAuthSpec, code: string, redirectUri: string, clientId: string, secret: string, verifier?: string) =>
+  tokenCall(http, o, { grant_type: "authorization_code", code, redirect_uri: redirectUri, ...(verifier ? { code_verifier: verifier } : {}) }, clientId, secret);
 
 export const refreshTokens = (http: Http, o: OAuthSpec, refresh: string, clientId: string, secret: string) =>
   tokenCall(http, o, { grant_type: "refresh_token", refresh_token: refresh }, clientId, secret);

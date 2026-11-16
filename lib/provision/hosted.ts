@@ -215,7 +215,7 @@ export function continueTask(base: string, why: { code?: string; link?: string; 
 }
 
 /** Pure: consent for verification, in the browser that is already signed in. */
-export function consentTask(app: string, url: string, redirectUri: string, account?: { email: string; exists: boolean; passwordAlias?: string; first_name: string; last_name: string; company: string }): string {
+export function consentTask(app: string, url: string, redirectUri: string, account?: { email: string; exists: boolean; passwordAlias?: string; first_name: string; last_name: string; company: string }, workspace?: string): string {
   const signIn = !account
     ? `If asked, sign in with the same account (use the email code or link option if needed).`
     : account.exists
@@ -223,7 +223,7 @@ export function consentTask(app: string, url: string, redirectUri: string, accou
       : `There is no ${app} account yet: on the sign-in page choose sign up, and create a free account with ${account.email}${account.passwordAlias ? ` and the password from the secret ${account.passwordAlias}` : " and a strong password you generate"} (name ${account.first_name} ${account.last_name}, company ${account.company}; skip optional prompts and onboarding). Never use Google or other single sign-on. Then come back to the authorization URL above if the sign-up does not return to it.`;
   return [
     `Open this ${app} authorization URL: ${url}`,
-    `${signIn} If an email code or link is needed, STOP with status "waiting_for_email". ${MFA_RULE} If a workspace or organization must be chosen, choose the one you created. Approve / allow / authorize access for the app. ${wallRule()}`,
+    `${signIn} If an email code or link is needed, STOP with status "waiting_for_email". ${MFA_RULE} If a workspace or organization must be chosen, choose ${workspace ? `"${workspace}" (the app belongs to it; switch to it if you are signed in to another one)` : "the one you created"}. Approve / allow / authorize access for the app. ${wallRule()}`,
     `Stop as soon as the browser reaches ${redirectUri} (that page may say "Authorization received"). Do not copy the code from the address bar into your answer.`,
     `Final answer: JSON only, exactly this shape: ${RESULT_SHAPE}`,
   ].join("\n\n");

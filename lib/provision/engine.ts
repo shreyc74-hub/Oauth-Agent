@@ -20,7 +20,7 @@ import { putSecret, getSecret, hasSecret, vaultName, redact, recordReveal } from
 import { saveRun, getRun } from "./runs";
 import { seedFrom, totp } from "./totp";
 import { browserUseViaComposio, hostedConfigured, agentTask, continueTask, consentTask, parseAgentResult, vendorDomains, type HostedAgent, type AgentResult } from "./hosted";
-import { authorizeUrl, codeFromUrl, exchangeCode, newState, refreshTokens, whoami, type Http } from "./verify";
+import { authorizeUrl, codeFromUrl, exchangeCode, newState, newVerifier, refreshTokens, whoami, type Http } from "./verify";
 import { PLAYBOOKS, planFromGuide, mockPlanFromGuide, validatePlaybook, guideFromBrief, briefPlaybook, type PlanTarget } from "./planner";
 import { slackManifest } from "./playbooks/slack";
 import { upsertRow, sheetConfigured } from "./sheets";
@@ -374,6 +374,9 @@ async function variablesFor(run: Run, text: string, extra: Record<string, string
 async function markAccountExists(run: Run) {
   if (!process.env.PROVISION_INBOX_ID || !run.identity?.email || run.vars.account_exists === "1" || run.vars.hosted_no_secrets === "1") return;
   await putSecret(vaultName(run.slug, run.id, "shared:account_email"), run.identity.email, `${run.app} account exists for ${run.identity.email}`).catch(() => undefined);
+  // The workspace (or org) this account works in: apps and tokens from this run belong to it, so later
+  // runs must choose it at consent (Slack refuses a non-distributed app in another workspace).
+  if (run.vars.workspace_name) await putSecret(vaultName(run.slug, run.id, "shared:workspace_name"), run.vars.workspace_name, `${run.app} workspace for ${run.identity.email}`).catch(() => undefined);
   run.vars.account_exists = "1";
 }
 
@@ -819,7 +822,7 @@ async function hostedStep(ctx: Ctx, s: Extract<Step, { kind: "agent" }>): Promis
 /** The consent task: in the job's browser when there is one, else with the account details to sign in or sign up. */
 function consentFor(run: Run, url: string): string {
   const account = run.hosted?.sessionId ? undefined : { email: run.identity?.email || "", exists: run.vars.account_exists === "1", passwordAlias: run.vault.password && run.vars.hosted_no_secrets !== "1" ? "account_password" : undefined, first_name: run.vars.first_name, last_name: run.vars.last_name, company: run.vars.company };
-  return consentTask(run.app, url, run.vars.redirect_uri, account);
+  return consentTask(run.app, url, run.vars.redirect_uri, account, run.vars.workspace_name);
 }
 
 /** Verification consent in the hosted browser. The callback route catches the code. */
@@ -869,7 +872,11 @@ async function runStep(ctx: Ctx, s: Step): Promise<Outcome> {
         if (!password) { password = `${randomBytes(15).toString("base64url")}!a1`; await putSecret(pwName, password, `${run.app} login for ${inbox.email}`); }
         ctx.seen.add(password);
         run.vault.password = pwName;
-        if (exists) run.vars.account_exists = "1";
+        if (exists) {
+          run.vars.account_exists = "1";
+          const ws = await getSecret(vaultName(run.slug, run.id, "shared:workspace_name")).catch(() => null);
+          if (ws) run.vars.workspace_name = ws;
+        }
         log(run, "step", exists
           ? `Using the shared mailbox ${inbox.email}. It already has a ${run.app} account, so the agent signs in instead of signing up.`
           : `Using the shared mailbox ${inbox.email}. First ${run.app} account for it: the agent signs up; the password goes straight into the vault and is reused by later runs.`, s.id);
@@ -1112,8 +1119,13 @@ async function verifyStep(ctx: Ctx, s: Step): Promise<Outcome> {
   }
   if (ctx.deps.hosted && run.mode === "auto") {
     // The hosted agent's browser is signed in already: it approves consent; the callback route catches the code.
-    if (!run.verify) { run.verify = { state: newState(), verifier: "" }; run.public.authorizeUrl = authorizeUrl(o, clientId, run.vars.redirect_uri, run.verify.state); }
-    const c = await hostedConsent(ctx, s, run.public.authorizeUrl || authorizeUrl(o, clientId, run.vars.redirect_uri, run.verify.state));
+    // A run from before PKCE (no verifier) gets a fresh consent URL when it retries.
+    if (!run.verify || (!run.verify.verifier && !run.verify.code)) {
+      run.verify = { state: newState(), verifier: newVerifier() };
+      run.public.authorizeUrl = authorizeUrl(o, clientId, run.vars.redirect_uri, run.verify.state, run.verify.verifier);
+      if (run.hosted) run.hosted.consent = false;
+    }
+    const c = await hostedConsent(ctx, s, run.public.authorizeUrl || authorizeUrl(o, clientId, run.vars.redirect_uri, run.verify.state, run.verify.verifier));
     if (c !== "code") return c;
     await markAccountExists(run);
     return finishVerify(ctx, s, run.verify.code!, clientId, secret);
@@ -1124,8 +1136,8 @@ async function verifyStep(ctx: Ctx, s: Step): Promise<Outcome> {
   if (fresh?.verify?.code && run.verify && fresh.verify.state === run.verify.state) run.verify.code = fresh.verify.code;
 
   if (!run.verify) {
-    run.verify = { state: newState(), verifier: "" };
-    const url = authorizeUrl(o, clientId, run.vars.redirect_uri, run.verify.state);
+    run.verify = { state: newState(), verifier: newVerifier() };
+    const url = authorizeUrl(o, clientId, run.vars.redirect_uri, run.verify.state, run.verify.verifier);
     run.public.authorizeUrl = url;
     await d.goto(url);
     const r = await d.act(o.consentInstruction, await variablesFor(run, o.consentInstruction));
@@ -1150,7 +1162,7 @@ async function finishVerify(ctx: Ctx, s: Step, code: string, clientId: string, s
   run.verify ??= { state: "", verifier: "" };
   ctx.seen.add(code);
   try {
-    const t = await exchangeCode(deps.http, o, code, run.vars.redirect_uri, clientId, secret);
+    const t = await exchangeCode(deps.http, o, code, run.vars.redirect_uri, clientId, secret, run.verify.verifier || undefined);
     ctx.seen.add(t.access); if (t.refresh) ctx.seen.add(t.refresh);
     await store(ctx, "access_token", t.access, true);
     if (t.refresh) await store(ctx, "refresh_token", t.refresh, true);

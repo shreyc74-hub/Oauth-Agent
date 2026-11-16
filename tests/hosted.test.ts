@@ -413,6 +413,42 @@ test("API-key-only vendor (Tavily): a guide saying 'no OAuth' doesn't stop it; t
   assert.match(agent.tasks[0], /Create an API key named/);
 });
 
+test("PKCE: the consent URL carries an S256 challenge and the token exchange its verifier (Airtable requires it)", async () => {
+  const { authorizeUrl, challengeFor } = await import("../lib/provision/verify");
+  // base64url(SHA-256(verifier)), cross-checked with Python's hashlib.
+  assert.equal(challengeFor("dBjftJeZ4CVP-mJ92K9N4BAj4GrNlNmhtrJFoKS6RDg"), "zPeJnrT2OPBdM3IutZVZynEdJEKTg4GKdlPJJ_DpmIA");
+  const { mockHttp } = await import("../lib/provision/mock");
+  const bodies: string[] = [];
+  const http = async (url: string, init?: RequestInit) => { if (init?.method === "POST" && String(init.body || "").includes("authorization_code")) bodies.push(String(init.body)); return mockHttp(url, init); };
+  const agent = scripted([done()]);
+  const deps = { ...defaultDeps(), http, hosted: agent };
+  const run = await createRun({ app: "Linear", baseUrl: BASE, autoStart: true }, deps);
+  const end = await drive(run.id, deps);
+  assert.equal(end.status, "verified");
+  const url = new URL(end.public.authorizeUrl!);
+  assert.equal(url.searchParams.get("code_challenge_method"), "S256");
+  assert.equal(url.searchParams.get("code_challenge"), challengeFor(end.verify!.verifier));
+  assert.match(bodies[0], new RegExp(`code_verifier=${end.verify!.verifier}`));
+  assert.ok(!authorizeUrl(end.playbook.oauth, "c", "https://x", "s").includes("code_challenge"), "no verifier, no challenge");
+});
+
+test("shared mailbox: a later run signs in and is told which workspace the app belongs to", async () => {
+  process.env.PROVISION_INBOX_ID = "shared-box@agentmail.to";
+  try {
+    const deps1 = { ...defaultDeps(), hosted: scripted([done()]) };
+    const first = await drive((await createRun({ app: "Linear", baseUrl: BASE, autoStart: true }, deps1)).id, deps1);
+    assert.equal(first.status, "verified");
+    const agent2 = scripted([done()]);
+    const deps2 = { ...defaultDeps(), hosted: agent2 };
+    const second = await createRun({ app: "Linear", baseUrl: BASE, autoStart: true }, deps2);
+    const end = await drive(second.id, deps2);
+    assert.equal(end.status, "verified");
+    assert.ok(end.events.some((e) => /already has a Linear account, so the agent signs in/.test(e.text)));
+    assert.equal(end.vars.workspace_name, first.vars.workspace_name);
+    assert.match(agent2.tasks[0], /already exists: sign in \(do not sign up\)/);
+  } finally { delete process.env.PROVISION_INBOX_ID; }
+});
+
 test("asked for an authenticator code with no key on file: a person enters it", async () => {
   const agent = scripted([JSON.stringify({ status: "needs_totp", totp_secret: null, notes: [] }), done()]);
   const deps = { ...defaultDeps(), hosted: agent };
