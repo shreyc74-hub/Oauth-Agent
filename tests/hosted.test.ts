@@ -271,3 +271,14 @@ test("identity call refused (405) and no use-case call: not verified, with the r
   assert.equal(end.status, "needs_review");
   assert.match(end.vars.verify_error, /Identity call failed: 405/);
 });
+
+test("shared mailbox: a run only takes its own vendor's mail (Okta must not take Mailchimp's code)", async () => {
+  const { mailFromVendor } = await import("../lib/provision/engine");
+  const okta = { words: ["okta"], domains: ["developer.okta.com", "okta.com"] };
+  assert.equal(mailFromVendor({ from: "Mailchimp <noreply@mailchimp.com>", subject: "Your code is here!" }, okta.words, okta.domains), false);
+  assert.equal(mailFromVendor({ from: "Okta <noreply@okta.com>", subject: "Push Verify Activation Email" }, okta.words, okta.domains), true);
+  assert.equal(mailFromVendor({ from: "<no-reply@integrator-123.okta.com>", subject: "Account password reset" }, okta.words, okta.domains), true);
+  assert.equal(mailFromVendor({ from: "Todoist <no-reply@notify.todoist.com>", subject: "Verify your email address" }, ["todoist"], ["todoist.com"]), true);
+  // A word only counts as a whole word: "zoom" is not in "zoomed-out newsletter" senders by accident.
+  assert.equal(mailFromVendor({ from: "news@zoomedout.example", subject: "Hi" }, ["zoom"], ["zoom.us"]), false);
+});

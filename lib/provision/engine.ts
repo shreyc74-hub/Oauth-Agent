@@ -586,6 +586,19 @@ async function pollHosted(ctx: Ctx, runId: string) {
   }
 }
 
+/**
+ * Pure: is this mail from the vendor? The sender's domain is one of the vendor's (or a subdomain of one),
+ * or the sender or subject names the vendor. The shared mailbox gets mail for every run at once, so a run
+ * must never take another vendor's code or link.
+ */
+export function mailFromVendor(m: { from: string; subject: string }, words: string[], domains: string[]): boolean {
+  const sender = (m.from.match(/@([a-z0-9.-]+)/i)?.[1] || "").toLowerCase();
+  const bases = new Set(domains.map((d) => d.toLowerCase().split(".").slice(-2).join(".")));
+  if (sender && bases.has(sender.split(".").slice(-2).join("."))) return true;
+  const text = `${m.from} ${m.subject}`.toLowerCase();
+  return words.some((w) => new RegExp(`\\b${w.replace(/[^a-z0-9]/gi, "")}\\b`, "i").test(text));
+}
+
 /** The agent stopped for an email: read the code or link from our inbox and resume the same browser. */
 async function hostedMail(ctx: Ctx, s: Extract<Step, { kind: "agent" }>, base: string): Promise<Outcome> {
   const { run, deps } = ctx;
@@ -593,12 +606,13 @@ async function hostedMail(ctx: Ctx, s: Extract<Step, { kind: "agent" }>, base: s
   const since = Number(run.vars.hosted_started || Date.now());
   const used = new Set<string>(JSON.parse(run.vars.hosted_mails || "[]"));
   const words = [run.slug.split(/[-_]/)[0], run.app.toLowerCase().split(/\s+/)[0]].filter((w) => w && w.length > 2);
+  const domains = vendorDomains([s.startUrl, ...s.docs, run.playbook.oauth.authorizeUrl, run.playbook.oauth.tokenUrl, run.sandbox?.resources?.website ? `https://${run.sandbox.resources.website}` : undefined, run.sandbox?.signupUrl]);
   const end = Math.min(ctx.deadline - 20_000, Date.now() + (deps.mock ? 0 : 60_000));
   let mail: Awaited<ReturnType<Inbox["list"]>>[number] | undefined;
   do {
     const mails = (await deps.inbox.list(run.identity.inboxId)).filter((m) => !used.has(m.id) && (!m.at || Date.parse(m.at) >= since - 60_000));
-    const late = Date.now() - since > 120_000; // after two minutes, any new mail will do
-    mail = mails.find((m) => words.some((w) => `${m.from} ${m.subject}`.toLowerCase().includes(w))) || (late ? mails[0] : undefined);
+    // One mailbox serves every run at once: only this vendor's mail, never "any new mail".
+    mail = mails.find((m) => mailFromVendor(m, words, domains));
     if (mail || Date.now() >= end) break;
     await new Promise((res) => setTimeout(res, 4000));
   } while (Date.now() < end);
