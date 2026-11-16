@@ -363,6 +363,14 @@ test("Slack: its first run's browser part (sign-up, code boxes, captcha) goes to
   const again = await createRun({ app: "Slack", baseUrl: BASE, autoStart: true }, deps);
   assert.ok(again.steps.some((s) => s.id === "manifest-create"), "with the config token stored, Slack keeps its API route");
   assert.ok(!again.steps.some((s) => s.kind === "agent"));
+  // No sign-up, code or token steps either: only the API call, then consent in the hosted browser.
+  assert.deepEqual(again.steps.map((s) => s.kind), ["identity", "api", "verify", "golive"]);
+  assert.equal(again.assessment?.route.method, "Management API (token on file)");
+  const agent2 = scripted([]);
+  const end2 = await drive(again.id, { ...deps, hosted: agent2 });
+  assert.equal(end2.status, "verified", end2.events.map((e) => e.text).join("\n"));
+  assert.equal(agent2.tasks.length, 1, "the only browser work is the consent screen");
+  assert.match(agent2.tasks[0], /authorization URL/);
 });
 
 test("DCR refuses our redirect domain (Typeform): the reason is logged and the hosted agent creates the app in the console", async () => {

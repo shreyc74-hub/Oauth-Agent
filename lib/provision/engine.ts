@@ -230,6 +230,12 @@ export async function createRun(input: { app: string; mode?: Mode; baseUrl: stri
     playbook = withHostedSteps(playbook, sandbox);
     route = { ...route, method: "Hosted browser agent", detail: `Browser Use (through Composio) signs up and creates the ${chosen === "oauth" ? "OAuth app" : "API key"} from the research. This app reads email codes for it, stores the secret in the vault and verifies it.`, executable: true };
     progress({ id: "route", label: "Browser route", state: "info", detail: "full automation uses the hosted browser agent (Browser Use via Composio)" });
+  } else if (deps.hosted && playbook.strategy === "api" && playbook.steps.auto.some((s) => BROWSERISH.has(s.kind))) {
+    // The API's token is on file (Slack's config refresh token): creating the app needs no browser at all.
+    // Sign-up and token steps go; the hosted browser only signs in for the consent screen at verification.
+    playbook = { ...playbook, steps: { ...playbook.steps, auto: playbook.steps.auto.filter((s) => !BROWSERISH.has(s.kind)) } };
+    route = { ...route, method: "Management API (token on file)", detail: `The token ${playbook.name}'s API needs is already in the vault, so the app is created with API calls only. The hosted browser signs in only to approve the consent screen at verification.`, executable: true };
+    progress({ id: "route", label: "API route", state: "info", detail: "token on file: no browser to create the app" });
   }
   const problems = validatePlaybook(playbook);
   if (problems.length) throw new Error(`Plan for ${playbook.name} failed checks: ${problems.join("; ")}`);
@@ -364,6 +370,13 @@ async function variablesFor(run: Run, text: string, extra: Record<string, string
   return out;
 }
 
+/** The hosted agent finished work inside the vendor account: with the shared mailbox, later runs sign in. */
+async function markAccountExists(run: Run) {
+  if (!process.env.PROVISION_INBOX_ID || !run.identity?.email || run.vars.account_exists === "1" || run.vars.hosted_no_secrets === "1") return;
+  await putSecret(vaultName(run.slug, run.id, "shared:account_email"), run.identity.email, `${run.app} account exists for ${run.identity.email}`).catch(() => undefined);
+  run.vars.account_exists = "1";
+}
+
 /** Bookkeeping once a browser step is done: a sign-up with the shared mailbox means the account now exists. */
 async function afterBrowserStep(ctx: Ctx, s: Step) {
   const { run } = ctx;
@@ -480,6 +493,8 @@ function wallPause(ctx: Ctx, s: Step, b: { kind: string; detail: string }): Outc
 
 const HOSTED_MAX_RUNS = 8;
 const HOSTED_RUN_MS = 20 * 60_000;
+
+const BROWSERISH = new Set<Step["kind"]>(["browser", "email", "capture", "totp"]);
 
 /**
  * An API playbook that still has browser steps in full automation (Slack's sign-up and config token).
@@ -764,9 +779,11 @@ async function hostedResult(ctx: Ctx, s: Extract<Step, { kind: "agent" }>, a: Ag
     if (a.refreshToken && s.token.refreshInto) await store(ctx, s.token.refreshInto, a.refreshToken, true);
     if (a.tokenScheme) run.vars.token_scheme = a.tokenScheme;
     log(run, "step", `${s.title}: done in ${run.hosted?.runs || 1} hosted run(s). The token went straight to the vault; the next step creates the app through the API with it${s.token.into.startsWith("shared:") ? ", and later runs reuse it with no browser" : ""}.${notes}`, s.id, ctx.seen);
+    await markAccountExists(run);
     return "done";
   }
   const need = s.credential === "api_key" ? (a.apiKey ? [] : ["API key"]) : [a.clientId ? "" : "client ID", a.clientSecret ? "" : "client secret"].filter(Boolean);
+  if (a.status === "done") await markAccountExists(run); // signed in far enough to create something
   if (a.status === "done" && !need.length) {
     log(run, "step", `${s.title}: done in ${run.hosted?.runs || 1} hosted run(s).${a.clientId ? ` Client ID ${a.clientId}.` : ""}${a.appUrl ? ` App page: ${a.appUrl}.` : ""} The ${s.credential === "api_key" ? "key" : "secret"} went straight to the vault.${notes}`, s.id, ctx.seen);
     return "done";
@@ -1098,6 +1115,7 @@ async function verifyStep(ctx: Ctx, s: Step): Promise<Outcome> {
     if (!run.verify) { run.verify = { state: newState(), verifier: "" }; run.public.authorizeUrl = authorizeUrl(o, clientId, run.vars.redirect_uri, run.verify.state); }
     const c = await hostedConsent(ctx, s, run.public.authorizeUrl || authorizeUrl(o, clientId, run.vars.redirect_uri, run.verify.state));
     if (c !== "code") return c;
+    await markAccountExists(run);
     return finishVerify(ctx, s, run.verify.code!, clientId, secret);
   }
   const d = await browser(ctx);
