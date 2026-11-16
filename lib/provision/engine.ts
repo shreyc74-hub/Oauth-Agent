@@ -217,8 +217,10 @@ export async function createRun(input: { app: string; mode?: Mode; baseUrl: stri
       reason: `Couldn't confirm a self-serve test account for ${playbook.name}. ${sandbox.summary ? `${sandbox.summary} ` : ""}${sandbox.humanPath ? `If it turns out to be gated: ${sandbox.humanPath} ` : ""}The evidence is under "Sandbox check" below. Press Continue to try anyway, or Cancel.` };
     playbook = { ...playbook, steps: { human: [check, ...playbook.steps.human], auto: [check, ...playbook.steps.auto] } };
   }
-  if (deps.hosted && playbook.strategy === "browser") {
+  if (deps.hosted && (playbook.strategy === "browser" || await stillNeedsBrowser(playbook))) {
     // Full automation hands the browser part to the hosted agent; human in the loop keeps our live browser.
+    // That includes hand-written API playbooks whose first run needs a browser (Slack signs up and makes a
+    // configuration token before its manifest API works): the hosted agent creates the app in the console.
     playbook = withHostedSteps(playbook, sandbox);
     route = { ...route, method: "Hosted browser agent", detail: `Browser Use (through Composio) signs up and creates the ${chosen === "oauth" ? "OAuth app" : "API key"} from the research. This app reads email codes for it, stores the secret in the vault and verifies it.`, executable: true };
     progress({ id: "route", label: "Browser route", state: "info", detail: "full automation uses the hosted browser agent (Browser Use via Composio)" });
@@ -472,6 +474,19 @@ function wallPause(ctx: Ctx, s: Step, b: { kind: string; detail: string }): Outc
 
 const HOSTED_MAX_RUNS = 8;
 const HOSTED_RUN_MS = 20 * 60_000;
+
+/**
+ * An API playbook that still has browser steps in full automation (Slack's sign-up and config token).
+ * Once its shared bootstrap secret is in the vault (skipIfVault), the API route needs no browser: keep it.
+ */
+async function stillNeedsBrowser(p: Playbook): Promise<boolean> {
+  if (p.strategy !== "api") return false;
+  const auto = p.steps.auto;
+  if (!auto.some((s) => s.kind === "browser")) return false;
+  const bootstrap = [...new Set(auto.map((s) => s.skipIfVault).filter((x): x is string => Boolean(x)))];
+  for (const label of bootstrap) if (await hasSecret(vaultName(p.slug, "", label))) return false;
+  return true;
+}
 
 /** DCR didn't work for this vendor: replace the remaining steps with the hosted browser route. */
 function switchToHosted(run: Run, why: string) {

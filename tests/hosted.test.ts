@@ -320,6 +320,24 @@ test("two-step verification: the agent sets up an authenticator, our app keeps t
   assert.match(agent2.tasks[1], /^Authenticator codes/);
 });
 
+test("Slack: its first run's browser part (sign-up, code boxes, captcha) goes to the hosted agent; with a config token on file the API route stays", async () => {
+  const { putSecret } = await import("../lib/provision/vault");
+  const agent = scripted([JSON.stringify({ status: "waiting_for_email", expects: "code", notes: [] }), done({ client_id: "1234.5678" })]);
+  const deps = { ...defaultDeps(), hosted: agent };
+  const run = await createRun({ app: "Slack", baseUrl: BASE, autoStart: true }, deps);
+  assert.deepEqual(run.steps.map((s) => s.kind), ["identity", "agent", "verify", "golive"]);
+  assert.equal(run.assessment?.route.method, "Hosted browser agent");
+  const end = await drive(run.id, deps);
+  assert.equal(end.status, "verified", end.events.map((e) => e.text).join("\n"));
+  assert.match(agent.tasks[0], /slack\.com/);
+  assert.match(agent.tasks[1], /The code from the email is 482913/);
+
+  await putSecret("slack/shared/config_refresh_token", "xoxe-1-mock-refresh");
+  const again = await createRun({ app: "Slack", baseUrl: BASE, autoStart: true }, deps);
+  assert.ok(again.steps.some((s) => s.id === "manifest-create"), "with the config token stored, Slack keeps its API route");
+  assert.ok(!again.steps.some((s) => s.kind === "agent"));
+});
+
 test("asked for an authenticator code with no key on file: a person enters it", async () => {
   const agent = scripted([JSON.stringify({ status: "needs_totp", totp_secret: null, notes: [] }), done()]);
   const deps = { ...defaultDeps(), hosted: agent };
