@@ -43,10 +43,15 @@ export async function planScopes(input: { useCase: string; guide?: Guide | null;
   };
   const text = await runClaude({ model: RESOLVE_MODEL, system: SYSTEM, maxTokens: 2000, messages: [{ role: "user", content: JSON.stringify(brief) }] });
   const j = await jsonFromModel<{ scopes?: string[]; mapping?: ScopePlan["mapping"]; testCall?: unknown; notes?: string[] }>(text);
-  const scopes = [...new Set((j.scopes || []).map(String).map((s) => s.trim()).filter((s) => s && !/\s/.test(s)))];
-  if (!scopes.length) throw new Error(`Couldn't map the use case to ${p.name} scopes.`);
-  const testCall = safeTestCall(p, j.testCall);
+  let scopes = [...new Set((j.scopes || []).map(String).map((s) => s.trim()).filter((s) => s && !/\s/.test(s)))];
   const notes = (j.notes || []).map(String).slice(0, 5);
+  if (!scopes.length) {
+    // Some vendors have no scopes at all (ClickUp: a token can do whatever the user can). Keep the plan's
+    // scopes, which the server ignores, and still use the test call to check the use case.
+    scopes = p.oauth.scopes;
+    notes.unshift(`No ${p.name} scopes were found for this use case (the vendor may not use scopes); keeping the plan's: ${scopes.join(", ")}.`);
+  }
+  const testCall = safeTestCall(p, j.testCall);
   if (j.testCall && !testCall) notes.push("The suggested test call was dropped: it was not a GET to the vendor's own API.");
   return { useCase, scopes, mapping: (j.mapping || []).slice(0, 10), testCall, notes };
 }

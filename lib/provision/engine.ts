@@ -8,7 +8,7 @@
 // (captchas, phone checks, device approvals, payment, legal terms).
 import { randomBytes } from "node:crypto";
 import { noProgress, type Assessment, type Mode, type Playbook, type Progress, type Run, type RunEvent, type SandboxCheck, type Step } from "./types";
-import { checkSandbox, cachedSandbox, saveSandbox, fromPlaybook, type SandboxIo } from "./sandbox";
+import { checkSandbox, cachedSandbox, saveSandbox, fromPlaybook, findOAuthEndpoints, type SandboxIo } from "./sandbox";
 import { planScopes } from "./scopes";
 import { offeredCredentials, chooseCredential, chooseRoute, recommendMode, stepSummary } from "./assess";
 import { probeDcr, describeDcr, fetchJson, type Fetcher } from "./dcr";
@@ -189,7 +189,14 @@ export async function createRun(input: { app: string; mode?: Mode; baseUrl: stri
   // 4. The plan, for that credential and route.
   const target: PlanTarget = { credential: chosen, dcr: route.method === "Dynamic Client Registration", keyWhere: sandbox?.offered?.find((o) => o.type === "api_key")?.where };
   // DCR and the hosted browser agent need no step-by-step browser plan: build it from the brief, no model call.
-  const brief = sandbox?.resources;
+  let brief = sandbox?.resources;
+  if (brief && chosen === "oauth" && !brief.oauth && !dcr?.endpoints && !known && !deps.mock) {
+    // The lean research missed the OAuth endpoints and the vendor publishes no metadata: one small lookup.
+    const found = await stage("endpoints", "Looking up the OAuth endpoints", "the research brief has none and the vendor publishes no OAuth metadata",
+      () => findOAuthEndpoints({ name: guide?.name || input.app, website: brief?.website || guide?.website }).catch(() => undefined),
+      (o) => (o ? `${o.authorizeUrl} and ${o.tokenUrl}` : "not found"));
+    if (found) { brief = { ...brief, oauth: found }; if (sandbox) sandbox = { ...sandbox, resources: brief }; }
+  }
   const browserRoute = route.method === "Browser automation" || chosen === "api_key";
   const noPlanCall = !known && brief && (target.dcr || (deps.hosted && browserRoute && input.mode !== "human"));
   let playbook = noPlanCall

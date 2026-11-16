@@ -184,6 +184,20 @@ const LEAN = `Work fast and cheap. Start from what you already know about this v
 
 `;
 
+const ENDPOINTS = `You find one vendor's OAuth 2.0 endpoints for third-party apps (authorization code flow), from its official developer docs.
+Return ONLY this JSON: {"authorizeUrl":"https://...","tokenUrl":"https://...","identity":{"url":"https://... a GET endpoint (no body) that returns the signed-in user","pick":"JSON path to a name or id"},"scopes":["smallest read scope set, or [] if the vendor has no scopes"]}
+Use exact URLs from the docs. At most 2 searches and 2 fetches. Omit a field you could not confirm rather than guessing.`;
+
+/**
+ * A small follow-up when the research brief has no OAuth endpoints and the vendor publishes no metadata
+ * (Figma): one targeted call for just the endpoints, instead of re-running the whole research.
+ */
+export async function findOAuthEndpoints(app: { name: string; website?: string }): Promise<NonNullable<ProvisionBrief["oauth"]> | undefined> {
+  const text = await runClaude({ model: RESOLVE_MODEL, system: ENDPOINTS, maxTokens: 1500, tools: webTools(2, 2, 6000), messages: [{ role: "user", content: `Vendor: ${app.name}${app.website ? ` (${app.website})` : ""}` }] });
+  const j = await jsonFromModel<{ authorizeUrl?: string; tokenUrl?: string; identity?: { url?: string; pick?: string }; scopes?: string[] }>(text).catch(() => ({} as Record<string, never>));
+  return cleanBrief({ steps: [], docs: [], oauth: { authorizeUrl: j.authorizeUrl, tokenUrl: j.tokenUrl, identity: j.identity?.url ? { url: j.identity.url, pick: j.identity.pick || "id" } : undefined, scopes: j.scopes || [] } as never })?.oauth;
+}
+
 export async function researchSandbox(app: { name: string; website?: string }, onTool: (name: string, input: Record<string, unknown>) => void = () => undefined): Promise<Found> {
   const b = researchBudget();
   const text = await runClaude({
