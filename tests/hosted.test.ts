@@ -239,3 +239,35 @@ test("DCR refused (Okta: initial access token needed): full automation switches 
   assert.deepEqual(end.steps.map((s) => s.id).filter((id) => id !== "sandbox-check"), ["identity", "hosted-agent", "verify"]);
   assert.match(agent.tasks[0], /Create an OAuth app named/);
 });
+
+test("identity: the planned field, else a common one, else a successful call is enough", async () => {
+  const { identityFrom } = await import("../lib/provision/verify");
+  assert.equal(identityFrom({ id: "u1" }, "id"), "u1");
+  // Mailchimp's metadata endpoint has no id, but names the account.
+  assert.equal(identityFrom({ dc: "us11", accountname: "Toolkit Test", login: { login_name: "agent" } }, "id"), "Toolkit Test");
+  assert.equal(identityFrom({ data: { user: "x", email: "a@b.c" } }, "user.id"), "a@b.c");
+  assert.equal(identityFrom({}, "id"), undefined);
+});
+
+test("a token that works isn't failed by an identity reply without the planned field; client IDs stay readable", async () => {
+  const { mockHttp } = await import("../lib/provision/mock");
+  const http = async (url: string, init?: RequestInit) => (/\/me$/.test(url)
+    ? new Response(JSON.stringify({ dc: "us11", accountname: "Toolkit Test" }), { status: 200, headers: { "content-type": "application/json" } })
+    : mockHttp(url, init));
+  const deps = { ...defaultDeps(), http, hosted: scripted([done()]), sandboxIo: tdoIo as never, dcrFetch: tdoMeta };
+  const run = await createRun({ app: "Tdo", baseUrl: BASE, autoStart: true }, deps);
+  const end = await drive(run.id, deps);
+  assert.equal(end.status, "verified", end.events.map((e) => e.text).join("\n"));
+  assert.equal(end.verify?.who, "Toolkit Test");
+  assert.ok(end.events.some((e) => /Client ID dcr_[0-9a-f]+/.test(e.text)), "the DCR client ID is shown, not redacted");
+});
+
+test("identity call refused (405) and no use-case call: not verified, with the reason", async () => {
+  const { mockHttp } = await import("../lib/provision/mock");
+  const http = async (url: string, init?: RequestInit) => (/\/me$/.test(url) ? new Response("{}", { status: 405 }) : mockHttp(url, init));
+  const deps = { ...defaultDeps(), http, hosted: scripted([done()]), sandboxIo: tdoIo as never, dcrFetch: tdoMeta };
+  const run = await createRun({ app: "Tdo", baseUrl: BASE, autoStart: true }, deps);
+  const end = await drive(run.id, deps);
+  assert.equal(end.status, "needs_review");
+  assert.match(end.vars.verify_error, /Identity call failed: 405/);
+});

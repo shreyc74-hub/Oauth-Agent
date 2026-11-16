@@ -188,7 +188,14 @@ When it recovers, it suggests a playbook fix ("the control moved into the sideba
 
 Switch it off with `PROVISION_RECOVERY=0`. In demo mode, tick "Simulate a console change" to watch it work on Linear.
 
+## Background driver
+
+Runs used to move forward only while their page was open (the page calls `/advance`). A Vercel cron now calls `/api/cron/advance` every minute; it advances every queued or running run (up to six at a time; a run already being advanced is skipped by its lease). Runs waiting for a person or an approval are left alone. Set `CRON_SECRET` in Vercel to lock the route to Vercel's cron.
+
 ## Verification
+
+When the identity call's reply lacks the planned field, a common identity field (login, email, name, account name, id) names the account; a successful identity call counts even without one. When the identity call itself fails (for example a POST-only endpoint), a working use-case call proves the token instead. Client IDs are public and stay readable in the log.
+
 
 A run is **verified** only if all of this works against the sandbox:
 

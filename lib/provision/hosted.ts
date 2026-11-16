@@ -167,7 +167,7 @@ export function agentTask(t: TaskInput): string {
     `3. Open the page that shows the ${t.credential === "api_key" ? "API key" : "client ID and client secret"} (click reveal, show or copy if the secret is hidden; if it can only be regenerated, regenerate it once).`,
     t.hints.length ? `Hints from ${t.app}'s docs (may be out of date; trust the screen over these):\n${t.hints.slice(0, 10).map((h) => `- ${h}`).join("\n")}` : "",
     t.docs.length ? `Official pages: ${t.docs.slice(0, 5).join(" , ")}` : "",
-    `Email: if ${t.app} sends a code or a sign-in link by email, STOP and answer with status "waiting_for_email" and expects "code" or "link". Keep the browser open; the next message gives you the code or link.`,
+    `Email: if ${t.app} sends a code or a sign-in link by email, STOP and answer with status "waiting_for_email" and expects "code" or "link". Keep the browser open; the next message gives you the code or link. A code from an authenticator app (Okta Verify, Google Authenticator) or a text message is NOT an email: if one is mandatory, stop with status "wall" and say so.`,
     `Rules: optional prompts with a Skip, Later or close button may be skipped (for example "add your phone number"). You may accept terms of service for this test account. ${wallRule()}`,
     `Secrets: put the ${t.credential === "api_key" ? "API key" : "client secret"} ONLY in its field of the final answer and never repeat it anywhere else (not in notes, not in your messages).`,
     `Final answer: JSON only, exactly this shape: ${RESULT_SHAPE}`,

@@ -61,7 +61,21 @@ export async function whoami(http: Http, o: OAuthSpec, access: string): Promise<
   });
   const j = (await res.json().catch(() => ({}))) as Record<string, unknown>;
   if (!res.ok || j.ok === false || j.errors) throw new Error(`Identity call failed: ${res.status} ${JSON.stringify(j.error || j.errors || "").slice(0, 120)}`);
-  const v = pick(j, w.pick);
-  if (v === undefined || v === null || v === "") throw new Error(`Identity call answered, but ${w.pick} was missing.`);
-  return String(v);
+  return identityFrom(j, w.pick) ?? `account (identity call answered HTTP ${res.status})`;
+}
+
+const NAME_KEYS = ["login", "email", "username", "user_name", "name", "account_name", "accountname", "display_name", "full_name", "user_id", "id"];
+
+/**
+ * Pure: a short label for who the token belongs to. The planned path first; else a common identity field,
+ * at the top level or one level down (data, user, login, account, viewer). A successful identity call is
+ * proof enough that the token works even when no label is found, so callers fall back to a generic one.
+ */
+export function identityFrom(j: unknown, path: string): string | undefined {
+  const ok = (v: unknown) => (typeof v === "string" && v.trim()) || typeof v === "number" ? String(v) : undefined;
+  const direct = ok(pick(j, path));
+  if (direct) return direct;
+  const scopes = [j, ...["data", "user", "login", "account", "viewer", "me"].map((k) => pick(j, k))].filter((x) => x && typeof x === "object");
+  for (const key of NAME_KEYS) for (const o of scopes) { const v = ok((o as Record<string, unknown>)[key]); if (v) return v; }
+  return undefined;
 }

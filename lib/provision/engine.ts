@@ -435,7 +435,7 @@ async function store(ctx: Ctx, label: string, value: string, secret: boolean, qu
   const { run } = ctx;
   if (label === "client_id") run.public.clientId = value;
   if (!secret) { run.vars[label] = value; if (label !== "client_id") return; }
-  ctx.seen.add(value);
+  if (secret) ctx.seen.add(value); // a client ID is public: it stays readable in the log
   const name = vaultName(run.slug, run.id, label);
   await putSecret(name, value, `${run.app}: ${label} (run ${run.id})`);
   run.vault[label.replace(/^shared:/, "")] = name;
@@ -1004,7 +1004,11 @@ async function finishVerify(ctx: Ctx, s: Step, code: string, clientId: string, s
     ctx.seen.add(t.access); if (t.refresh) ctx.seen.add(t.refresh);
     await store(ctx, "access_token", t.access, true);
     if (t.refresh) await store(ctx, "refresh_token", t.refresh, true);
-    run.verify.who = await whoami(deps.http, o, t.access);
+    // The identity call can be wrong in the research (e.g. a POST-only endpoint). A working use-case call
+    // proves the token just as well, so a failed identity call alone doesn't fail verification.
+    let idError: Error | undefined;
+    try { run.verify.who = await whoami(deps.http, o, t.access); }
+    catch (e) { idError = e as Error; log(run, "info", `${idError.message} Trying the use-case call instead.`, s.id, ctx.seen); }
     const tc = run.scopePlan?.testCall;
     if (tc) {
       // The use-case call: proves the scopes cover what the app will do, not only sign-in.
@@ -1013,7 +1017,9 @@ async function finishVerify(ctx: Ctx, s: Step, code: string, clientId: string, s
       run.verify.useCaseOk = res.ok && j.ok !== false && !j.error;
       run.verify.useCase = run.verify.useCaseOk ? `${tc.label}: ok` : `${tc.label}: ${res.status} ${String(j.error || res.statusText || "").slice(0, 80)}`;
       log(run, run.verify.useCaseOk ? "step" : "error", `Use-case call ${tc.method} ${tc.url}: ${run.verify.useCaseOk ? "ok" : `failed (${run.verify.useCase})`}.`, s.id, ctx.seen);
+      if (idError && run.verify.useCaseOk) run.verify.who = `token works (${tc.label})`;
     }
+    if (idError && !run.verify.who) throw idError;
     if (t.refresh) {
       try {
         const r2 = await refreshTokens(deps.http, o, t.refresh, clientId, secret);
