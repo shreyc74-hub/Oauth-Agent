@@ -365,6 +365,32 @@ test("Slack: its first run's browser part (sign-up, code boxes, captcha) goes to
   assert.ok(!again.steps.some((s) => s.kind === "agent"));
 });
 
+test("API-key-only vendor (Tavily): a guide saying 'no OAuth' doesn't stop it; the hosted agent creates the key, a test call verifies it", async () => {
+  const { saveGuide } = await import("../lib/store");
+  const { libraryGuides } = await import("../lib/library");
+  const base = libraryGuides().find((g) => g.slug === "notion")!;
+  await saveGuide({ ...base, slug: "keyonly", name: "Keyonly", website: "keyonly.example", evidenceLevel: "generated", oauth: { ...base.oauth, supported: false, note: "API keys only" } });
+  const io = {
+    research: async () => ({
+      summary: "Free API key for anyone.", relation: "same",
+      developerAccount: { name: "Keyonly dashboard", selfServe: "yes", quotes: [] }, sandbox: { name: "Keyonly account", selfServe: "yes", quotes: [] },
+      oauthApp: { available: "none", apiKeySelfServe: true, quotes: [] }, credentials: [{ type: "api_key", selfServe: "yes", where: "Dashboard > API keys" }],
+      resources: { website: "keyonly.example", docs: [{ label: "API", url: "https://docs.keyonly.example" }], steps: [{ title: "Sign up", detail: "email", owner: "agent" }],
+        apiKey: { header: "Authorization", prefix: "Bearer", testUrl: "https://api.keyonly.example/usage" } },
+    }),
+    pageText: async () => "", probe: async (u: string) => ({ url: u, signals: [], looks: "signup_form" as const }),
+  };
+  const agent = scripted([JSON.stringify({ status: "done", api_key: "tvly-key-123", notes: [] })]);
+  const deps = { ...defaultDeps(), hosted: agent, sandboxIo: io as never };
+  const run = await createRun({ app: "Keyonly", baseUrl: BASE, autoStart: true }, deps);
+  assert.equal(run.assessment?.credentials.chosen, "api_key");
+  assert.deepEqual(run.steps.map((s) => s.kind).filter((k) => k !== "human"), ["identity", "agent", "verify"]);
+  const end = await drive(run.id, deps);
+  assert.equal(end.status, "verified", end.events.map((e) => e.text).join("\n"));
+  assert.equal(await getSecret(end.vault.api_key), "tvly-key-123");
+  assert.match(agent.tasks[0], /Create an API key named/);
+});
+
 test("asked for an authenticator code with no key on file: a person enters it", async () => {
   const agent = scripted([JSON.stringify({ status: "needs_totp", totp_secret: null, notes: [] }), done()]);
   const deps = { ...defaultDeps(), hosted: agent };

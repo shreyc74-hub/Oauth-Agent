@@ -116,7 +116,8 @@ export async function planFor(app: string, deps: Deps, guideSlug?: string, setup
   const slug = guide?.slug || slugify(app);
   if (PLAYBOOKS[slug]) return PLAYBOOKS[slug];
   if (!guide) throw new NoGuideError(app);
-  if (guide.oauth && guide.oauth.supported === false) throw new Error(`${guide.name} does not offer OAuth for third-party apps: ${guide.oauth.note || "see its guide"}.`);
+  // No OAuth only stops an OAuth plan: API-key vendors (Tavily, Firecrawl's keys) get an API-key plan.
+  if (target?.credential !== "api_key" && guide.oauth && guide.oauth.supported === false) throw new Error(`${guide.name} does not offer OAuth for third-party apps: ${guide.oauth.note || "see its guide"}.`);
   return deps.mock ? mockPlanFromGuide(guide, target) : planFromGuide(guide, setup, progress, target);
 }
 
@@ -189,7 +190,8 @@ export async function createRun(input: { app: string; mode?: Mode; baseUrl: stri
   const target: PlanTarget = { credential: chosen, dcr: route.method === "Dynamic Client Registration", keyWhere: sandbox?.offered?.find((o) => o.type === "api_key")?.where };
   // DCR and the hosted browser agent need no step-by-step browser plan: build it from the brief, no model call.
   const brief = sandbox?.resources;
-  const noPlanCall = !known && brief && (target.dcr || (deps.hosted && route.method === "Browser automation" && input.mode !== "human"));
+  const browserRoute = route.method === "Browser automation" || chosen === "api_key";
+  const noPlanCall = !known && brief && (target.dcr || (deps.hosted && browserRoute && input.mode !== "human"));
   let playbook = noPlanCall
     ? await stage("plan", "Planning the steps", "from the research brief, no model call (nobody needs click-by-click steps on this route)",
       async () => briefPlaybook({ name: guide?.name || input.app, slug: guide?.slug || slugify(input.app) }, brief!, target, dcr?.endpoints),
